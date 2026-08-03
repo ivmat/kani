@@ -74,6 +74,14 @@ fn main() -> ExitCode {
 fn cargokani_main(input_args: Vec<OsString>) -> Result<()> {
     let input_args = join_args(input_args)?;
     let args = args::CargoKaniArgs::parse_from(&input_args);
+    if args.version {
+        // Deliberately not gated on `--quiet`: this is an explicit,
+        // one-shot query (like clap's built-in `--version` it replaces),
+        // not a verification run, so `--quiet` -- whose contract is about
+        // suppressing *verification* output -- shouldn't suppress it.
+        print_kani_version(InvocationType::CargoKani(input_args));
+        return Ok(());
+    }
     check_is_valid(&args);
 
     let mut session = match args.command {
@@ -100,6 +108,12 @@ fn cargokani_main(input_args: Vec<OsString>) -> Result<()> {
 /// The main function for the `kani` command.
 fn standalone_main() -> Result<()> {
     let args = args::StandaloneArgs::parse();
+    if args.version {
+        // See the matching comment in `cargokani_main`: intentionally not
+        // gated on `--quiet`.
+        print_kani_version(InvocationType::Standalone);
+        return Ok(());
+    }
     check_is_valid(&args);
 
     let (session, project) = match args.command {

@@ -140,7 +140,7 @@ impl From<Timeout> for Duration {
 
 #[derive(Debug, clap::Parser)]
 #[command(
-    version,
+    disable_version_flag = true,
     name = "kani",
     about = "Verify a single Rust crate. For more information, see https://github.com/model-checking/kani",
     args_override_self = true,
@@ -150,7 +150,7 @@ impl From<Timeout> for Duration {
 )]
 pub struct StandaloneArgs {
     /// Rust file to verify
-    #[arg(required = true)]
+    #[arg(required_unless_present = "version")]
     pub input: Option<PathBuf>,
 
     #[command(flatten)]
@@ -161,6 +161,16 @@ pub struct StandaloneArgs {
 
     #[arg(long, hide = true)]
     pub crate_name: Option<String>,
+
+    /// Print version information -- including the CBMC version resolved via
+    /// `PATH` and whether it matches Kani's pin -- and exit.
+    ///
+    /// This replaces clap's built-in `--version`/`-V` (via
+    /// `disable_version_flag = true` above) specifically so that this check
+    /// runs: the built-in flag prints and exits during argument parsing,
+    /// before any of our code -- including the CBMC pin check -- ever runs.
+    #[arg(short = 'V', long, action = clap::ArgAction::SetTrue)]
+    pub version: bool,
 }
 
 /// Kani takes optional subcommands to request specialized behavior.
@@ -179,7 +189,7 @@ pub enum StandaloneSubcommand {
 
 #[derive(Debug, clap::Parser)]
 #[command(
-    version,
+    disable_version_flag = true,
     name = "cargo-kani",
     about = "Verify a Rust crate. For more information, see https://github.com/model-checking/kani",
     args_override_self = true
@@ -190,6 +200,14 @@ pub struct CargoKaniArgs {
 
     #[command(flatten)]
     pub verify_opts: VerificationArgs,
+
+    /// Print version information -- including the CBMC version resolved via
+    /// `PATH` and whether it matches Kani's pin -- and exit.
+    ///
+    /// See the identically-documented field on `StandaloneArgs` for why this
+    /// replaces clap's built-in `--version`/`-V`.
+    #[arg(short = 'V', long, action = clap::ArgAction::SetTrue)]
+    pub version: bool,
 }
 
 /// cargo-kani takes optional subcommands to request specialized behavior
