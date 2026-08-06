@@ -266,7 +266,9 @@ fn location_from_source_location(loc: &SourceLocation) -> Option<(String, u32, O
     Some((relativize_path(file), line, column))
 }
 
-fn relativize_path(file: &str) -> String {
+/// Relative to the current working directory when possible, falling back to `file` unchanged.
+/// `pub(crate)`: also used by `export_json.rs` (`HarnessExport::file`).
+pub(crate) fn relativize_path(file: &str) -> String {
     let file_path = PathBuf::from(file);
     let Ok(cur_dir) = env::current_dir() else { return file.to_string() };
 
@@ -328,6 +330,8 @@ mod tests {
             generated_concrete_test: false,
             coverage_results: None,
             resolved_solver: Some("cadical".to_string()),
+            warnings: Vec::new(),
+            peak_memory_bytes: None,
         }
     }
 
@@ -342,6 +346,8 @@ mod tests {
             generated_concrete_test: false,
             coverage_results: None,
             resolved_solver: Some("cadical".to_string()),
+            warnings: Vec::new(),
+            peak_memory_bytes: None,
         };
         let harness_result = HarnessResult { harness: &harness, result };
 

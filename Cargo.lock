@@ -1124,6 +1124,7 @@ dependencies = [
  "comfy-table",
  "console",
  "kani_metadata",
+ "libc",
  "once_cell",
  "pathdiff",
  "rayon",

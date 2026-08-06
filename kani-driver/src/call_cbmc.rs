@@ -19,7 +19,7 @@ use tokio::process::Command as TokioCommand;
 use crate::args::common::Verbosity;
 use crate::args::{OutputFormat, VerificationArgs};
 use crate::cbmc_output_parser::{
-    CheckStatus, Property, VerificationOutput, extract_results, process_cbmc_output,
+    CheckStatus, ParserItem, Property, VerificationOutput, extract_results, process_cbmc_output,
 };
 use crate::cbmc_property_renderer::{format_coverage, format_result, kani_cbmc_output_filter};
 use crate::coverage::cov_results::{CoverageCheck, CoverageResults};
@@ -102,6 +102,15 @@ pub struct VerificationResult {
     /// exact "recorded kissat, CaDiCaL ran" defect this field exists to prevent, so we
     /// record "unknown" instead of guessing.
     pub resolved_solver: Option<String>,
+    /// Raw CBMC `WARNING`-type messages for this run (e.g. "ignoring forall" when a
+    /// symbolic-bound quantifier falls back to a solver that can't handle it -- a dropped
+    /// obligation that a green result otherwise hides completely). No taxonomy: free text,
+    /// non-contractual, for `--export-json` only.
+    pub warnings: Vec<String>,
+    /// Peak RSS in bytes across CBMC and its descendants (e.g. an external SAT solver),
+    /// via `getrusage(RUSAGE_CHILDREN)`. `None` -- never a guess -- whenever it cannot be
+    /// honestly attributed to this specific harness; see `peak_memory_delta_bytes`.
+    pub peak_memory_bytes: Option<u64>,
 }
 
 impl KaniSession {
@@ -149,6 +158,10 @@ impl KaniSession {
         if self.args.common_args.verbose() {
             println!("[Kani] Running: `{}`", render_command(cmd.as_std()).to_string_lossy());
         }
+        // See `peak_memory_delta_bytes`: only meaningful single-threaded.
+        let peak_memory_before =
+            if self.args.jobs().will_multithread() { None } else { getrusage_children_maxrss_kb() };
+
         // Spawn the CBMC process and process its output below
         let mut cbmc_process = cmd
             .stdout(std::process::Stdio::piped())
@@ -184,11 +197,13 @@ impl KaniSession {
 
         if let Ok(output) = res {
             // The timeout wasn't reached
+            let peak_memory_bytes = peak_memory_before.and_then(peak_memory_delta_bytes);
             Ok(VerificationResult::from(
                 output?,
                 harness.attributes.should_panic,
                 start_time,
                 resolved_solver,
+                peak_memory_bytes,
             ))
         } else {
             // An error occurs if the timeout was reached
@@ -204,6 +219,8 @@ impl KaniSession {
                 generated_concrete_test: false,
                 coverage_results: None,
                 resolved_solver,
+                warnings: Vec::new(),
+                peak_memory_bytes: None,
             })
         }
     }
@@ -447,6 +464,53 @@ fn cbmc_args_may_override_solver(cbmc_args: &[OsString]) -> bool {
     })
 }
 
+/// Raw CBMC `WARNING`-type messages, for `VerificationResult::warnings`. See its doc comment.
+fn extract_warnings(items: &[ParserItem]) -> Vec<String> {
+    items
+        .iter()
+        .filter_map(|item| match item {
+            ParserItem::Message { message_text, message_type }
+                if message_type.eq_ignore_ascii_case("warning") =>
+            {
+                Some(message_text.clone())
+            }
+            _ => None,
+        })
+        .collect()
+}
+
+/// `getrusage(RUSAGE_CHILDREN).ru_maxrss` in KiB (Linux only -- other platforms use different
+/// units or don't have this field). `None` if unavailable.
+#[cfg(target_os = "linux")]
+fn getrusage_children_maxrss_kb() -> Option<i64> {
+    let mut usage: libc::rusage = unsafe { std::mem::zeroed() };
+    // SAFETY: `usage` is a correctly-sized out-param for a standard, precondition-free read
+    // of kernel-maintained accounting.
+    if unsafe { libc::getrusage(libc::RUSAGE_CHILDREN, &mut usage) } == 0 {
+        Some(usage.ru_maxrss)
+    } else {
+        None
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+fn getrusage_children_maxrss_kb() -> Option<i64> {
+    None
+}
+
+/// `RUSAGE_CHILDREN` is a running MAXIMUM across every child this process has ever reaped
+/// (not a per-child figure, and not summable), and it propagates through a child's own
+/// `wait()` calls on its descendants (so an external solver spawned by CBMC is included). A
+/// value read after one specific child is only honestly attributable to it if it is a NEW
+/// record versus `before_kb` (measured immediately before spawning) -- otherwise some earlier
+/// process already set a higher mark and we cannot tell how much of it is this child's.
+/// Callers only attempt this single-threaded: under `--jobs`, the counter is shared across
+/// threads, so a "new record" could belong to a concurrently-running sibling instead.
+fn peak_memory_delta_bytes(before_kb: i64) -> Option<u64> {
+    let after_kb = getrusage_children_maxrss_kb()?;
+    if after_kb > before_kb { Some(after_kb as u64 * 1024) } else { None }
+}
+
 impl VerificationResult {
     /// Computes a `VerificationResult` (kani-driver's notion of the result of a CBMC call) from a
     /// `VerificationOutput` (cbmc_output_parser's idea of CBMC results).
@@ -461,9 +525,11 @@ impl VerificationResult {
         should_panic: bool,
         start_time: Instant,
         resolved_solver: Option<String>,
+        peak_memory_bytes: Option<u64>,
     ) -> VerificationResult {
         let runtime = start_time.elapsed();
-        let (_, results) = extract_results(output.processed_items);
+        let (other_items, results) = extract_results(output.processed_items);
+        let warnings = extract_warnings(&other_items);
 
         if let Some(results) = results {
             let (status, failed_properties) =
@@ -477,6 +543,8 @@ impl VerificationResult {
                 generated_concrete_test: false,
                 coverage_results,
                 resolved_solver,
+                warnings,
+                peak_memory_bytes,
             }
         } else {
             // We never got results from CBMC - something went wrong (e.g. crash) so it's failure
@@ -493,6 +561,8 @@ impl VerificationResult {
                 generated_concrete_test: false,
                 coverage_results: None,
                 resolved_solver,
+                warnings,
+                peak_memory_bytes,
             }
         }
     }
@@ -506,6 +576,8 @@ impl VerificationResult {
             generated_concrete_test: false,
             coverage_results: None,
             resolved_solver,
+            warnings: Vec::new(),
+            peak_memory_bytes: None,
         }
     }
 
@@ -521,6 +593,8 @@ impl VerificationResult {
             generated_concrete_test: false,
             coverage_results: None,
             resolved_solver,
+            warnings: Vec::new(),
+            peak_memory_bytes: None,
         }
     }
 
@@ -777,5 +851,35 @@ mod tests {
         use std::os::unix::ffi::OsStrExt;
         let non_utf8 = std::ffi::OsStr::from_bytes(&[0xff, 0xfe]).to_owned();
         assert!(cbmc_args_may_override_solver(&[non_utf8]));
+    }
+
+    /// `message_type` matching is case-insensitive and ignores non-WARNING messages (e.g.
+    /// the "ERROR"-typed messages `cbmc_property_renderer.rs` already matches exactly this
+    /// way). Matches the convention already proven in this codebase; a live CBMC "ignoring
+    /// forall" repro was not obtained in this session, so this is unit-level evidence only.
+    #[test]
+    fn check_extract_warnings_filters_by_message_type() {
+        let items = vec![
+            ParserItem::Message {
+                message_text: "ignoring forall".to_string(),
+                message_type: "WARNING".to_string(),
+            },
+            ParserItem::Message {
+                message_text: "lowercase warning too".to_string(),
+                message_type: "warning".to_string(),
+            },
+            ParserItem::Message {
+                message_text: "not a warning".to_string(),
+                message_type: "STATUS-MESSAGE".to_string(),
+            },
+            ParserItem::Program { program: "CBMC 6.8.0".to_string() },
+        ];
+
+        let warnings = extract_warnings(&items);
+
+        assert_eq!(
+            warnings,
+            vec!["ignoring forall".to_string(), "lowercase warning too".to_string()]
+        );
     }
 }
