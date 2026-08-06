@@ -29,9 +29,17 @@ use std::time::Duration;
 use time::OffsetDateTime;
 use time::format_description;
 
-/// Represents the version of the `--export-json` schema.
-/// Increment this (following semantic versioning rules) whenever the JSON output shape
-/// changes -- copies the idiom used for `FILE_VERSION` in `list/output.rs`.
+/// Represents the version of the `--export-json` schema -- copies the versioned-field idiom
+/// used for `FILE_VERSION` in `list/output.rs`.
+///
+/// `0.1.0` is the shape as first released (i.e. the shape at the point `--export-json`
+/// stabilizes, loses its `-Z export-json` gate, and a consumer could actually depend on it).
+/// Until then, this branch is unreleased and behind an unstable flag, so no consumer can
+/// have observed an earlier shape; iterating the schema pre-release does not warrant bumping
+/// this constant. Once released, the semantic-versioning obligation is real and starts here:
+/// any shape change made *after* release must increment this (major for a breaking change to
+/// an existing field, minor for an additive one like a new field), so that a consumer reading
+/// `schema_version` can rely on it having changed whenever the shape did.
 const SCHEMA_VERSION: &str = "0.1.0";
 
 const STATUS_SUCCESSFUL: &str = "SUCCESSFUL";
