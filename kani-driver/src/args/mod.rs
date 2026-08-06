@@ -790,6 +790,19 @@ impl ValidateArgs for VerificationArgs {
                     "Conflicting options: --sarif isn't compatible with --output-format=old.",
                 ));
             }
+            // With `--output-format=old`, `run_cbmc` never parses CBMC's JSON output at all
+            // (`run_terminal_timeout` + `mock_success`/`mock_failure`, with zero properties
+            // either way) -- so `--export-json` under this combination would silently emit a
+            // well-formed file with zero properties and zero covers, indistinguishable from
+            // a real clean run, and (because `run_terminal_timeout` treats a timeout as
+            // `Ok(true)`) a *timed-out* run would export as a confident SUCCESSFUL. Reject
+            // the combination outright rather than exporting a result that never happened.
+            if self.export_json.is_some() && self.output_format == OutputFormat::Old {
+                return Err(Error::raw(
+                    ErrorKind::ArgumentConflict,
+                    "Conflicting options: --export-json isn't compatible with --output-format=old.",
+                ));
+            }
             if self.concrete_playback.is_some() && self.jobs().will_multithread() {
                 // Concrete playback currently embeds a lot of assumptions about the order in which harnesses get called.
                 return Err(Error::raw(
@@ -1238,6 +1251,19 @@ mod tests {
     fn check_export_json_conflicts() {
         expect_validation_error(
             "kani file.rs -Z export-json --export-json out.json --only-codegen",
+            ErrorKind::ArgumentConflict,
+        );
+    }
+
+    /// `--output-format=old` never parses CBMC's JSON output (`run_cbmc` takes the
+    /// `mock_success`/`mock_failure` path instead), so `--export-json` under that
+    /// combination would silently produce a well-formed file with zero properties -- and,
+    /// because a timeout is reported as success on that path, could even export a timed-out
+    /// run as SUCCESSFUL. Must be rejected outright, exactly like `--sarif`.
+    #[test]
+    fn check_export_json_output_format_old_conflict() {
+        expect_validation_error(
+            "kani file.rs -Z export-json --export-json out.json --output-format=old",
             ErrorKind::ArgumentConflict,
         );
     }

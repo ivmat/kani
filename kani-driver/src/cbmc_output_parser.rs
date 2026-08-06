@@ -28,6 +28,11 @@ use console::style;
 use pathdiff::diff_paths;
 use rustc_demangle::demangle;
 use serde::{Deserialize, Deserializer, Serialize};
+// NOTE: `Serialize` above is only needed for `CheckStatus` below (pre-existing before
+// `--export-json`). `Property`/`SourceLocation`/etc. deliberately do NOT derive `Serialize`:
+// `--export-json` (see `export_json.rs`) serializes its own DTOs, not these parser-internal
+// types directly, so a JSON wire format doesn't silently follow whatever shape CBMC's own
+// parsing happens to want internally.
 
 use std::env;
 use std::os::unix::process::ExitStatusExt;
@@ -74,7 +79,7 @@ struct ResultStruct {
 ///
 /// Note: `reach` is not part of the parsed data, but it's useful to annotate
 /// its reachability status.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Property {
     pub description: String,
     #[serde(rename = "property")]
@@ -216,6 +221,13 @@ impl PropertyId {
     /// Reconstructs the original CBMC-style property ID string (`<function>.<class>.<counter>`,
     /// or one of the shorter forms) from its parsed representation.
     ///
+    /// This exists for `--export-json` (see `export_json.rs`): `Property::property_name()`
+    /// below is a *display* rendering that always emits a full 3-part (or `class.id`) form,
+    /// synthesizing the `missing_definition`/`recursion` classes into it -- which is correct
+    /// for human-readable text output, but means it does NOT roundtrip back to a real CBMC
+    /// property id for those two cases. A consumer trying to correlate `--export-json`'s
+    /// output against CBMC's own property ids needs the real thing, hence this method.
+    ///
     /// This must remain the exact inverse of the hand-written `Deserialize` impl above,
     /// including its two synthetic cases:
     ///  * `class == "recursion"` is CBMC's `<function>.recursion` (or bare `.recursion`) form,
@@ -224,7 +236,7 @@ impl PropertyId {
     ///    `Deserialize` uses to remember "the id string had only two dot-separated parts, and
     ///    the first one didn't look like a class", so on the way back out we must drop it and
     ///    emit the original two-part form, not a fabricated three-part one.
-    fn to_property_id_string(&self) -> String {
+    pub fn to_cbmc_id(&self) -> String {
         if self.class == "recursion" && self.id == 1 {
             return match &self.fn_name {
                 Some(name) => format!("{name}.recursion"),
@@ -244,23 +256,11 @@ impl PropertyId {
     }
 }
 
-impl Serialize for PropertyId {
-    /// Hand-written to match the hand-written `Deserialize` above -- there is no derive that
-    /// can invert that custom parsing, so this has to be kept in sync by hand. See the
-    /// round-trip test below.
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.to_property_id_string())
-    }
-}
-
 /// Struct that represents a CBMC source location.
 ///
 /// Source locations may be completely empty, which is why
 /// all members are optional.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct SourceLocation {
     pub column: Option<String>,
     pub file: Option<String>,
@@ -328,7 +328,7 @@ fn filepath(file: String) -> String {
 ///
 /// In general, traces may include more information than this, but this is not
 /// documented anywhere. So we ignore the rest for now.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TraceItem {
     pub step_type: String,
@@ -341,7 +341,7 @@ pub struct TraceItem {
 ///
 /// Note: this struct can have a lot of different fields depending on the value type.
 /// The fields included right now are relevant to primitive types and arrays.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct TraceValue {
     pub binary: Option<String>,
     pub data: Option<TraceData>,
@@ -351,13 +351,13 @@ pub struct TraceValue {
 }
 
 /// Struct that represents an element of an array in a trace.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct TraceArrayValue {
     pub value: TraceValue,
 }
 
 /// Enum that represents a trace data item.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(untagged)]
 pub enum TraceData {
     NonBool(String),
@@ -826,38 +826,37 @@ mod tests {
         assert!(result_struct.is_ok());
     }
 
-    /// `serialize(deserialize(s)) == s` for a real CBMC property id, in its general
-    /// (three-part) form. `PropertyId`'s `Deserialize` is hand-written, and so is its
-    /// `Serialize`; nothing else checks they agree, and a pair that quietly disagreed
-    /// would be exactly the kind of silent defect `--export-json` output could ship for
-    /// a long time before anyone noticed the property ids it prints don't match CBMC's.
+    /// `to_cbmc_id(deserialize(s)) == s` for a real CBMC property id, in its general
+    /// (three-part) form. `PropertyId::to_cbmc_id` is hand-written to invert the
+    /// hand-written `Deserialize` above; nothing else checks they agree, and a pair that
+    /// quietly disagreed would be exactly the kind of silent defect `--export-json` output
+    /// could ship for a long time before anyone noticed the property ids it prints don't
+    /// match CBMC's real ones (see `to_cbmc_id`'s doc comment for why that distinction
+    /// matters -- `property_name()` is a display rendering, not a real-id reconstruction).
     #[test]
     fn check_property_id_round_trips_general() {
-        let prop_id_string = "\"alloc::raw_vec::RawVec::<u8>::allocate_in.sanity_check.1\"";
-        let prop_id: PropertyId = serde_json::from_str(prop_id_string).unwrap();
-        let round_tripped = serde_json::to_string(&prop_id).unwrap();
-        assert_eq!(round_tripped, prop_id_string);
+        let prop_id_string = "alloc::raw_vec::RawVec::<u8>::allocate_in.sanity_check.1";
+        let prop_id: PropertyId = serde_json::from_str(&format!("{prop_id_string:?}")).unwrap();
+        assert_eq!(prop_id.to_cbmc_id(), prop_id_string);
     }
 
     /// Same round-trip property, for the two-part "class inferred from function name shape"
     /// form, which `Deserialize` privately relabels as class `missing_definition` -- the
-    /// `Serialize` side must know to drop that synthetic class again on the way out, rather
+    /// `to_cbmc_id` side must know to drop that synthetic class again on the way out, rather
     /// than emitting a bogus three-part id CBMC never produced.
     #[test]
     fn check_property_id_round_trips_missing_definition() {
-        let prop_id_string = "\"alloc::raw_vec::RawVec::<u8>::allocate_in.1\"";
-        let prop_id: PropertyId = serde_json::from_str(prop_id_string).unwrap();
-        let round_tripped = serde_json::to_string(&prop_id).unwrap();
-        assert_eq!(round_tripped, prop_id_string);
+        let prop_id_string = "alloc::raw_vec::RawVec::<u8>::allocate_in.1";
+        let prop_id: PropertyId = serde_json::from_str(&format!("{prop_id_string:?}")).unwrap();
+        assert_eq!(prop_id.to_cbmc_id(), prop_id_string);
     }
 
     /// Same round-trip property, for the two-part "class only, no function" form.
     #[test]
     fn check_property_id_round_trips_class_only() {
-        let prop_id_string = "\"assertion.1\"";
-        let prop_id: PropertyId = serde_json::from_str(prop_id_string).unwrap();
-        let round_tripped = serde_json::to_string(&prop_id).unwrap();
-        assert_eq!(round_tripped, prop_id_string);
+        let prop_id_string = "assertion.1";
+        let prop_id: PropertyId = serde_json::from_str(&format!("{prop_id_string:?}")).unwrap();
+        assert_eq!(prop_id.to_cbmc_id(), prop_id_string);
     }
 
     /// Same round-trip property, for the special-cased `.recursion` form (whose real
@@ -865,9 +864,8 @@ mod tests {
     /// case where the round trip depends on that hardcoding staying in sync too).
     #[test]
     fn check_property_id_round_trips_recursion() {
-        let prop_id_string = "\"alloc::raw_vec::RawVec::<u8>::allocate_in.recursion\"";
-        let prop_id: PropertyId = serde_json::from_str(prop_id_string).unwrap();
-        let round_tripped = serde_json::to_string(&prop_id).unwrap();
-        assert_eq!(round_tripped, prop_id_string);
+        let prop_id_string = "alloc::raw_vec::RawVec::<u8>::allocate_in.recursion";
+        let prop_id: PropertyId = serde_json::from_str(&format!("{prop_id_string:?}")).unwrap();
+        assert_eq!(prop_id.to_cbmc_id(), prop_id_string);
     }
 }

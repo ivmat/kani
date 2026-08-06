@@ -327,7 +327,7 @@ mod tests {
             runtime: Duration::from_secs(1),
             generated_concrete_test: false,
             coverage_results: None,
-            resolved_solver: "cadical".to_string(),
+            resolved_solver: Some("cadical".to_string()),
         }
     }
 
@@ -341,7 +341,7 @@ mod tests {
             runtime: Duration::from_secs(1),
             generated_concrete_test: false,
             coverage_results: None,
-            resolved_solver: "cadical".to_string(),
+            resolved_solver: Some("cadical".to_string()),
         };
         let harness_result = HarnessResult { harness: &harness, result };
 

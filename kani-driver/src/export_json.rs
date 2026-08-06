@@ -130,8 +130,9 @@ struct HarnessExport {
     verification_time_s: f64,
     /// The solver CBMC actually ran this harness with (CLI `--solver` overrides the
     /// harness `solver` attribute, else the driver default). NOT the same thing as
-    /// `attributes.solver`, which is only the request.
-    resolved_solver: String,
+    /// `attributes.solver`, which is only the request. `None` when `--cbmc-args` may have
+    /// smuggled in a different solver flag -- see `VerificationResult::resolved_solver`.
+    resolved_solver: Option<String>,
     n_properties: usize,
     n_failed: usize,
     failed_properties: Vec<FailedPropertyExport>,
@@ -155,13 +156,28 @@ struct FailedPropertyExport {
     file: Option<String>,
     line: Option<String>,
     trace_available: bool,
+    /// `FAILURE` or `ERROR`. A harness can be `FAILED` because of `ERROR` properties alone
+    /// (CBMC returns `ERROR` when an SMT solver itself errors out; Kani's own
+    /// `determine_failed_properties` treats *any* `ERROR` property as failing the whole
+    /// harness), with zero `FAILURE`-status properties -- so this field lets a consumer
+    /// tell the two apart instead of silently dropping the `ERROR` ones.
+    status: CheckStatus,
 }
 
+/// Non-vacuity signal, grouped by CBMC's own cover-property vocabulary (see
+/// `cbmc_property_renderer::format_result`, which tracks exactly these four buckets:
+/// `number_covers_satisfied`, `number_covers_unsatisfiable`, `number_covers_unreachable`,
+/// `number_covers_undetermined`). Kept as separate lists rather than one merged
+/// "not satisfied" bucket because "dead code" (`unreachable`), "logically impossible"
+/// (`unsatisfiable`), and "the solver couldn't determine it" (`undetermined`) are different
+/// diagnoses -- a consumer should not have to guess which one they got.
 #[derive(Serialize)]
 struct CoversExport {
     total: usize,
     satisfied: usize,
     unsatisfiable: Vec<String>,
+    unreachable: Vec<String>,
+    undetermined: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -210,12 +226,14 @@ impl ExportedRun {
     }
 }
 
-/// `Some(solver)` only if every harness in this run resolved to the same solver;
-/// `None` (not a guess at "the" solver) if the run was empty or solvers differed.
+/// `Some(solver)` only if every harness in this run resolved to a *known* solver, and it's
+/// the same one for all of them. `None` (never a guess) if the run was empty, if any
+/// harness's own `resolved_solver` is unknown (e.g. `--cbmc-args` may have overridden it),
+/// or if harnesses genuinely used different solvers.
 fn uniform_solver(harnesses: &[HarnessExport]) -> Option<String> {
-    let mut iter = harnesses.iter().map(|h| &h.resolved_solver);
-    let first = iter.next()?;
-    if iter.all(|s| s == first) { Some(first.clone()) } else { None }
+    let mut iter = harnesses.iter().map(|h| h.resolved_solver.as_ref());
+    let first = iter.next()??;
+    if iter.all(|s| s == Some(first)) { Some(first.clone()) } else { None }
 }
 
 fn format_started_at(dt: OffsetDateTime) -> String {
@@ -238,9 +256,15 @@ impl HarnessExport {
             match &result.results {
                 Ok(properties) => {
                     let n_properties = properties.len();
+                    // Mirrors `call_cbmc::determine_failed_properties`, which keys on
+                    // exactly these two statuses (an `Error` property fails the harness
+                    // even with zero `Failure`-status properties -- see the `status` field
+                    // doc comment on `FailedPropertyExport`). `Undetermined`/`Unknown` do
+                    // NOT fail a harness in Kani's own determination, so they are
+                    // deliberately excluded here too.
                     let failed_properties: Vec<FailedPropertyExport> = properties
                         .iter()
-                        .filter(|p| p.status == CheckStatus::Failure)
+                        .filter(|p| matches!(p.status, CheckStatus::Failure | CheckStatus::Error))
                         .map(FailedPropertyExport::from_property)
                         .collect();
                     let n_failed = failed_properties.len();
@@ -257,7 +281,13 @@ impl HarnessExport {
                     0,
                     0,
                     Vec::new(),
-                    CoversExport { total: 0, satisfied: 0, unsatisfiable: Vec::new() },
+                    CoversExport {
+                        total: 0,
+                        satisfied: 0,
+                        unsatisfiable: Vec::new(),
+                        unreachable: Vec::new(),
+                        undetermined: Vec::new(),
+                    },
                     Some(*exit_status),
                 ),
             };
@@ -284,12 +314,16 @@ impl HarnessExport {
 impl FailedPropertyExport {
     fn from_property(p: &Property) -> Self {
         FailedPropertyExport {
-            id: p.property_name(),
+            // The real CBMC property id (not `property_name()`'s display rendering --
+            // see `PropertyId::to_cbmc_id`'s doc comment for why they can differ), so a
+            // consumer can correlate this against CBMC's own output.
+            id: p.property_id.to_cbmc_id(),
             description: p.description.clone(),
             class: p.property_class(),
             file: p.source_location.file.clone(),
             line: p.source_location.line.clone(),
             trace_available: p.trace.is_some(),
+            status: p.status,
         }
     }
 }
@@ -299,12 +333,17 @@ impl CoversExport {
         let covers: Vec<&Property> = properties.iter().filter(|p| p.is_cover_property()).collect();
         let total = covers.len();
         let satisfied = covers.iter().filter(|p| p.status == CheckStatus::Satisfied).count();
-        let unsatisfiable: Vec<String> = covers
-            .iter()
-            .filter(|p| p.status == CheckStatus::Unsatisfiable)
-            .map(|p| p.property_name())
-            .collect();
-        CoversExport { total, satisfied, unsatisfiable }
+        let ids_with_status = |status: CheckStatus| -> Vec<String> {
+            covers
+                .iter()
+                .filter(|p| p.status == status)
+                .map(|p| p.property_id.to_cbmc_id())
+                .collect()
+        };
+        let unsatisfiable = ids_with_status(CheckStatus::Unsatisfiable);
+        let unreachable = ids_with_status(CheckStatus::Unreachable);
+        let undetermined = ids_with_status(CheckStatus::Undetermined);
+        CoversExport { total, satisfied, unsatisfiable, unreachable, undetermined }
     }
 }
 
@@ -351,7 +390,10 @@ mod tests {
         }
     }
 
-    fn success_result(properties: Vec<Property>, resolved_solver: &str) -> VerificationResult {
+    fn success_result(
+        properties: Vec<Property>,
+        resolved_solver: Option<&str>,
+    ) -> VerificationResult {
         VerificationResult {
             status: VerificationStatus::Success,
             failed_properties: FailedProperties::None,
@@ -359,7 +401,7 @@ mod tests {
             runtime: Duration::from_millis(329),
             generated_concrete_test: false,
             coverage_results: None,
-            resolved_solver: resolved_solver.to_string(),
+            resolved_solver: resolved_solver.map(str::to_string),
         }
     }
 
@@ -375,7 +417,7 @@ mod tests {
             property("assertion", 1, CheckStatus::Success),
             property("cover", 1, CheckStatus::Satisfied),
         ];
-        let result = success_result(properties, "cadical");
+        let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
         let export = ExportedRun::from_harness_results(
@@ -413,7 +455,7 @@ mod tests {
     fn export_with_failed_property() {
         let h = harness("my_harness");
         let properties = vec![property("assertion", 1, CheckStatus::Failure)];
-        let mut result = success_result(properties, "cadical");
+        let mut result = success_result(properties, Some("cadical"));
         result.status = VerificationStatus::Failure;
         result.failed_properties = FailedProperties::PanicsOnly;
         let hr = HarnessResult { harness: &h, result };
@@ -442,7 +484,7 @@ mod tests {
             property("cover", 1, CheckStatus::Satisfied),
             property("cover", 2, CheckStatus::Unsatisfiable),
         ];
-        let result = success_result(properties, "cadical");
+        let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
         let export =
@@ -476,7 +518,7 @@ mod tests {
             runtime: Duration::from_secs(300),
             generated_concrete_test: false,
             coverage_results: None,
-            resolved_solver: "cadical".to_string(),
+            resolved_solver: Some("cadical".to_string()),
         };
         let hr = HarnessResult { harness: &h, result };
 
@@ -497,8 +539,8 @@ mod tests {
     fn export_solver_not_uniform_is_null() {
         let h1 = harness("h1");
         let h2 = harness("h2");
-        let r1 = success_result(vec![], "cadical");
-        let r2 = success_result(vec![], "kissat");
+        let r1 = success_result(vec![], Some("cadical"));
+        let r2 = success_result(vec![], Some("kissat"));
         let hr1 = HarnessResult { harness: &h1, result: r1 };
         let hr2 = HarnessResult { harness: &h2, result: r2 };
 
@@ -512,5 +554,123 @@ mod tests {
         assert!(v["solver"].is_null());
         assert_eq!(v["harnesses"][0]["resolved_solver"], "cadical");
         assert_eq!(v["harnesses"][1]["resolved_solver"], "kissat");
+    }
+
+    /// A harness can be FAILED purely because of `Error`-status properties (CBMC returns
+    /// `ERROR` when an SMT solver itself errors out), with zero `Failure`-status properties
+    /// -- `call_cbmc::determine_failed_properties` treats any `Error` property as failing
+    /// the whole harness. `failed_properties` must not come back empty in that case; that
+    /// would be `status: "FAILED", failed_properties: []`, the exact silent-lie shape this
+    /// feature exists to prevent.
+    #[test]
+    fn export_with_error_property_is_listed_as_failed() {
+        let h = harness("solver_error_harness");
+        let properties = vec![
+            property("assertion", 1, CheckStatus::Success),
+            property("assertion", 2, CheckStatus::Error),
+        ];
+        let mut result = success_result(properties, Some("cadical"));
+        result.status = VerificationStatus::Failure;
+        result.failed_properties = FailedProperties::Error;
+        let hr = HarnessResult { harness: &h, result };
+
+        let export =
+            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let v = serde_json::to_value(&export).unwrap();
+
+        let harness_json = &v["harnesses"][0];
+        assert_eq!(harness_json["status"], "FAILED");
+        // The real bug: with only the (buggy) `Failure`-only filter this would be empty.
+        assert_eq!(harness_json["n_failed"], 1);
+        assert!(!harness_json["failed_properties"].as_array().unwrap().is_empty());
+        assert_eq!(harness_json["failed_properties"][0]["id"], "harness.assertion.2");
+        assert_eq!(harness_json["failed_properties"][0]["status"], "ERROR");
+    }
+
+    /// Covers can land in any of CBMC's four terminal states, not just satisfied/
+    /// unsatisfiable. `unreachable`/`undetermined` must be visible too, each in their own
+    /// list (not merged into `unsatisfiable`, since "dead code" and "logically impossible"
+    /// are different diagnoses) -- and the four buckets must exactly partition `total`.
+    #[test]
+    fn export_covers_all_four_states_and_invariant() {
+        let h = harness("mixed_covers_harness");
+        let properties = vec![
+            property("cover", 1, CheckStatus::Satisfied),
+            property("cover", 2, CheckStatus::Unsatisfiable),
+            property("cover", 3, CheckStatus::Unreachable),
+            property("cover", 4, CheckStatus::Undetermined),
+        ];
+        let result = success_result(properties, Some("cadical"));
+        let hr = HarnessResult { harness: &h, result };
+
+        let export =
+            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let v = serde_json::to_value(&export).unwrap();
+
+        let covers = &v["harnesses"][0]["covers"];
+        assert_eq!(covers["total"], 4);
+        assert_eq!(covers["satisfied"], 1);
+        assert_eq!(
+            covers["unsatisfiable"].as_array().unwrap(),
+            &vec![serde_json::Value::String("harness.cover.2".to_string())]
+        );
+        assert_eq!(
+            covers["unreachable"].as_array().unwrap(),
+            &vec![serde_json::Value::String("harness.cover.3".to_string())]
+        );
+        assert_eq!(
+            covers["undetermined"].as_array().unwrap(),
+            &vec![serde_json::Value::String("harness.cover.4".to_string())]
+        );
+
+        // The invariant: every cover property is accounted for by exactly one bucket.
+        let satisfied = covers["satisfied"].as_u64().unwrap();
+        let unsatisfiable = covers["unsatisfiable"].as_array().unwrap().len() as u64;
+        let unreachable = covers["unreachable"].as_array().unwrap().len() as u64;
+        let undetermined = covers["undetermined"].as_array().unwrap().len() as u64;
+        assert_eq!(
+            satisfied + unsatisfiable + unreachable + undetermined,
+            covers["total"].as_u64().unwrap()
+        );
+    }
+
+    /// `is_cover_property()` must not mistake `code_coverage` properties for `cover`
+    /// properties (they're deliberately distinct CBMC property classes, produced by
+    /// `--coverage`, not `kani::cover!`) -- a `code_coverage` property must not appear in
+    /// `covers` or inflate `total`.
+    #[test]
+    fn export_covers_excludes_code_coverage_properties() {
+        let h = harness("code_coverage_harness");
+        let properties = vec![
+            property("cover", 1, CheckStatus::Satisfied),
+            property("code_coverage", 1, CheckStatus::Covered),
+        ];
+        let result = success_result(properties, Some("cadical"));
+        let hr = HarnessResult { harness: &h, result };
+
+        let export =
+            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let v = serde_json::to_value(&export).unwrap();
+
+        let covers = &v["harnesses"][0]["covers"];
+        assert_eq!(covers["total"], 1);
+        assert_eq!(covers["satisfied"], 1);
+    }
+
+    /// When `--cbmc-args` may have smuggled in a solver-selecting flag,
+    /// `VerificationResult::resolved_solver` is `None` -- confirm that surfaces as `null`
+    /// (never a guessed value) both per-harness and at the run-wide `solver` field.
+    #[test]
+    fn export_unknown_resolved_solver_is_null() {
+        let h = harness("cbmc_args_solver_harness");
+        let result = success_result(vec![], None);
+        let hr = HarnessResult { harness: &h, result };
+
+        let export =
+            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let v = serde_json::to_value(&export).unwrap();
+
+        assert!(v["harnesses"][0]["resolved_solver"].is_null());
+        assert!(v["solver"].is_null());
     }
 }

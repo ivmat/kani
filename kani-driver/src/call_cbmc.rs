@@ -31,7 +31,7 @@ use crate::util::render_command;
 /// Note: Kissat was marginally better, but it is an external solver which could be more unstable.
 static DEFAULT_SOLVER: CbmcSolver = CbmcSolver::Cadical;
 
-#[derive(Clone, Copy, Debug, Display, Serialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Display, PartialEq, Eq)]
 pub enum VerificationStatus {
     Success,
     Failure,
@@ -39,7 +39,7 @@ pub enum VerificationStatus {
 
 /// Represents failed properties in three different categories.
 /// This simplifies the process to determine and format verification results.
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug)]
 pub enum FailedProperties {
     // No failures
     None,
@@ -61,7 +61,7 @@ pub enum ExitStatus {
 }
 
 /// Our (kani-driver) notions of CBMC results.
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct VerificationResult {
     /// Whether verification should be considered to have succeeded, or have failed.
     pub status: VerificationStatus,
@@ -86,7 +86,16 @@ pub struct VerificationResult {
     /// as `HarnessAttributes::solver`: that field is only the harness's *request*, and
     /// recording a request as if it were the fact actually invoked is the defect that had
     /// months of results claiming `kissat` ran while CaDiCaL did.
-    pub resolved_solver: String,
+    ///
+    /// `None` when `--cbmc-args` contains a solver-selecting flag (see
+    /// `cbmc_args_may_override_solver` below): those flags are appended to CBMC's argv
+    /// *after* the flags this resolution pushes, so CBMC's own last-flag-wins argument
+    /// parsing can silently pick a different solver than the one resolved here (this is a
+    /// real, exercised path -- see `tests/cargo-kani/simple-kissat`, which selects kissat
+    /// purely via `--cbmc-args`). Recording a value we cannot stand behind would repeat the
+    /// exact "recorded kissat, CaDiCaL ran" defect this field exists to prevent, so we
+    /// record "unknown" instead of guessing.
+    pub resolved_solver: Option<String>,
 }
 
 impl KaniSession {
@@ -94,7 +103,14 @@ impl KaniSession {
     pub fn run_cbmc(&self, file: &Path, harness: &HarnessMetadata) -> Result<VerificationResult> {
         let (args, resolved_solver): (Vec<OsString>, CbmcSolver) =
             self.cbmc_flags(file, harness)?;
-        let resolved_solver = solver_identity(&resolved_solver);
+        let resolved_solver = if cbmc_args_may_override_solver(&self.args.cbmc_args) {
+            // `--cbmc-args` is appended after our own solver flags (see `cbmc_flags`), so if
+            // it contains a solver-selecting flag we cannot know which one CBMC actually
+            // honors -- see the doc comment on `VerificationResult::resolved_solver`.
+            None
+        } else {
+            Some(solver_identity(&resolved_solver))
+        };
 
         // TODO get cbmc path from self
         let mut cmd = TokioCommand::new("cbmc");
@@ -122,7 +138,7 @@ impl KaniSession {
         &self,
         mut cmd: TokioCommand,
         harness: &HarnessMetadata,
-        resolved_solver: String,
+        resolved_solver: Option<String>,
     ) -> Result<VerificationResult> {
         if self.args.common_args.verbose() {
             println!("[Kani] Running: `{}`", render_command(cmd.as_std()).to_string_lossy());
@@ -365,6 +381,44 @@ pub fn solver_identity(solver: &CbmcSolver) -> String {
     }
 }
 
+/// CBMC flags that select a solver backend by themselves, independent of
+/// `KaniSession::handle_solver_args`'s own resolution. `--cbmc-args` (an unstable
+/// passthrough escape hatch, see `VerificationArgs::cbmc_args`) appends its contents to
+/// CBMC's argv *after* the flags `cbmc_flags` pushes for the resolved solver, so if any of
+/// these are present there, CBMC's own last-flag-wins argument parsing can silently honor a
+/// different solver than the one `handle_solver_args` resolved.
+///
+/// This list is deliberately broader than the solvers `handle_solver_args` itself knows how
+/// to select (it also includes e.g. `--boolector`/`--yices`, which Kani has no dedicated
+/// `CbmcSolver` variant for): the goal here is only to detect "a solver flag might have been
+/// smuggled in", not to identify which solver it selects. See `tests/cargo-kani/simple-kissat`
+/// for a real, exercised instance of exactly this pattern (`cbmc-args = ["--external-sat-solver", "kissat"]`).
+const CBMC_SOLVER_SELECTING_ARGS: &[&str] = &[
+    "--sat-solver",
+    "--external-sat-solver",
+    "--smt1",
+    "--smt2",
+    "--bitwuzla",
+    "--boolector",
+    "--cprover-smt2",
+    "--cvc3",
+    "--cvc4",
+    "--cvc5",
+    "--mathsat",
+    "--yices",
+    "--z3",
+    "--external-smt2-solver",
+    "--incremental-smt2-solver",
+];
+
+/// Whether `cbmc_args` (the raw `--cbmc-args` passthrough) contains a flag that could
+/// override the solver `handle_solver_args` resolved. See `CBMC_SOLVER_SELECTING_ARGS`.
+fn cbmc_args_may_override_solver(cbmc_args: &[OsString]) -> bool {
+    cbmc_args
+        .iter()
+        .any(|arg| CBMC_SOLVER_SELECTING_ARGS.iter().any(|flag| arg.to_str() == Some(*flag)))
+}
+
 impl VerificationResult {
     /// Computes a `VerificationResult` (kani-driver's notion of the result of a CBMC call) from a
     /// `VerificationOutput` (cbmc_output_parser's idea of CBMC results).
@@ -378,7 +432,7 @@ impl VerificationResult {
         output: VerificationOutput,
         should_panic: bool,
         start_time: Instant,
-        resolved_solver: String,
+        resolved_solver: Option<String>,
     ) -> VerificationResult {
         let runtime = start_time.elapsed();
         let (_, results) = extract_results(output.processed_items);
@@ -415,7 +469,7 @@ impl VerificationResult {
         }
     }
 
-    pub fn mock_success(resolved_solver: String) -> VerificationResult {
+    pub fn mock_success(resolved_solver: Option<String>) -> VerificationResult {
         VerificationResult {
             status: VerificationStatus::Success,
             failed_properties: FailedProperties::None,
@@ -427,7 +481,7 @@ impl VerificationResult {
         }
     }
 
-    fn mock_failure(resolved_solver: String) -> VerificationResult {
+    fn mock_failure(resolved_solver: Option<String>) -> VerificationResult {
         VerificationResult {
             status: VerificationStatus::Failure,
             failed_properties: FailedProperties::Other,
@@ -647,5 +701,27 @@ mod tests {
         assert_eq!(resolve(&args_only_default, &harness_some), Some(3));
         assert_eq!(resolve(&args_only_harness, &harness_some), Some(1));
         assert_eq!(resolve(&args_both, &harness_some), Some(1));
+    }
+
+    fn os_strings(args: &[&str]) -> Vec<OsString> {
+        args.iter().map(OsString::from).collect()
+    }
+
+    /// A solver flag smuggled in via `--cbmc-args` (the real pattern used by
+    /// `tests/cargo-kani/simple-kissat`) must be detected, so `resolved_solver` can be
+    /// recorded as unknown rather than the (possibly wrong) resolved default.
+    #[test]
+    fn check_cbmc_args_solver_override_detected() {
+        assert!(cbmc_args_may_override_solver(&os_strings(&["--external-sat-solver", "kissat"])));
+        assert!(cbmc_args_may_override_solver(&os_strings(&["--cvc5"])));
+        assert!(cbmc_args_may_override_solver(&os_strings(&["--sat-solver", "minisat"])));
+    }
+
+    /// Unrelated `--cbmc-args` flags must not be mistaken for a solver override.
+    #[test]
+    fn check_cbmc_args_without_solver_override_not_detected() {
+        assert!(!cbmc_args_may_override_solver(&os_strings(&[])));
+        assert!(!cbmc_args_may_override_solver(&os_strings(&["--object-bits", "16"])));
+        assert!(!cbmc_args_may_override_solver(&os_strings(&["--json-ui"])));
     }
 }
