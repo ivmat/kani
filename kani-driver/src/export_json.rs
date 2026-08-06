@@ -165,12 +165,29 @@ struct FailedPropertyExport {
 }
 
 /// Non-vacuity signal, grouped by CBMC's own cover-property vocabulary (see
-/// `cbmc_property_renderer::format_result`, which tracks exactly these four buckets:
+/// `cbmc_property_renderer::format_result`, which tracks four named buckets:
 /// `number_covers_satisfied`, `number_covers_unsatisfiable`, `number_covers_unreachable`,
-/// `number_covers_undetermined`). Kept as separate lists rather than one merged
-/// "not satisfied" bucket because "dead code" (`unreachable`), "logically impossible"
-/// (`unsatisfiable`), and "the solver couldn't determine it" (`undetermined`) are different
-/// diagnoses -- a consumer should not have to guess which one they got.
+/// `number_covers_undetermined`) plus two more this module adds for completeness. Kept as
+/// separate lists rather than one merged "not satisfied" bucket because "dead code"
+/// (`unreachable`), "logically impossible" (`unsatisfiable`), "the solver couldn't determine
+/// it" (`undetermined`), and "inconclusive because a *different* check failed"
+/// (`unknown` -- see below) are different diagnoses -- a consumer should not have to guess
+/// which one they got.
+///
+/// The sum of every bucket below (satisfied's count plus every other list's length) equals
+/// `total` **by construction**: `CoversExport::from_properties` puts every cover property
+/// into exactly one of these seven buckets, so there is no status a cover property could have
+/// that silently escapes the count.
+///  * `error` (`CheckStatus::Error`, an SMT solver erroring out on that specific property)
+///    and `unknown` (`CheckStatus::Unknown`) are both realistic enough to name explicitly.
+///    `unknown` in particular is not exotic: `cbmc_property_renderer::format_result`'s own
+///    cover-bucketing match only recognizes `Undetermined`, not `Unknown`, so any run with a
+///    genuine undefined-behavior failure elsewhere in the harness -- an entirely ordinary,
+///    non-crash outcome -- can come back with covers left `Unknown`, and Kani's own text
+///    summary already silently drops those from its cover counts today.
+///  * `other` is the true catch-all, carrying both the id and the actual status string, so
+///    that even a status nobody anticipated (e.g. if CBMC or Kani's postprocessing ever adds
+///    one) still shows up somewhere rather than vanishing from the total.
 #[derive(Serialize)]
 struct CoversExport {
     total: usize,
@@ -178,6 +195,16 @@ struct CoversExport {
     unsatisfiable: Vec<String>,
     unreachable: Vec<String>,
     undetermined: Vec<String>,
+    error: Vec<String>,
+    unknown: Vec<String>,
+    other: Vec<OtherCoverExport>,
+}
+
+/// A cover property whose status didn't fit any of `CoversExport`'s named buckets.
+#[derive(Serialize)]
+struct OtherCoverExport {
+    id: String,
+    status: CheckStatus,
 }
 
 #[derive(Serialize)]
@@ -281,13 +308,10 @@ impl HarnessExport {
                     0,
                     0,
                     Vec::new(),
-                    CoversExport {
-                        total: 0,
-                        satisfied: 0,
-                        unsatisfiable: Vec::new(),
-                        unreachable: Vec::new(),
-                        undetermined: Vec::new(),
-                    },
+                    // Empty by construction, via the same path as the real case, rather
+                    // than a hand-written empty literal that could drift as fields are
+                    // added.
+                    CoversExport::from_properties(&[]),
                     Some(*exit_status),
                 ),
             };
@@ -329,21 +353,49 @@ impl FailedPropertyExport {
 }
 
 impl CoversExport {
+    /// Every cover property is placed into *exactly one* of the six buckets below, which is
+    /// what makes the sum of all six (satisfied's count plus every other list's length) equal
+    /// `total` unconditionally, rather than merely for the statuses this code happened to
+    /// anticipate. The `other` arm is not reachable for any `CheckStatus` variant that exists
+    /// today (Kani's postprocessing settles cover properties into
+    /// `Satisfied`/`Unsatisfiable`/`Unreachable`/`Undetermined`, and CBMC can additionally
+    /// report `Error`) -- it exists for whatever status shows up next, not one we've already
+    /// named.
     fn from_properties(properties: &[Property]) -> Self {
         let covers: Vec<&Property> = properties.iter().filter(|p| p.is_cover_property()).collect();
         let total = covers.len();
-        let satisfied = covers.iter().filter(|p| p.status == CheckStatus::Satisfied).count();
-        let ids_with_status = |status: CheckStatus| -> Vec<String> {
-            covers
-                .iter()
-                .filter(|p| p.status == status)
-                .map(|p| p.property_id.to_cbmc_id())
-                .collect()
-        };
-        let unsatisfiable = ids_with_status(CheckStatus::Unsatisfiable);
-        let unreachable = ids_with_status(CheckStatus::Unreachable);
-        let undetermined = ids_with_status(CheckStatus::Undetermined);
-        CoversExport { total, satisfied, unsatisfiable, unreachable, undetermined }
+
+        let mut satisfied = 0;
+        let mut unsatisfiable = Vec::new();
+        let mut unreachable = Vec::new();
+        let mut undetermined = Vec::new();
+        let mut error = Vec::new();
+        let mut unknown = Vec::new();
+        let mut other = Vec::new();
+
+        for p in &covers {
+            let id = p.property_id.to_cbmc_id();
+            match p.status {
+                CheckStatus::Satisfied => satisfied += 1,
+                CheckStatus::Unsatisfiable => unsatisfiable.push(id),
+                CheckStatus::Unreachable => unreachable.push(id),
+                CheckStatus::Undetermined => undetermined.push(id),
+                CheckStatus::Error => error.push(id),
+                CheckStatus::Unknown => unknown.push(id),
+                status => other.push(OtherCoverExport { id, status }),
+            }
+        }
+
+        CoversExport {
+            total,
+            satisfied,
+            unsatisfiable,
+            unreachable,
+            undetermined,
+            error,
+            unknown,
+            other,
+        }
     }
 }
 
@@ -587,10 +639,23 @@ mod tests {
         assert_eq!(harness_json["failed_properties"][0]["status"], "ERROR");
     }
 
+    /// Sums every bucket in a `covers` JSON object -- the structural form of the invariant
+    /// "every cover property lands in exactly one bucket", usable regardless of which
+    /// statuses actually showed up in a given test.
+    fn sum_cover_buckets(covers: &serde_json::Value) -> u64 {
+        covers["satisfied"].as_u64().unwrap()
+            + covers["unsatisfiable"].as_array().unwrap().len() as u64
+            + covers["unreachable"].as_array().unwrap().len() as u64
+            + covers["undetermined"].as_array().unwrap().len() as u64
+            + covers["error"].as_array().unwrap().len() as u64
+            + covers["unknown"].as_array().unwrap().len() as u64
+            + covers["other"].as_array().unwrap().len() as u64
+    }
+
     /// Covers can land in any of CBMC's four terminal states, not just satisfied/
     /// unsatisfiable. `unreachable`/`undetermined` must be visible too, each in their own
     /// list (not merged into `unsatisfiable`, since "dead code" and "logically impossible"
-    /// are different diagnoses) -- and the four buckets must exactly partition `total`.
+    /// are different diagnoses) -- and every bucket together must exactly partition `total`.
     #[test]
     fn export_covers_all_four_states_and_invariant() {
         let h = harness("mixed_covers_harness");
@@ -622,16 +687,96 @@ mod tests {
             covers["undetermined"].as_array().unwrap(),
             &vec![serde_json::Value::String("harness.cover.4".to_string())]
         );
+        assert!(covers["error"].as_array().unwrap().is_empty());
+        assert!(covers["unknown"].as_array().unwrap().is_empty());
+        assert!(covers["other"].as_array().unwrap().is_empty());
 
-        // The invariant: every cover property is accounted for by exactly one bucket.
-        let satisfied = covers["satisfied"].as_u64().unwrap();
-        let unsatisfiable = covers["unsatisfiable"].as_array().unwrap().len() as u64;
-        let unreachable = covers["unreachable"].as_array().unwrap().len() as u64;
-        let undetermined = covers["undetermined"].as_array().unwrap().len() as u64;
+        assert_eq!(sum_cover_buckets(covers), covers["total"].as_u64().unwrap());
+    }
+
+    /// A cover property can carry `Error` status (an SMT solver erroring out on that
+    /// specific property) -- it must appear in its own named `error` bucket, not vanish or
+    /// get merged into `unsatisfiable`.
+    #[test]
+    fn export_covers_error_status_bucketed() {
+        let h = harness("solver_error_cover_harness");
+        let properties = vec![
+            property("cover", 1, CheckStatus::Satisfied),
+            property("cover", 2, CheckStatus::Error),
+        ];
+        let result = success_result(properties, Some("cadical"));
+        let hr = HarnessResult { harness: &h, result };
+
+        let export =
+            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let v = serde_json::to_value(&export).unwrap();
+
+        let covers = &v["harnesses"][0]["covers"];
+        assert_eq!(covers["total"], 2);
         assert_eq!(
-            satisfied + unsatisfiable + unreachable + undetermined,
-            covers["total"].as_u64().unwrap()
+            covers["error"].as_array().unwrap(),
+            &vec![serde_json::Value::String("harness.cover.2".to_string())]
         );
+        assert_eq!(sum_cover_buckets(covers), covers["total"].as_u64().unwrap());
+    }
+
+    /// A cover property can carry `Unknown` status -- and unlike `Error`, this is not an
+    /// exotic path: `cbmc_property_renderer::format_result`'s own cover-bucketing match only
+    /// recognizes `Undetermined`, not `Unknown`, so any run with a genuine undefined-behavior
+    /// failure elsewhere in the harness (an entirely ordinary outcome, not a crash) can come
+    /// back with covers left `Unknown`. It must appear in its own named `unknown` bucket, not
+    /// the generic `other` catch-all, so a consumer can read "inconclusive because something
+    /// else failed" directly.
+    #[test]
+    fn export_covers_unknown_status_bucketed() {
+        let h = harness("undefined_behavior_elsewhere_harness");
+        let properties = vec![
+            property("cover", 1, CheckStatus::Satisfied),
+            property("cover", 2, CheckStatus::Unknown),
+        ];
+        let result = success_result(properties, Some("cadical"));
+        let hr = HarnessResult { harness: &h, result };
+
+        let export =
+            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let v = serde_json::to_value(&export).unwrap();
+
+        let covers = &v["harnesses"][0]["covers"];
+        assert_eq!(covers["total"], 2);
+        assert_eq!(
+            covers["unknown"].as_array().unwrap(),
+            &vec![serde_json::Value::String("harness.cover.2".to_string())]
+        );
+        assert!(covers["other"].as_array().unwrap().is_empty());
+        assert_eq!(sum_cover_buckets(covers), covers["total"].as_u64().unwrap());
+    }
+
+    /// The catch-all: a cover status neither this module nor its `unknown`/`error` buckets
+    /// name explicitly must still be accounted for in `other`, carrying both its id and its
+    /// actual status, so the invariant holds even for a status nobody anticipated -- rather
+    /// than that cover silently inflating `total` while appearing in no list, which is
+    /// exactly how the invariant broke before this fix.
+    #[test]
+    fn export_covers_unexpected_status_goes_to_other() {
+        let h = harness("unexpected_cover_status_harness");
+        // `Success` never appears on a cover property after Kani's own postprocessing (see
+        // `cbmc_property_renderer::update_results_of_cover_checks`), which is exactly why
+        // it's a good stand-in here for "a status this module doesn't have a named bucket
+        // for".
+        let properties = vec![property("cover", 1, CheckStatus::Success)];
+        let result = success_result(properties, Some("cadical"));
+        let hr = HarnessResult { harness: &h, result };
+
+        let export =
+            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let v = serde_json::to_value(&export).unwrap();
+
+        let covers = &v["harnesses"][0]["covers"];
+        assert_eq!(covers["total"], 1);
+        assert_eq!(covers["other"].as_array().unwrap().len(), 1);
+        assert_eq!(covers["other"][0]["id"], "harness.cover.1");
+        assert_eq!(covers["other"][0]["status"], "SUCCESS");
+        assert_eq!(sum_cover_buckets(covers), covers["total"].as_u64().unwrap());
     }
 
     /// `is_cover_property()` must not mistake `code_coverage` properties for `cover`

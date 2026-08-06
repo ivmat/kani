@@ -413,10 +413,32 @@ const CBMC_SOLVER_SELECTING_ARGS: &[&str] = &[
 
 /// Whether `cbmc_args` (the raw `--cbmc-args` passthrough) contains a flag that could
 /// override the solver `handle_solver_args` resolved. See `CBMC_SOLVER_SELECTING_ARGS`.
+///
+/// Matches both the space-separated form (`--sat-solver kissat`, two tokens) and the
+/// `=`-joined form (`--sat-solver=kissat`, one token). Missing the second form would
+/// silently record the resolved default with confidence while a different solver actually
+/// ran, which is the exact defect this field exists to prevent (months of results recorded
+/// `kissat` while CaDiCaL ran) -- so it is matched defensively even though, as verified
+/// directly against the pinned CBMC 6.8.0 binary, CBMC's own argument parser currently
+/// *rejects* the `=`-joined form outright for every flag tried (`cbmc --sat-solver=kissat`
+/// errors `Usage error!`, and so does e.g. `--object-bits=16`) rather than silently ignoring
+/// it or honoring it: CBMC's parser is not getopt-style in this respect. That makes this
+/// specific branch currently unreachable in practice for `--cbmc-args` values CBMC will
+/// actually accept, but it costs nothing to keep: a spurious `null` costs a consumer
+/// nothing, while a future CBMC version (or a different invocation path) accepting `=`-joined
+/// flags and this code not noticing would reintroduce exactly the defect this exists to
+/// prevent. An argument that isn't valid UTF-8 can't be inspected at all either, so it is
+/// treated as a possible override too -- when in doubt, this resolves to `true`.
 fn cbmc_args_may_override_solver(cbmc_args: &[OsString]) -> bool {
-    cbmc_args
-        .iter()
-        .any(|arg| CBMC_SOLVER_SELECTING_ARGS.iter().any(|flag| arg.to_str() == Some(*flag)))
+    cbmc_args.iter().any(|arg| {
+        let Some(arg) = arg.to_str() else {
+            // Can't inspect it; don't rule out an override.
+            return true;
+        };
+        CBMC_SOLVER_SELECTING_ARGS.iter().any(|flag| {
+            arg == *flag || arg.strip_prefix(flag).is_some_and(|rest| rest.starts_with('='))
+        })
+    })
 }
 
 impl VerificationResult {
@@ -717,11 +739,37 @@ mod tests {
         assert!(cbmc_args_may_override_solver(&os_strings(&["--sat-solver", "minisat"])));
     }
 
+    /// The `=`-joined form (`--sat-solver=kissat`, a single token) must be detected exactly
+    /// like the space-separated form, as a defensive measure -- see the doc comment on
+    /// `cbmc_args_may_override_solver` for what was actually verified about CBMC's own
+    /// parser here (it currently rejects this form outright rather than honoring it).
+    #[test]
+    fn check_cbmc_args_solver_override_detected_equals_form() {
+        assert!(cbmc_args_may_override_solver(&os_strings(&["--sat-solver=kissat"])));
+        assert!(cbmc_args_may_override_solver(&os_strings(&["--external-sat-solver=kissat"])));
+    }
+
     /// Unrelated `--cbmc-args` flags must not be mistaken for a solver override.
     #[test]
     fn check_cbmc_args_without_solver_override_not_detected() {
         assert!(!cbmc_args_may_override_solver(&os_strings(&[])));
         assert!(!cbmc_args_may_override_solver(&os_strings(&["--object-bits", "16"])));
         assert!(!cbmc_args_may_override_solver(&os_strings(&["--json-ui"])));
+    }
+
+    /// A flag name that merely shares a prefix with a solver flag (but isn't followed by
+    /// end-of-token or `=`) must not be a false positive.
+    #[test]
+    fn check_cbmc_args_solver_flag_prefix_lookalike_not_detected() {
+        assert!(!cbmc_args_may_override_solver(&os_strings(&["--z3-something-else"])));
+    }
+
+    /// An argument that isn't valid UTF-8 can't be inspected, so it must resolve toward
+    /// "may override" (`true`), not toward a false "definitely not" (`false`).
+    #[test]
+    fn check_cbmc_args_non_utf8_resolves_to_may_override() {
+        use std::os::unix::ffi::OsStrExt;
+        let non_utf8 = std::ffi::OsStr::from_bytes(&[0xff, 0xfe]).to_owned();
+        assert!(cbmc_args_may_override_solver(&[non_utf8]));
     }
 }
