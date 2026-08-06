@@ -102,6 +102,11 @@ pub struct PropertyId {
 impl Property {
     const COVER_PROPERTY_CLASS: &'static str = "cover";
     const COVERAGE_PROPERTY_CLASS: &'static str = "code_coverage";
+    // Matches `PropertyClass::UnsupportedConstruct` in
+    // `kani-compiler/src/codegen_cprover_gotoc/codegen/assert.rs`, which derives
+    // `AsRefStr` with `#[strum(serialize_all = "snake_case")]` -- e.g. the property id
+    // `probe_unaligned_volatile_load.unsupported_construct.1`.
+    const UNSUPPORTED_CONSTRUCT_PROPERTY_CLASS: &'static str = "unsupported_construct";
 
     pub fn property_class(&self) -> String {
         self.property_id.class.clone()
@@ -115,6 +120,16 @@ impl Property {
     /// Returns true if this is a cover property
     pub fn is_cover_property(&self) -> bool {
         self.property_id.class == Self::COVER_PROPERTY_CLASS
+    }
+
+    /// Returns true if this check exists because Kani hit a Rust/MIR construct it does not
+    /// currently support (`GotoCtx::codegen_unimplemented_stmt`), as opposed to an ordinary
+    /// assertion or safety check. A `FAILURE` here means "Kani cannot model this", not "this
+    /// harness found a bug" -- the two demand opposite next actions, and today both otherwise
+    /// look identical (`status: "FAILURE"`) to any consumer that isn't also inspecting the
+    /// property class.
+    pub fn is_unsupported_construct_property(&self) -> bool {
+        self.property_id.class == Self::UNSUPPORTED_CONSTRUCT_PROPERTY_CLASS
     }
 
     pub fn property_name(&self) -> String {

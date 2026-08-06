@@ -45,6 +45,35 @@ const SCHEMA_VERSION: &str = "0.1.0";
 const STATUS_SUCCESSFUL: &str = "SUCCESSFUL";
 const STATUS_FAILED: &str = "FAILED";
 
+/// The git commit this `kani-driver` binary was compiled from, set by `build.rs`. `None` for
+/// a build outside a git checkout (e.g. a published release source tarball) -- never a
+/// guessed SHA. "Kani Rust Verifier 0.67.0" alone cannot attribute a result to a build: a
+/// release build and a dev build have been observed printing that identical string while
+/// differing in what they actually support.
+const KANI_GIT_SHA: Option<&str> = option_env!("KANI_GIT_SHA");
+
+/// Whether the working tree had uncommitted changes at build time, set by `build.rs`
+/// alongside `KANI_GIT_SHA`. `None` exactly when `KANI_GIT_SHA` is `None` -- there is nothing
+/// to be dirty relative to. A build from a dirty tree is not the commit it claims to be.
+const KANI_GIT_DIRTY: Option<&str> = option_env!("KANI_GIT_DIRTY");
+
+/// Everything `ExportedRun::from_harness_results` needs besides the harness results
+/// themselves, bundled into one struct to keep that function's signature small (this is
+/// already past the point where clippy's `too_many_arguments` would start complaining about a
+/// flat parameter list).
+struct RunContext {
+    cbmc_version: Option<String>,
+    kani_commit: Option<&'static str>,
+    kani_commit_dirty: Option<bool>,
+    /// The `-Z` unstable features enabled for this run. Results produced under different
+    /// feature sets are not comparable -- e.g. a quantifier-bearing proof verified without
+    /// `-Z quantifiers` is a different claim than one verified with it.
+    enabled_unstable_features: Vec<String>,
+    harness_selection: HarnessSelectionExport,
+    started_at: OffsetDateTime,
+    wall_time: Duration,
+}
+
 impl KaniSession {
     /// Write the `--export-json` output for this run.
     /// Early-returns (writes nothing) when `--export-json` was not passed.
@@ -59,9 +88,25 @@ impl KaniSession {
         wall_time: Duration,
     ) -> Result<()> {
         let Some(path) = &self.args.export_json else { return Ok(()) };
-        let cbmc_version = probe_cbmc_version();
-        let export =
-            ExportedRun::from_harness_results(results, cbmc_version, started_at, wall_time);
+        let ctx = RunContext {
+            cbmc_version: probe_cbmc_version(),
+            kani_commit: KANI_GIT_SHA,
+            kani_commit_dirty: KANI_GIT_DIRTY.map(|dirty| dirty == "true"),
+            enabled_unstable_features: self
+                .args
+                .common_args
+                .unstable_features
+                .iter()
+                .map(|feature| feature.as_ref().to_string())
+                .collect(),
+            harness_selection: HarnessSelectionExport {
+                requested_filters: self.args.harnesses.clone(),
+                exact: self.args.exact,
+            },
+            started_at,
+            wall_time,
+        };
+        let export = ExportedRun::from_harness_results(results, ctx);
         write_export_json_file(path, &export)
     }
 }
@@ -102,6 +147,12 @@ fn probe_cbmc_version() -> Option<String> {
 struct ExportedRun {
     schema_version: &'static str,
     kani_version: &'static str,
+    /// The git commit this build was compiled from. `None` for a build outside a git
+    /// checkout (e.g. a published release) -- never a guess. See `KANI_GIT_SHA`.
+    kani_commit: Option<&'static str>,
+    /// Whether the working tree had uncommitted changes at build time. `None` exactly when
+    /// `kani_commit` is `None`. See `KANI_GIT_DIRTY`.
+    kani_commit_dirty: Option<bool>,
     /// `None` only if the `cbmc --version` probe failed; never a guess.
     cbmc_version: Option<String>,
     /// The solver actually used, IF uniform across every harness in this run.
@@ -109,6 +160,15 @@ struct ExportedRun {
     /// (a harness-level `solver` attribute can override the run-wide default) -- see each
     /// harness's own `resolved_solver` for the per-harness ground truth in that case.
     solver: Option<String>,
+    /// The `-Z` unstable features enabled for this run (kebab-case, as passed on the command
+    /// line, e.g. `"quantifiers"`). See `RunContext::enabled_unstable_features`.
+    enabled_unstable_features: Vec<String>,
+    /// The `--harness` filters requested and whether `--exact` was set, so a consumer can
+    /// notice under-matching (a filter that matched fewer harnesses than intended) by
+    /// comparing this against `harnesses`/`summary.total`, rather than a smaller-than-
+    /// expected run silently reporting success for what it did run and saying nothing about
+    /// what it skipped.
+    harness_selection: HarnessSelectionExport,
     target: &'static str,
     /// RFC3339-ish UTC timestamp (`YYYY-MM-DDTHH:MM:SSZ`) for when harness checking began.
     started_at: String,
@@ -117,6 +177,19 @@ struct ExportedRun {
     wall_time_s: f64,
     harnesses: Vec<HarnessExport>,
     summary: Summary,
+}
+
+/// See `ExportedRun::harness_selection`.
+#[derive(Serialize)]
+struct HarnessSelectionExport {
+    /// The raw `--harness` values requested. Empty means no filter was given (every harness
+    /// in the crate ran).
+    requested_filters: Vec<String>,
+    /// Whether `--exact` was set: without it, `requested_filters` are substring matches, so
+    /// more harnesses can match than a consumer expects; with it, a filter that matches
+    /// nothing is already a hard error (`kani-driver` refuses to proceed) rather than a
+    /// silent under-match.
+    exact: bool,
 }
 
 #[derive(Serialize)]
@@ -143,7 +216,15 @@ struct HarnessExport {
     resolved_solver: Option<String>,
     n_properties: usize,
     n_failed: usize,
-    failed_properties: Vec<FailedPropertyExport>,
+    failed_properties: Vec<PropertyExport>,
+    /// Properties that exist because Kani hit a Rust/MIR construct it does not currently
+    /// support (`Property::is_unsupported_construct_property`), listed separately from
+    /// `failed_properties` even though (when reached) they also appear there with
+    /// `status: "FAILURE"`. Without this, an automated consumer cannot distinguish "this
+    /// harness found a real bug" (investigate the code) from "Kani cannot model this"
+    /// (investigate the tool instead; no amount of harness work fixes it) -- both otherwise
+    /// look like an ordinary failed property.
+    unsupported_constructs: Vec<PropertyExport>,
     /// Non-vacuity signal. SARIF drops cover properties entirely; an unsatisfiable cover
     /// still reports `VERIFICATION: SUCCESSFUL` with exit code 0, so `status` alone cannot
     /// tell a consumer whether a proof was vacuous. `unsatisfiable` lists the property
@@ -156,19 +237,26 @@ struct HarnessExport {
     exit_status: Option<ExitStatus>,
 }
 
+/// A single CBMC property, projected down to what an automated consumer needs to triage it.
+/// Used both for `failed_properties` (status is always `FAILURE`/`ERROR` there, see
+/// `HarnessExport::failed_properties`) and `unsupported_constructs` (any status: an
+/// unsupported-construct check that was never reached shows up as `SUCCESS`/`UNREACHABLE`,
+/// not `FAILURE` -- a consumer wanting only the ones that actually blocked this harness
+/// should filter on `status`).
 #[derive(Serialize)]
-struct FailedPropertyExport {
+struct PropertyExport {
     id: String,
     description: String,
     class: String,
     file: Option<String>,
     line: Option<String>,
     trace_available: bool,
-    /// `FAILURE` or `ERROR`. A harness can be `FAILED` because of `ERROR` properties alone
-    /// (CBMC returns `ERROR` when an SMT solver itself errors out; Kani's own
-    /// `determine_failed_properties` treats *any* `ERROR` property as failing the whole
-    /// harness), with zero `FAILURE`-status properties -- so this field lets a consumer
-    /// tell the two apart instead of silently dropping the `ERROR` ones.
+    /// In `failed_properties`, always `FAILURE` or `ERROR` (see that field's doc comment for
+    /// why both are included, and why distinguishing them matters). In
+    /// `unsupported_constructs`, any status: a construct Kani flagged as unsupported but that
+    /// this harness never actually reached shows up as `SUCCESS`/`UNREACHABLE`, not
+    /// `FAILURE` -- this field is how a consumer tells "blocked this proof" apart from
+    /// "present in the code, but not on any path this harness explored".
     status: CheckStatus,
 }
 
@@ -225,12 +313,7 @@ struct Summary {
 }
 
 impl ExportedRun {
-    fn from_harness_results(
-        results: &[HarnessResult<'_>],
-        cbmc_version: Option<String>,
-        started_at: OffsetDateTime,
-        wall_time: Duration,
-    ) -> Self {
+    fn from_harness_results(results: &[HarnessResult<'_>], ctx: RunContext) -> Self {
         let harnesses: Vec<HarnessExport> =
             results.iter().map(HarnessExport::from_harness_result).collect();
 
@@ -244,11 +327,15 @@ impl ExportedRun {
         ExportedRun {
             schema_version: SCHEMA_VERSION,
             kani_version: KANI_VERSION,
-            cbmc_version,
+            kani_commit: ctx.kani_commit,
+            kani_commit_dirty: ctx.kani_commit_dirty,
+            cbmc_version: ctx.cbmc_version,
             solver,
+            enabled_unstable_features: ctx.enabled_unstable_features,
+            harness_selection: ctx.harness_selection,
             target: env!("TARGET"),
-            started_at: format_started_at(started_at),
-            wall_time_s: wall_time.as_secs_f64(),
+            started_at: format_started_at(ctx.started_at),
+            wall_time_s: ctx.wall_time.as_secs_f64(),
             harnesses,
             summary: Summary {
                 total: results.len(),
@@ -287,42 +374,63 @@ impl HarnessExport {
         let harness = hr.harness;
         let result = &hr.result;
 
-        let (status, n_properties, n_failed, failed_properties, covers, exit_status) =
-            match &result.results {
-                Ok(properties) => {
-                    let n_properties = properties.len();
-                    // Mirrors `call_cbmc::determine_failed_properties`, which keys on
-                    // exactly these two statuses (an `Error` property fails the harness
-                    // even with zero `Failure`-status properties -- see the `status` field
-                    // doc comment on `FailedPropertyExport`). `Undetermined`/`Unknown` do
-                    // NOT fail a harness in Kani's own determination, so they are
-                    // deliberately excluded here too.
-                    let failed_properties: Vec<FailedPropertyExport> = properties
-                        .iter()
-                        .filter(|p| matches!(p.status, CheckStatus::Failure | CheckStatus::Error))
-                        .map(FailedPropertyExport::from_property)
-                        .collect();
-                    let n_failed = failed_properties.len();
-                    let covers = CoversExport::from_properties(properties);
-                    let status = if result.status == VerificationStatus::Success {
-                        STATUS_SUCCESSFUL
-                    } else {
-                        STATUS_FAILED
-                    };
-                    (status, n_properties, n_failed, failed_properties, covers, None)
-                }
-                Err(exit_status) => (
-                    STATUS_FAILED,
-                    0,
-                    0,
-                    Vec::new(),
-                    // Empty by construction, via the same path as the real case, rather
-                    // than a hand-written empty literal that could drift as fields are
-                    // added.
-                    CoversExport::from_properties(&[]),
-                    Some(*exit_status),
-                ),
-            };
+        let (
+            status,
+            n_properties,
+            n_failed,
+            failed_properties,
+            unsupported_constructs,
+            covers,
+            exit_status,
+        ) = match &result.results {
+            Ok(properties) => {
+                let n_properties = properties.len();
+                // Mirrors `call_cbmc::determine_failed_properties`, which keys on
+                // exactly these two statuses (an `Error` property fails the harness
+                // even with zero `Failure`-status properties -- see the `status` field
+                // doc comment on `PropertyExport`). `Undetermined`/`Unknown` do
+                // NOT fail a harness in Kani's own determination, so they are
+                // deliberately excluded here too.
+                let failed_properties: Vec<PropertyExport> = properties
+                    .iter()
+                    .filter(|p| matches!(p.status, CheckStatus::Failure | CheckStatus::Error))
+                    .map(PropertyExport::from_property)
+                    .collect();
+                let n_failed = failed_properties.len();
+                let unsupported_constructs: Vec<PropertyExport> = properties
+                    .iter()
+                    .filter(|p| p.is_unsupported_construct_property())
+                    .map(PropertyExport::from_property)
+                    .collect();
+                let covers = CoversExport::from_properties(properties);
+                let status = if result.status == VerificationStatus::Success {
+                    STATUS_SUCCESSFUL
+                } else {
+                    STATUS_FAILED
+                };
+                (
+                    status,
+                    n_properties,
+                    n_failed,
+                    failed_properties,
+                    unsupported_constructs,
+                    covers,
+                    None,
+                )
+            }
+            Err(exit_status) => (
+                STATUS_FAILED,
+                0,
+                0,
+                Vec::new(),
+                Vec::new(),
+                // Empty by construction, via the same path as the real case, rather
+                // than a hand-written empty literal that could drift as fields are
+                // added.
+                CoversExport::from_properties(&[]),
+                Some(*exit_status),
+            ),
+        };
 
         HarnessExport {
             name: harness.pretty_name.clone(),
@@ -337,15 +445,16 @@ impl HarnessExport {
             n_properties,
             n_failed,
             failed_properties,
+            unsupported_constructs,
             covers,
             exit_status,
         }
     }
 }
 
-impl FailedPropertyExport {
+impl PropertyExport {
     fn from_property(p: &Property) -> Self {
-        FailedPropertyExport {
+        PropertyExport {
             // The real CBMC property id (not `property_name()`'s display rendering --
             // see `PropertyId::to_cbmc_id`'s doc comment for why they can differ), so a
             // consumer can correlate this against CBMC's own output.
@@ -469,6 +578,23 @@ mod tests {
         OffsetDateTime::from_unix_timestamp(1_754_500_902).unwrap()
     }
 
+    /// A minimal `RunContext` for tests that don't care about provenance/selection fields.
+    /// Override individual fields with struct-update syntax where a test does care.
+    fn test_context() -> RunContext {
+        RunContext {
+            cbmc_version: None,
+            kani_commit: None,
+            kani_commit_dirty: None,
+            enabled_unstable_features: Vec::new(),
+            harness_selection: HarnessSelectionExport {
+                requested_filters: Vec::new(),
+                exact: false,
+            },
+            started_at: started(),
+            wall_time: Duration::from_millis(1),
+        }
+    }
+
     /// An all-successful run: no failed properties, and every cover satisfied.
     #[test]
     fn export_all_successful() {
@@ -480,12 +606,12 @@ mod tests {
         let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
-        let export = ExportedRun::from_harness_results(
-            &[hr],
-            Some("CBMC 6.8.0".to_string()),
-            started(),
-            Duration::from_millis(500),
-        );
+        let ctx = RunContext {
+            cbmc_version: Some("CBMC 6.8.0".to_string()),
+            wall_time: Duration::from_millis(500),
+            ..test_context()
+        };
+        let export = ExportedRun::from_harness_results(&[hr], ctx);
         let v = serde_json::to_value(&export).unwrap();
 
         assert_eq!(v["schema_version"], "0.1.0");
@@ -520,8 +646,7 @@ mod tests {
         result.failed_properties = FailedProperties::PanicsOnly;
         let hr = HarnessResult { harness: &h, result };
 
-        let export =
-            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let export = ExportedRun::from_harness_results(&[hr], test_context());
         let v = serde_json::to_value(&export).unwrap();
 
         assert!(v["cbmc_version"].is_null());
@@ -547,8 +672,7 @@ mod tests {
         let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
-        let export =
-            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let export = ExportedRun::from_harness_results(&[hr], test_context());
         let v = serde_json::to_value(&export).unwrap();
 
         let harness_json = &v["harnesses"][0];
@@ -582,8 +706,8 @@ mod tests {
         };
         let hr = HarnessResult { harness: &h, result };
 
-        let export =
-            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_secs(300));
+        let ctx = RunContext { wall_time: Duration::from_secs(300), ..test_context() };
+        let export = ExportedRun::from_harness_results(&[hr], ctx);
         let v = serde_json::to_value(&export).unwrap();
 
         let harness_json = &v["harnesses"][0];
@@ -604,12 +728,7 @@ mod tests {
         let hr1 = HarnessResult { harness: &h1, result: r1 };
         let hr2 = HarnessResult { harness: &h2, result: r2 };
 
-        let export = ExportedRun::from_harness_results(
-            &[hr1, hr2],
-            None,
-            started(),
-            Duration::from_millis(1),
-        );
+        let export = ExportedRun::from_harness_results(&[hr1, hr2], test_context());
         let v = serde_json::to_value(&export).unwrap();
         assert!(v["solver"].is_null());
         assert_eq!(v["harnesses"][0]["resolved_solver"], "cadical");
@@ -634,8 +753,7 @@ mod tests {
         result.failed_properties = FailedProperties::Error;
         let hr = HarnessResult { harness: &h, result };
 
-        let export =
-            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let export = ExportedRun::from_harness_results(&[hr], test_context());
         let v = serde_json::to_value(&export).unwrap();
 
         let harness_json = &v["harnesses"][0];
@@ -676,8 +794,7 @@ mod tests {
         let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
-        let export =
-            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let export = ExportedRun::from_harness_results(&[hr], test_context());
         let v = serde_json::to_value(&export).unwrap();
 
         let covers = &v["harnesses"][0]["covers"];
@@ -715,8 +832,7 @@ mod tests {
         let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
-        let export =
-            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let export = ExportedRun::from_harness_results(&[hr], test_context());
         let v = serde_json::to_value(&export).unwrap();
 
         let covers = &v["harnesses"][0]["covers"];
@@ -745,8 +861,7 @@ mod tests {
         let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
-        let export =
-            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let export = ExportedRun::from_harness_results(&[hr], test_context());
         let v = serde_json::to_value(&export).unwrap();
 
         let covers = &v["harnesses"][0]["covers"];
@@ -775,8 +890,7 @@ mod tests {
         let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
-        let export =
-            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let export = ExportedRun::from_harness_results(&[hr], test_context());
         let v = serde_json::to_value(&export).unwrap();
 
         let covers = &v["harnesses"][0]["covers"];
@@ -801,8 +915,7 @@ mod tests {
         let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
-        let export =
-            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let export = ExportedRun::from_harness_results(&[hr], test_context());
         let v = serde_json::to_value(&export).unwrap();
 
         let covers = &v["harnesses"][0]["covers"];
@@ -819,11 +932,175 @@ mod tests {
         let result = success_result(vec![], None);
         let hr = HarnessResult { harness: &h, result };
 
-        let export =
-            ExportedRun::from_harness_results(&[hr], None, started(), Duration::from_millis(1));
+        let export = ExportedRun::from_harness_results(&[hr], test_context());
         let v = serde_json::to_value(&export).unwrap();
 
         assert!(v["harnesses"][0]["resolved_solver"].is_null());
         assert!(v["solver"].is_null());
+    }
+
+    /// ADD A: an unsupported-construct property must be listed in `unsupported_constructs`
+    /// -- separately from an ordinary failed assertion -- so a consumer can tell "Kani cannot
+    /// model this" (stop; no harness work fixes it) apart from "this harness found a bug"
+    /// (investigate the code), which otherwise look identical (`status: "FAILURE"`).
+    #[test]
+    fn export_unsupported_construct_listed_separately() {
+        let h = harness("volatile_probe_harness");
+        let properties = vec![
+            property("assertion", 1, CheckStatus::Failure),
+            property("unsupported_construct", 1, CheckStatus::Failure),
+        ];
+        let mut result = success_result(properties, Some("cadical"));
+        result.status = VerificationStatus::Failure;
+        let hr = HarnessResult { harness: &h, result };
+
+        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let v = serde_json::to_value(&export).unwrap();
+
+        let harness_json = &v["harnesses"][0];
+        // Reached, so it's a real failure: still counted (and listed) as a failed property...
+        assert_eq!(harness_json["n_failed"], 2);
+        let failed_ids: Vec<&str> = harness_json["failed_properties"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|p| p["id"].as_str().unwrap())
+            .collect();
+        assert!(failed_ids.contains(&"harness.assertion.1"));
+        assert!(failed_ids.contains(&"harness.unsupported_construct.1"));
+        // ... AND separately identifiable as a tool gap, not a proof bug.
+        let unsupported = harness_json["unsupported_constructs"].as_array().unwrap();
+        assert_eq!(unsupported.len(), 1);
+        assert_eq!(unsupported[0]["id"], "harness.unsupported_construct.1");
+        assert_eq!(unsupported[0]["status"], "FAILURE");
+        // The ordinary assertion must not be misclassified as a tool gap.
+        assert!(!unsupported.iter().any(|p| p["id"] == "harness.assertion.1"));
+    }
+
+    /// An unsupported-construct check that exists in the harness's search space but was never
+    /// actually reached on any explored path shows up as `SUCCESS`, not `FAILURE` -- it must
+    /// still be listed (a consumer may want to know the construct is present at all), with
+    /// its real status visible so "present but not reached" isn't confused with "blocked
+    /// this proof".
+    #[test]
+    fn export_unreached_unsupported_construct_has_its_real_status() {
+        let h = harness("volatile_probe_harness");
+        let properties = vec![property("unsupported_construct", 1, CheckStatus::Success)];
+        let result = success_result(properties, Some("cadical"));
+        let hr = HarnessResult { harness: &h, result };
+
+        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let v = serde_json::to_value(&export).unwrap();
+
+        let harness_json = &v["harnesses"][0];
+        assert_eq!(harness_json["status"], "SUCCESSFUL");
+        assert!(harness_json["failed_properties"].as_array().unwrap().is_empty());
+        let unsupported = harness_json["unsupported_constructs"].as_array().unwrap();
+        assert_eq!(unsupported.len(), 1);
+        assert_eq!(unsupported[0]["status"], "SUCCESS");
+    }
+
+    /// ADD B: `kani_commit`/`kani_commit_dirty` must pass through from `RunContext` into the
+    /// exported JSON verbatim -- this covers the wiring within this module; the actual
+    /// `git rev-parse`/`git status` probing lives in `build.rs` and is covered by a real
+    /// end-to-end run, not a unit test.
+    #[test]
+    fn export_kani_commit_and_dirty_flag() {
+        let h = harness("h");
+        let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
+
+        let ctx = RunContext {
+            kani_commit: Some("d4df833c8f8f18e632e7b0a7945bb2161f708990"),
+            kani_commit_dirty: Some(true),
+            ..test_context()
+        };
+        let export = ExportedRun::from_harness_results(&[hr], ctx);
+        let v = serde_json::to_value(&export).unwrap();
+
+        assert_eq!(v["kani_commit"], "d4df833c8f8f18e632e7b0a7945bb2161f708990");
+        assert_eq!(v["kani_commit_dirty"], true);
+    }
+
+    /// `kani_commit_dirty` must be `null`, not a guessed `false`, when there's no commit to
+    /// be dirty relative to (e.g. a build outside a git checkout).
+    #[test]
+    fn export_kani_commit_null_when_unavailable() {
+        let h = harness("h");
+        let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
+
+        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let v = serde_json::to_value(&export).unwrap();
+
+        assert!(v["kani_commit"].is_null());
+        assert!(v["kani_commit_dirty"].is_null());
+    }
+
+    /// ADD D: the enabled `-Z` unstable features must be recorded, since results produced
+    /// under different feature sets are not comparable -- e.g. a quantifier-bearing proof
+    /// verified without `-Z quantifiers` is a different claim than one verified with it.
+    #[test]
+    fn export_enabled_unstable_features() {
+        let h = harness("h");
+        let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
+
+        let ctx = RunContext {
+            enabled_unstable_features: vec![
+                "quantifiers".to_string(),
+                "function-contracts".to_string(),
+            ],
+            ..test_context()
+        };
+        let export = ExportedRun::from_harness_results(&[hr], ctx);
+        let v = serde_json::to_value(&export).unwrap();
+
+        assert_eq!(
+            v["enabled_unstable_features"].as_array().unwrap(),
+            &vec![
+                serde_json::Value::String("quantifiers".to_string()),
+                serde_json::Value::String("function-contracts".to_string())
+            ]
+        );
+    }
+
+    /// ADD E: the requested `--harness` filters and whether `--exact` was set must be
+    /// recorded, so a consumer can notice a filter that matched fewer harnesses than
+    /// intended by comparing this against `harnesses`/`summary.total` -- rather than a
+    /// smaller-than-expected run silently reporting success for what it did run and saying
+    /// nothing about what it skipped.
+    #[test]
+    fn export_harness_selection_requested_filters() {
+        let h = harness("check_volatile_load_wrapper_contract");
+        let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
+
+        let ctx = RunContext {
+            harness_selection: HarnessSelectionExport {
+                requested_filters: vec!["check_volatile_load_wrapper_contract".to_string()],
+                exact: true,
+            },
+            ..test_context()
+        };
+        let export = ExportedRun::from_harness_results(&[hr], ctx);
+        let v = serde_json::to_value(&export).unwrap();
+
+        assert_eq!(
+            v["harness_selection"]["requested_filters"].as_array().unwrap(),
+            &vec![serde_json::Value::String("check_volatile_load_wrapper_contract".to_string())]
+        );
+        assert_eq!(v["harness_selection"]["exact"], true);
+    }
+
+    /// No `--harness` filter given (`requested_filters` empty) must not be confused with a
+    /// filter that matched nothing -- both `harness_selection.exact` default and empty
+    /// `requested_filters` mean "no filter, every harness ran".
+    #[test]
+    fn export_harness_selection_defaults_to_no_filter() {
+        let h = harness("h");
+        let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
+
+        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let v = serde_json::to_value(&export).unwrap();
+
+        assert!(v["harness_selection"]["requested_filters"].as_array().unwrap().is_empty());
+        assert_eq!(v["harness_selection"]["exact"], false);
     }
 }
