@@ -39,7 +39,13 @@ pub enum VerificationStatus {
 
 /// Represents failed properties in three different categories.
 /// This simplifies the process to determine and format verification results.
-#[derive(Clone, Copy, Debug)]
+///
+/// `Serialize` (`SCREAMING_SNAKE_CASE`, matching this crate's export-json convention) is
+/// genuinely used: `export_json.rs`'s `HarnessExport::failure_kind` embeds this directly, so
+/// an automated consumer can tell a panic-only failure (investigate the code) apart from an
+/// `Error` failure (an SMT solver itself errored out -- investigate the tool, not the proof).
+#[derive(Clone, Copy, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum FailedProperties {
     // No failures
     None,
@@ -52,7 +58,7 @@ pub enum FailedProperties {
 }
 
 /// The possible CBMC exit statuses
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug)]
 pub enum ExitStatus {
     Timeout,
     OutOfMemory,

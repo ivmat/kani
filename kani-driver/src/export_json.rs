@@ -13,8 +13,15 @@
 //! satisfaction: the signal that distinguishes a real proof from a vacuous one. An
 //! unsatisfiable cover still reports `VERIFICATION: SUCCESSFUL` with exit code 0, so a
 //! consumer that only reads top-level status cannot detect it without this.
+//!
+//! **Contract for consumers:** a *missing* `--export-json` output file means verification
+//! never began at all (e.g. a compilation error, or an invalid `--harness` filter rejected by
+//! `determine_targets` before any harness runs). Once verification begins, a file is always
+//! written, even if it aborts partway through (`run_status: "ABORTED"`, see
+//! `KaniSession::write_export_json_aborted`) -- so "no file" and "a file with `run_status:
+//! ABORTED`" are deliberately different, distinguishable states.
 
-use crate::call_cbmc::{ExitStatus, VerificationStatus};
+use crate::call_cbmc::{ExitStatus, FailedProperties, VerificationStatus, resolve_unwind_value};
 use crate::cbmc_output_parser::{CheckStatus, Property};
 use crate::harness_runner::HarnessResult;
 use crate::session::KaniSession;
@@ -43,19 +50,38 @@ use time::format_description;
 /// `schema_version` can rely on it having changed whenever the shape did.
 const SCHEMA_VERSION: &str = "0.1.0";
 
+// Casing convention for every enum-like string value in this schema (as opposed to object/
+// field *names*, which stay snake_case): SCREAMING_SNAKE_CASE, matching the one convention
+// this module cannot change -- `CheckStatus`'s pre-existing `#[serde(rename_all =
+// "UPPERCASE")]`, which is already embedded pervasively (`PropertyExport.status`,
+// `OtherPropertyExport.status`). The one deliberate exception is
+// `enabled_unstable_features`, which is kebab-case because it mirrors `-Z` flag spelling, a
+// different namespace (CLI syntax) from "internal status enum", not a competing convention
+// for the same kind of data.
 const STATUS_SUCCESSFUL: &str = "SUCCESSFUL";
 const STATUS_FAILED: &str = "FAILED";
+const RUN_STATUS_COMPLETED: &str = "COMPLETED";
+const RUN_STATUS_ABORTED: &str = "ABORTED";
 
 /// The git commit this `kani-driver` binary was compiled from, set by `build.rs`. `None` for
 /// a build outside a git checkout (e.g. a published release source tarball) -- never a
 /// guessed SHA. "Kani Rust Verifier 0.67.0" alone cannot attribute a result to a build: a
 /// release build and a dev build have been observed printing that identical string while
 /// differing in what they actually support.
+///
+/// This is the git state as of the *last rebuild of this crate*, not necessarily the live
+/// working-tree state at the moment `--export-json` runs: `build.rs`'s
+/// `watch_git_state_for_rerun` asks cargo to rebuild on a HEAD/branch/staged-index change,
+/// but does not (and, short of watching every file in the tree and defeating incremental
+/// builds, cannot) watch arbitrary unstaged edits. In practice this means the SHA can lag by
+/// at most "changes made since the last `cargo build`", which is the honest limit of what a
+/// build-time probe can promise -- see `build.rs` for the exact coverage.
 const KANI_GIT_SHA: Option<&str> = option_env!("KANI_GIT_SHA");
 
 /// Whether the working tree had uncommitted changes at build time, set by `build.rs`
 /// alongside `KANI_GIT_SHA`. `None` exactly when `KANI_GIT_SHA` is `None` -- there is nothing
 /// to be dirty relative to. A build from a dirty tree is not the commit it claims to be.
+/// Subject to the same "as of the last rebuild" staleness limit as `KANI_GIT_SHA` above.
 const KANI_GIT_DIRTY: Option<&str> = option_env!("KANI_GIT_DIRTY");
 
 /// Everything `ExportedRun::from_harness_results` needs besides the harness results
@@ -66,24 +92,42 @@ struct RunContext {
     cbmc_version: Option<String>,
     kani_commit: Option<&'static str>,
     kani_commit_dirty: Option<bool>,
-    /// The `-Z` unstable features enabled for this run. Results produced under different
-    /// feature sets are not comparable -- e.g. a quantifier-bearing proof verified without
-    /// `-Z quantifiers` is a different claim than one verified with it.
+    /// The `-Z` unstable features enabled for this run, sorted (see `RunOutcome` -- sorting
+    /// everything order-dependent is what makes two identical runs produce byte-identical
+    /// files, so "did anything change?" is a diff, not a parse). Results produced under
+    /// different feature sets are not comparable -- e.g. a quantifier-bearing proof verified
+    /// without `-Z quantifiers` is a different claim than one verified with it.
     enabled_unstable_features: Vec<String>,
     harness_selection: HarnessSelectionExport,
+    /// The global `--harness-timeout` bound in force for this run, if any. Without this, an
+    /// `exit_status` of `TIMEOUT` is uninterpretable: a consumer cannot tell whether 30s or
+    /// 30min was exceeded.
+    harness_timeout_s: Option<f64>,
+    outcome: RunOutcome,
     started_at: OffsetDateTime,
     wall_time: Duration,
 }
 
+/// Whether this run completed (in the sense of "verification ran to completion without an
+/// unrelated internal crash" -- NOT "every harness passed") or aborted before producing any
+/// harness results at all. See `ExportedRun::run_status`/`abort_reason`.
+enum RunOutcome {
+    Completed,
+    Aborted(String),
+}
+
 impl KaniSession {
-    /// Write the `--export-json` output for this run.
-    /// Early-returns (writes nothing) when `--export-json` was not passed.
+    /// Write the `--export-json` output for a run that ran to completion (successfully or
+    /// with harness failures -- "completed" means "verification finished", not "everything
+    /// passed"; see `run_status`/`status`). Early-returns (writes nothing) when
+    /// `--export-json` was not passed.
     ///
     /// `matched_harnesses` is the post-`determine_targets`, pre-verification harness list
     /// (i.e. what `main.rs` gets back from `determine_targets`, *not* derived from `results`):
     /// with `--fail-fast`, `results` can be truncated to a single harness on the first
     /// failure, which would make deriving the matched set from `results` alone wrongly
-    /// report other, unreached-but-genuinely-matched harnesses' filters as unmatched.
+    /// report other, unreached-but-genuinely-matched harnesses' filters as unmatched (and
+    /// `run_complete` would have nothing correct to compare against).
     ///
     /// `started_at`/`wall_time` describe the whole verification run (all harnesses),
     /// not any single harness -- callers should measure them around
@@ -96,17 +140,65 @@ impl KaniSession {
         wall_time: Duration,
     ) -> Result<()> {
         let Some(path) = &self.args.export_json else { return Ok(()) };
-        let ctx = RunContext {
+        let ctx =
+            self.build_run_context(matched_harnesses, started_at, wall_time, RunOutcome::Completed);
+        let resolved_unwinds: Vec<Option<u32>> =
+            results.iter().map(|hr| resolve_unwind_value(&self.args, hr.harness)).collect();
+        let export = ExportedRun::from_harness_results(results, &resolved_unwinds, ctx);
+        write_export_json_file(path, &export)
+    }
+
+    /// Write the `--export-json` output for a run that **aborted** before producing any
+    /// harness results at all -- e.g. an internal crash during verification unrelated to any
+    /// single harness's outcome (`check_all_harnesses` returning `Err` for a reason other
+    /// than `--fail-fast`, which is not this path: that already turns into `Ok` with a
+    /// partial result). Early-returns (writes nothing) when `--export-json` was not passed.
+    ///
+    /// This exists so an autonomous consumer waiting on `--export-json` can tell "Kani itself
+    /// crashed mid-run" (`run_status: "ABORTED"`, `abort_reason` set) apart from "no file
+    /// because we never got this far" (see the module doc comment's contract) -- a *missing*
+    /// file is otherwise ambiguous between a compilation failure and a verification crash.
+    pub fn write_export_json_aborted(
+        &self,
+        matched_harnesses: &[&HarnessMetadata],
+        started_at: OffsetDateTime,
+        wall_time: Duration,
+        error: &anyhow::Error,
+    ) -> Result<()> {
+        let Some(path) = &self.args.export_json else { return Ok(()) };
+        let ctx = self.build_run_context(
+            matched_harnesses,
+            started_at,
+            wall_time,
+            RunOutcome::Aborted(format!("{error:#}")),
+        );
+        let export = ExportedRun::from_harness_results(&[], &[], ctx);
+        write_export_json_file(path, &export)
+    }
+
+    fn build_run_context(
+        &self,
+        matched_harnesses: &[&HarnessMetadata],
+        started_at: OffsetDateTime,
+        wall_time: Duration,
+        outcome: RunOutcome,
+    ) -> RunContext {
+        // Sorting happens in `ExportedRun::from_harness_results` (alongside the harness
+        // sort), not here, so the diff-stability guarantee holds at the one true
+        // construction point regardless of caller discipline.
+        let enabled_unstable_features: Vec<String> = self
+            .args
+            .common_args
+            .unstable_features
+            .iter()
+            .map(|feature| feature.as_ref().to_string())
+            .collect();
+
+        RunContext {
             cbmc_version: probe_cbmc_version(),
             kani_commit: KANI_GIT_SHA,
             kani_commit_dirty: KANI_GIT_DIRTY.map(|dirty| dirty == "true"),
-            enabled_unstable_features: self
-                .args
-                .common_args
-                .unstable_features
-                .iter()
-                .map(|feature| feature.as_ref().to_string())
-                .collect(),
+            enabled_unstable_features,
             harness_selection: HarnessSelectionExport {
                 requested_filters: self.args.harnesses.clone(),
                 exact: self.args.exact,
@@ -115,12 +207,13 @@ impl KaniSession {
                     matched_harnesses,
                     self.args.exact,
                 ),
+                matched_count: matched_harnesses.len(),
             },
+            harness_timeout_s: self.args.harness_timeout.map(|t| Duration::from(t).as_secs_f64()),
+            outcome,
             started_at,
             wall_time,
-        };
-        let export = ExportedRun::from_harness_results(results, ctx);
-        write_export_json_file(path, &export)
+        }
     }
 }
 
@@ -198,30 +291,83 @@ struct ExportedRun {
     /// Whether the working tree had uncommitted changes at build time. `None` exactly when
     /// `kani_commit` is `None`. See `KANI_GIT_DIRTY`.
     kani_commit_dirty: Option<bool>,
+    /// `"COMPLETED"` or `"ABORTED"` -- see the module doc comment's contract. This is
+    /// independent of whether individual harnesses passed (`status`/`summary` cover that);
+    /// it answers "did verification itself run to completion".
+    run_status: &'static str,
+    /// Whether a result was obtained for every harness in `harness_selection.matched_count`.
+    /// `false` under `--fail-fast` after the first failure (some matched harnesses were never
+    /// attempted) or whenever `run_status` is `"ABORTED"`. A 50-harness run that fails at
+    /// harness 3 must not export `summary.total: 3` with nothing indicating 47 were never
+    /// attempted -- this is that signal.
+    run_complete: bool,
+    /// Set only when `run_status` is `"ABORTED"`: the error that aborted verification.
+    abort_reason: Option<String>,
     /// `None` only if the `cbmc --version` probe failed; never a guess.
     cbmc_version: Option<String>,
-    /// The solver actually used, IF uniform across every harness in this run.
-    /// `None` when no harnesses ran, or when harnesses resolved to different solvers
-    /// (a harness-level `solver` attribute can override the run-wide default) -- see each
-    /// harness's own `resolved_solver` for the per-harness ground truth in that case.
-    solver: Option<String>,
+    /// The solver used across this run. See `SolverExport`: unlike a plain `Option<String>`,
+    /// this cannot conflate "no harnesses ran" with "solver unknown for some harness" with
+    /// "harnesses genuinely used different solvers" into a single ambiguous `null`.
+    solver: SolverExport,
     /// The `-Z` unstable features enabled for this run (kebab-case, as passed on the command
-    /// line, e.g. `"quantifiers"`). See `RunContext::enabled_unstable_features`.
+    /// line, e.g. `"quantifiers"`), sorted. See `RunContext::enabled_unstable_features`.
     enabled_unstable_features: Vec<String>,
-    /// The `--harness` filters requested, whether `--exact` was set, and (see
-    /// `compute_unmatched_filters`) which requested filters matched zero harnesses -- so a
-    /// consumer can directly see under-matching rather than a smaller-than-expected run
-    /// silently reporting success for what it did run and saying nothing about what it
-    /// skipped.
+    /// The `--harness` filters requested, whether `--exact` was set, how many harnesses
+    /// actually matched, and which requested filters matched zero harnesses -- so a consumer
+    /// can directly see under-matching rather than a smaller-than-expected run silently
+    /// reporting success for what it did run and saying nothing about what it skipped.
     harness_selection: HarnessSelectionExport,
+    /// The `--harness-timeout` bound in force for this run, if any -- without this, an
+    /// `exit_status` of `TIMEOUT` on some harness is uninterpretable.
+    harness_timeout_s: Option<f64>,
     target: &'static str,
     /// RFC3339-ish UTC timestamp (`YYYY-MM-DDTHH:MM:SSZ`) for when harness checking began.
     started_at: String,
     /// Wall-clock duration of the whole run (all harnesses). Do not confuse with any
     /// single harness's `verification_time_s`.
     wall_time_s: f64,
+    /// Sorted by `(crate_name, name)`, not runner order (which is nondeterministic under
+    /// `--jobs`): two identical runs must produce byte-identical files, so "did anything
+    /// change?" is a diff, not a parse.
     harnesses: Vec<HarnessExport>,
     summary: Summary,
+}
+
+/// See `ExportedRun::solver`. Every state that could otherwise collapse into a bare `null` is
+/// named explicitly: a schema whose entire pitch is removing ambiguity should not itself
+/// have an ambiguous `null`.
+#[derive(Serialize)]
+#[serde(tag = "state", rename_all = "SCREAMING_SNAKE_CASE")]
+enum SolverExport {
+    /// Every harness in this run resolved to this same, known solver.
+    Uniform { solver: String },
+    /// No harnesses ran, so there is nothing to be uniform about.
+    NoHarnesses,
+    /// At least one harness's resolved solver is unknown (e.g. `--cbmc-args` may have
+    /// overridden it) -- see that harness's own `resolved_solver`.
+    UnknownForSomeHarness,
+    /// Harnesses in this run resolved to genuinely different solvers -- see each harness's
+    /// own `resolved_solver` for which.
+    Mixed,
+}
+
+impl SolverExport {
+    fn from_harnesses(harnesses: &[HarnessExport]) -> Self {
+        if harnesses.is_empty() {
+            return SolverExport::NoHarnesses;
+        }
+        if harnesses.iter().any(|h| h.resolved_solver.is_none()) {
+            return SolverExport::UnknownForSomeHarness;
+        }
+        let mut resolved = harnesses.iter().map(|h| h.resolved_solver.as_deref().unwrap());
+        // Safe: `harnesses` is non-empty (checked above), so there is a first element.
+        let first = resolved.next().unwrap();
+        if resolved.all(|solver| solver == first) {
+            SolverExport::Uniform { solver: first.to_string() }
+        } else {
+            SolverExport::Mixed
+        }
+    }
 }
 
 /// See `ExportedRun::harness_selection`.
@@ -238,32 +384,72 @@ struct HarnessSelectionExport {
     /// `--exact`, nothing else in Kani's output says so, and a consumer would otherwise have
     /// to reimplement Kani's own matching rules to work it out).
     unmatched_filters: Vec<String>,
+    /// How many harnesses actually matched (before verification, so unaffected by
+    /// `--fail-fast` truncation) -- compare against `ExportedRun::run_complete` /
+    /// `summary.total` to know whether every matched harness was actually attempted.
+    matched_count: usize,
 }
 
 #[derive(Serialize)]
 struct HarnessExport {
     name: String,
+    /// The crate this harness belongs to. Without this, two harnesses with the same
+    /// `pretty_name` in different crates of the same workspace (e.g. `tests::check_foo` in
+    /// two separate crates) are indistinguishable to a consumer keying on name alone --
+    /// silently merging two distinct harnesses' results.
+    crate_name: String,
     file: String,
     line: usize,
     contract: Option<AssignsContract>,
     is_automatically_generated: bool,
+    /// Whether this harness actually had a loop contract in force during verification
+    /// (already on `HarnessMetadata`, previously omitted here) -- lets a consumer confirm the
+    /// contract was used rather than the loop being fully unrolled instead.
+    has_loop_contracts: bool,
     /// The harness's `#[kani::*]` attributes as requested by the user (kind, whether it
     /// should panic, the *requested* solver, unwind value, stubs, verified stubs). Compare
-    /// against `resolved_solver` below, which is what actually ran, not what was asked for.
+    /// against `resolved_solver`/`resolved_unwind` below, which are what actually ran, not
+    /// what was asked for.
     attributes: HarnessAttributes,
     status: &'static str,
-    /// Wall-clock duration of this harness's CBMC subprocess invocation (spawn through
-    /// parsed output) -- the same measurement the "Verification Time:" line in regular
-    /// text output uses. This is not a lower-level solver-internal timing breakdown (CBMC
-    /// does not expose one in structured form; see the design doc's cut `cbmc_stats`).
     verification_time_s: f64,
     /// The solver CBMC actually ran this harness with (CLI `--solver` overrides the
     /// harness `solver` attribute, else the driver default). NOT the same thing as
     /// `attributes.solver`, which is only the request. `None` when `--cbmc-args` may have
     /// smuggled in a different solver flag -- see `VerificationResult::resolved_solver`.
     resolved_solver: Option<String>,
+    /// The effective unwind bound CBMC actually ran this harness with, resolved the same way
+    /// `handle_solver_args` resolves the solver: `--unwind` (CLI, per-harness) overrides the
+    /// harness's own `#[kani::unwind(N)]` (`attributes.unwind_value`), which overrides
+    /// `--default-unwind`. Without this, an agent that hits an unwinding-assertion failure
+    /// has no way to know the bound it needs to raise: `attributes.unwind_value` alone omits
+    /// both CLI overrides entirely.
+    resolved_unwind: Option<u32>,
+    /// Whether concrete playback generated a replayable unit test for this harness's failure
+    /// (already on `VerificationResult`, previously omitted here) -- tells a consumer whether
+    /// a test exists to reproduce the failure, instead of regexing stdout for it.
+    generated_concrete_test: bool,
     n_properties: usize,
     n_failed: usize,
+    /// `result.failed_properties` verbatim: `NONE` / `PANICS_ONLY` / `OTHER` / `ERROR`.
+    /// Distinguishes a panic-only failure (investigate the code) from an `ERROR` failure (an
+    /// SMT solver itself errored out -- investigate the tool, not the proof). `NONE` for a
+    /// harness that aborted before producing any properties (`exit_status` set) too: it is
+    /// literally true that no *property*-level failure was identified in that case, even
+    /// though something else clearly went wrong -- `exit_status` is what flags that.
+    ///
+    /// This does NOT further distinguish "insufficient `--unwind`" or "reachable undefined
+    /// function" within `OTHER`/`PANICS_ONLY`, even though those call for different actions
+    /// (raise `--unwind` and retry, vs. stub the missing function) -- Kani computes that
+    /// distinction (`has_failed_unwinding_asserts`/`has_reachable_undefined_functions` in
+    /// `cbmc_property_renderer::postprocess_result`) and then discards it; it exists only as
+    /// local variables inside that function, never reaching `VerificationResult`. Recovering
+    /// it here would mean either duplicating CBMC-message-substring matching outside the one
+    /// place that already does it (drift risk, and the exact architecture objection that
+    /// sank the previous attempt at this feature), or new plumbing through
+    /// `VerificationResult` that does not exist today. Left out rather than approximated;
+    /// see also the RFC's `warnings` field, cut for the same underlying reason.
+    failure_kind: FailedProperties,
     failed_properties: Vec<PropertyExport>,
     /// Properties that exist because Kani hit a Rust/MIR construct it does not currently
     /// support (`Property::is_unsupported_construct_property`), listed separately from
@@ -273,16 +459,42 @@ struct HarnessExport {
     /// (investigate the tool instead; no amount of harness work fixes it) -- both otherwise
     /// look like an ordinary failed property.
     unsupported_constructs: Vec<PropertyExport>,
-    /// Non-vacuity signal. SARIF drops cover properties entirely; an unsatisfiable cover
-    /// still reports `VERIFICATION: SUCCESSFUL` with exit code 0, so `status` alone cannot
-    /// tell a consumer whether a proof was vacuous. `unsatisfiable` lists the property
-    /// identities, not just a count, so a consumer can tell *which* cover(s) went vacuous.
+    /// Non-vacuity signal for ORDINARY checks -- see `ChecksExport`'s doc comment for why
+    /// this, not `covers`, is the field that actually matters most of the time.
+    checks: ChecksExport,
+    /// Non-vacuity signal for `kani::cover!` properties. SARIF drops cover properties
+    /// entirely; an unsatisfiable cover still reports `VERIFICATION: SUCCESSFUL` with exit
+    /// code 0, so `status` alone cannot tell a consumer whether a proof was vacuous.
+    /// `unsatisfiable` lists the property identities, not just a count, so a consumer can
+    /// tell *which* cover(s) went vacuous.
     covers: CoversExport,
     /// Present (non-null) only when CBMC produced no parsed properties at all for this
     /// harness (crash, timeout, out-of-memory) -- see `VerificationResult::results`. When
-    /// this is set, `n_properties`/`n_failed`/`covers` are all zero because there is
+    /// this is set, `n_properties`/`n_failed`/`checks`/`covers` are all zero because there is
     /// nothing to report, not because verification passed.
-    exit_status: Option<ExitStatus>,
+    exit_status: Option<ExitStatusExport>,
+}
+
+/// `ExitStatus`, reshaped for JSON: a single tagged-object shape (`{"kind": "OTHER", "code":
+/// 101}`) instead of the derive's two incompatible shapes for the same field (`"TIMEOUT"` as
+/// a bare string, `{"Other": 101}` as an object -- one field, two JSON types depending on the
+/// variant, plus Rust-PascalCase values sitting beside SCREAMING_SNAKE_CASE ones elsewhere in
+/// this schema). `code` is present only where there is one.
+#[derive(Serialize)]
+struct ExitStatusExport {
+    kind: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    code: Option<i32>,
+}
+
+impl From<&ExitStatus> for ExitStatusExport {
+    fn from(status: &ExitStatus) -> Self {
+        match status {
+            ExitStatus::Timeout => ExitStatusExport { kind: "TIMEOUT", code: None },
+            ExitStatus::OutOfMemory => ExitStatusExport { kind: "OUT_OF_MEMORY", code: None },
+            ExitStatus::Other(code) => ExitStatusExport { kind: "OTHER", code: Some(*code) },
+        }
+    }
 }
 
 /// A single CBMC property, projected down to what an automated consumer needs to triage it.
@@ -308,6 +520,75 @@ struct PropertyExport {
     status: CheckStatus,
 }
 
+impl PropertyExport {
+    fn from_property(p: &Property) -> Self {
+        PropertyExport {
+            // The real CBMC property id (not `property_name()`'s display rendering --
+            // see `PropertyId::to_cbmc_id`'s doc comment for why they can differ), so a
+            // consumer can correlate this against CBMC's own output.
+            id: p.property_id.to_cbmc_id(),
+            description: p.description.clone(),
+            class: p.property_class(),
+            file: p.source_location.file.clone(),
+            line: p.source_location.line.clone(),
+            trace_available: p.trace.is_some(),
+            status: p.status,
+        }
+    }
+}
+
+/// A property whose status didn't fit any of `CoversExport`/`ChecksExport`'s named buckets.
+/// See `bucket_by_status`.
+#[derive(Serialize)]
+struct OtherPropertyExport {
+    id: String,
+    status: CheckStatus,
+}
+
+/// Non-vacuity signal for ORDINARY (non-cover, non-`code_coverage`) checks -- the same
+/// exhaustive-partition machinery as `CoversExport` (see `bucket_by_status`), because an
+/// over-constrained `kani::assume` is the single most common way a Kani proof passes while
+/// proving nothing, and it is invisible without this: a harness whose every ordinary check is
+/// `UNREACHABLE` (contradictory assumptions upstream, e.g. `kani::assume(x > 200);
+/// kani::assume(x < 100)`) reports `status: "SUCCESSFUL"` and `n_failed: 0` today, identically
+/// to a harness that actually proved something. Most harnesses have no `kani::cover!` at all,
+/// so `covers` alone (the original headline field) is empty in exactly the runs where this
+/// distinction matters most -- this field is the one that is populated there instead.
+///
+/// `success + failure.len() + unreachable.len() + undetermined.len() + error.len() +
+/// unknown.len() + other.len() == total` by construction, exactly as for `CoversExport`.
+#[derive(Serialize)]
+struct ChecksExport {
+    total: usize,
+    success: usize,
+    failure: Vec<String>,
+    unreachable: Vec<String>,
+    undetermined: Vec<String>,
+    error: Vec<String>,
+    unknown: Vec<String>,
+    other: Vec<OtherPropertyExport>,
+}
+
+impl ChecksExport {
+    fn from_properties(properties: &[Property]) -> Self {
+        let checks: Vec<&Property> = properties
+            .iter()
+            .filter(|p| !p.is_cover_property() && !p.is_code_coverage_property())
+            .collect();
+        let b = bucket_by_status(&checks, CheckStatus::Success, CheckStatus::Failure);
+        ChecksExport {
+            total: b.total,
+            success: b.good,
+            failure: b.bad,
+            unreachable: b.unreachable,
+            undetermined: b.undetermined,
+            error: b.error,
+            unknown: b.unknown,
+            other: b.other,
+        }
+    }
+}
+
 /// Non-vacuity signal, grouped by CBMC's own cover-property vocabulary (see
 /// `cbmc_property_renderer::format_result`, which tracks four named buckets:
 /// `number_covers_satisfied`, `number_covers_unsatisfiable`, `number_covers_unreachable`,
@@ -318,20 +599,9 @@ struct PropertyExport {
 /// (`unknown` -- see below) are different diagnoses -- a consumer should not have to guess
 /// which one they got.
 ///
-/// The sum of every bucket below (satisfied's count plus every other list's length) equals
-/// `total` **by construction**: `CoversExport::from_properties` puts every cover property
-/// into exactly one of these seven buckets, so there is no status a cover property could have
-/// that silently escapes the count.
-///  * `error` (`CheckStatus::Error`, an SMT solver erroring out on that specific property)
-///    and `unknown` (`CheckStatus::Unknown`) are both realistic enough to name explicitly.
-///    `unknown` in particular is not exotic: `cbmc_property_renderer::format_result`'s own
-///    cover-bucketing match only recognizes `Undetermined`, not `Unknown`, so any run with a
-///    genuine undefined-behavior failure elsewhere in the harness -- an entirely ordinary,
-///    non-crash outcome -- can come back with covers left `Unknown`, and Kani's own text
-///    summary already silently drops those from its cover counts today.
-///  * `other` is the true catch-all, carrying both the id and the actual status string, so
-///    that even a status nobody anticipated (e.g. if CBMC or Kani's postprocessing ever adds
-///    one) still shows up somewhere rather than vanishing from the total.
+/// `satisfied + unsatisfiable.len() + unreachable.len() + undetermined.len() + error.len() +
+/// unknown.len() + other.len() == total` by construction, via the same `bucket_by_status`
+/// machinery `ChecksExport` uses.
 #[derive(Serialize)]
 struct CoversExport {
     total: usize,
@@ -341,14 +611,82 @@ struct CoversExport {
     undetermined: Vec<String>,
     error: Vec<String>,
     unknown: Vec<String>,
-    other: Vec<OtherCoverExport>,
+    other: Vec<OtherPropertyExport>,
 }
 
-/// A cover property whose status didn't fit any of `CoversExport`'s named buckets.
-#[derive(Serialize)]
-struct OtherCoverExport {
-    id: String,
-    status: CheckStatus,
+impl CoversExport {
+    fn from_properties(properties: &[Property]) -> Self {
+        let covers: Vec<&Property> = properties.iter().filter(|p| p.is_cover_property()).collect();
+        let b = bucket_by_status(&covers, CheckStatus::Satisfied, CheckStatus::Unsatisfiable);
+        CoversExport {
+            total: b.total,
+            satisfied: b.good,
+            unsatisfiable: b.bad,
+            unreachable: b.unreachable,
+            undetermined: b.undetermined,
+            error: b.error,
+            unknown: b.unknown,
+            other: b.other,
+        }
+    }
+}
+
+/// The output of `bucket_by_status`: every property lands in exactly one field, which is what
+/// makes `good + bad.len() + unreachable.len() + undetermined.len() + error.len() +
+/// unknown.len() + other.len() == total` hold unconditionally, rather than merely for the
+/// statuses anticipated when this was written.
+struct StatusBuckets {
+    total: usize,
+    good: usize,
+    bad: Vec<String>,
+    unreachable: Vec<String>,
+    undetermined: Vec<String>,
+    error: Vec<String>,
+    unknown: Vec<String>,
+    other: Vec<OtherPropertyExport>,
+}
+
+/// Shared partitioning behind `CoversExport` and `ChecksExport`, so the exhaustiveness
+/// invariant only has to be implemented -- and tested -- once. `good_status` is the status
+/// that means "as expected" (`Satisfied` for covers, `Success` for ordinary checks);
+/// `bad_status` is its opposite (`Unsatisfiable`, `Failure`). `Unreachable`/`Undetermined`/
+/// `Error`/`Unknown` get their own buckets regardless of domain, since they mean the same
+/// thing either way; anything else -- including a status that happens to coincide with
+/// neither `good_status` nor `bad_status` nor one of those four -- falls into `other` (id +
+/// its actual status), never silently inflating `total` while landing nowhere.
+fn bucket_by_status(
+    properties: &[&Property],
+    good_status: CheckStatus,
+    bad_status: CheckStatus,
+) -> StatusBuckets {
+    let total = properties.len();
+    let mut good = 0;
+    let mut bad = Vec::new();
+    let mut unreachable = Vec::new();
+    let mut undetermined = Vec::new();
+    let mut error = Vec::new();
+    let mut unknown = Vec::new();
+    let mut other = Vec::new();
+
+    for p in properties {
+        let id = p.property_id.to_cbmc_id();
+        let status = p.status;
+        if status == good_status {
+            good += 1;
+        } else if status == bad_status {
+            bad.push(id);
+        } else {
+            match status {
+                CheckStatus::Unreachable => unreachable.push(id),
+                CheckStatus::Undetermined => undetermined.push(id),
+                CheckStatus::Error => error.push(id),
+                CheckStatus::Unknown => unknown.push(id),
+                _ => other.push(OtherPropertyExport { id, status }),
+            }
+        }
+    }
+
+    StatusBuckets { total, good, bad, unreachable, undetermined, error, unknown, other }
 }
 
 #[derive(Serialize)]
@@ -356,31 +694,63 @@ struct Summary {
     total: usize,
     successful: usize,
     failed: usize,
+    checks_total: usize,
+    checks_success: usize,
     covers_total: usize,
     covers_satisfied: usize,
 }
 
 impl ExportedRun {
-    fn from_harness_results(results: &[HarnessResult<'_>], ctx: RunContext) -> Self {
-        let harnesses: Vec<HarnessExport> =
-            results.iter().map(HarnessExport::from_harness_result).collect();
+    fn from_harness_results(
+        results: &[HarnessResult<'_>],
+        resolved_unwinds: &[Option<u32>],
+        mut ctx: RunContext,
+    ) -> Self {
+        assert_eq!(
+            results.len(),
+            resolved_unwinds.len(),
+            "resolved_unwinds must be computed 1:1 with results"
+        );
+        let mut harnesses: Vec<HarnessExport> = results
+            .iter()
+            .zip(resolved_unwinds.iter().copied())
+            .map(|(hr, resolved_unwind)| HarnessExport::from_harness_result(hr, resolved_unwind))
+            .collect();
+        // Deterministic order: runner order follows `--jobs` scheduling (nondeterministic
+        // under parallelism), but two identical runs must produce byte-identical files. Same
+        // reasoning for the feature list below: sorted here, at the one true construction
+        // point, rather than relying on every caller to have pre-sorted its input.
+        harnesses.sort_by(|a, b| (&a.crate_name, &a.name).cmp(&(&b.crate_name, &b.name)));
+        ctx.enabled_unstable_features.sort();
 
-        let solver = uniform_solver(&harnesses);
+        let solver = SolverExport::from_harnesses(&harnesses);
 
         let successful = harnesses.iter().filter(|h| h.status == STATUS_SUCCESSFUL).count();
         let failed = harnesses.len() - successful;
+        let checks_total: usize = harnesses.iter().map(|h| h.checks.total).sum();
+        let checks_success: usize = harnesses.iter().map(|h| h.checks.success).sum();
         let covers_total: usize = harnesses.iter().map(|h| h.covers.total).sum();
         let covers_satisfied: usize = harnesses.iter().map(|h| h.covers.satisfied).sum();
+
+        let (run_status, abort_reason) = match ctx.outcome {
+            RunOutcome::Completed => (RUN_STATUS_COMPLETED, None),
+            RunOutcome::Aborted(reason) => (RUN_STATUS_ABORTED, Some(reason)),
+        };
+        let run_complete = results.len() == ctx.harness_selection.matched_count;
 
         ExportedRun {
             schema_version: SCHEMA_VERSION,
             kani_version: KANI_VERSION,
             kani_commit: ctx.kani_commit,
             kani_commit_dirty: ctx.kani_commit_dirty,
+            run_status,
+            run_complete,
+            abort_reason,
             cbmc_version: ctx.cbmc_version,
             solver,
             enabled_unstable_features: ctx.enabled_unstable_features,
             harness_selection: ctx.harness_selection,
+            harness_timeout_s: ctx.harness_timeout_s,
             target: env!("TARGET"),
             started_at: format_started_at(ctx.started_at),
             wall_time_s: ctx.wall_time.as_secs_f64(),
@@ -389,21 +759,13 @@ impl ExportedRun {
                 total: results.len(),
                 successful,
                 failed,
+                checks_total,
+                checks_success,
                 covers_total,
                 covers_satisfied,
             },
         }
     }
-}
-
-/// `Some(solver)` only if every harness in this run resolved to a *known* solver, and it's
-/// the same one for all of them. `None` (never a guess) if the run was empty, if any
-/// harness's own `resolved_solver` is unknown (e.g. `--cbmc-args` may have overridden it),
-/// or if harnesses genuinely used different solvers.
-fn uniform_solver(harnesses: &[HarnessExport]) -> Option<String> {
-    let mut iter = harnesses.iter().map(|h| h.resolved_solver.as_ref());
-    let first = iter.next()??;
-    if iter.all(|s| s == Some(first)) { Some(first.clone()) } else { None }
 }
 
 fn format_started_at(dt: OffsetDateTime) -> String {
@@ -418,7 +780,7 @@ fn format_started_at(dt: OffsetDateTime) -> String {
 }
 
 impl HarnessExport {
-    fn from_harness_result(hr: &HarnessResult<'_>) -> Self {
+    fn from_harness_result(hr: &HarnessResult<'_>, resolved_unwind: Option<u32>) -> Self {
         let harness = hr.harness;
         let result = &hr.result;
 
@@ -428,6 +790,7 @@ impl HarnessExport {
             n_failed,
             failed_properties,
             unsupported_constructs,
+            checks,
             covers,
             exit_status,
         ) = match &result.results {
@@ -450,6 +813,7 @@ impl HarnessExport {
                     .filter(|p| p.is_unsupported_construct_property())
                     .map(PropertyExport::from_property)
                     .collect();
+                let checks = ChecksExport::from_properties(properties);
                 let covers = CoversExport::from_properties(properties);
                 let status = if result.status == VerificationStatus::Success {
                     STATUS_SUCCESSFUL
@@ -462,6 +826,7 @@ impl HarnessExport {
                     n_failed,
                     failed_properties,
                     unsupported_constructs,
+                    checks,
                     covers,
                     None,
                 )
@@ -475,91 +840,34 @@ impl HarnessExport {
                 // Empty by construction, via the same path as the real case, rather
                 // than a hand-written empty literal that could drift as fields are
                 // added.
+                ChecksExport::from_properties(&[]),
                 CoversExport::from_properties(&[]),
-                Some(*exit_status),
+                Some(ExitStatusExport::from(exit_status)),
             ),
         };
 
         HarnessExport {
             name: harness.pretty_name.clone(),
+            crate_name: harness.crate_name.clone(),
             file: harness.original_file.clone(),
             line: harness.original_start_line,
             contract: harness.contract.clone(),
             is_automatically_generated: harness.is_automatically_generated,
+            has_loop_contracts: harness.has_loop_contracts,
             attributes: harness.attributes.clone(),
             status,
             verification_time_s: result.runtime.as_secs_f64(),
             resolved_solver: result.resolved_solver.clone(),
+            resolved_unwind,
+            generated_concrete_test: result.generated_concrete_test,
             n_properties,
             n_failed,
+            failure_kind: result.failed_properties,
             failed_properties,
             unsupported_constructs,
+            checks,
             covers,
             exit_status,
-        }
-    }
-}
-
-impl PropertyExport {
-    fn from_property(p: &Property) -> Self {
-        PropertyExport {
-            // The real CBMC property id (not `property_name()`'s display rendering --
-            // see `PropertyId::to_cbmc_id`'s doc comment for why they can differ), so a
-            // consumer can correlate this against CBMC's own output.
-            id: p.property_id.to_cbmc_id(),
-            description: p.description.clone(),
-            class: p.property_class(),
-            file: p.source_location.file.clone(),
-            line: p.source_location.line.clone(),
-            trace_available: p.trace.is_some(),
-            status: p.status,
-        }
-    }
-}
-
-impl CoversExport {
-    /// Every cover property is placed into *exactly one* of the six buckets below, which is
-    /// what makes the sum of all six (satisfied's count plus every other list's length) equal
-    /// `total` unconditionally, rather than merely for the statuses this code happened to
-    /// anticipate. The `other` arm is not reachable for any `CheckStatus` variant that exists
-    /// today (Kani's postprocessing settles cover properties into
-    /// `Satisfied`/`Unsatisfiable`/`Unreachable`/`Undetermined`, and CBMC can additionally
-    /// report `Error`) -- it exists for whatever status shows up next, not one we've already
-    /// named.
-    fn from_properties(properties: &[Property]) -> Self {
-        let covers: Vec<&Property> = properties.iter().filter(|p| p.is_cover_property()).collect();
-        let total = covers.len();
-
-        let mut satisfied = 0;
-        let mut unsatisfiable = Vec::new();
-        let mut unreachable = Vec::new();
-        let mut undetermined = Vec::new();
-        let mut error = Vec::new();
-        let mut unknown = Vec::new();
-        let mut other = Vec::new();
-
-        for p in &covers {
-            let id = p.property_id.to_cbmc_id();
-            match p.status {
-                CheckStatus::Satisfied => satisfied += 1,
-                CheckStatus::Unsatisfiable => unsatisfiable.push(id),
-                CheckStatus::Unreachable => unreachable.push(id),
-                CheckStatus::Undetermined => undetermined.push(id),
-                CheckStatus::Error => error.push(id),
-                CheckStatus::Unknown => unknown.push(id),
-                status => other.push(OtherCoverExport { id, status }),
-            }
-        }
-
-        CoversExport {
-            total,
-            satisfied,
-            unsatisfiable,
-            unreachable,
-            undetermined,
-            error,
-            unknown,
-            other,
         }
     }
 }
@@ -567,15 +875,19 @@ impl CoversExport {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::call_cbmc::{FailedProperties, VerificationResult};
+    use crate::call_cbmc::VerificationResult;
     use crate::cbmc_output_parser::{PropertyId, SourceLocation};
     use kani_metadata::{HarnessKind, HarnessMetadata};
 
     fn harness(pretty: &str) -> HarnessMetadata {
+        harness_in_crate(pretty, "krate")
+    }
+
+    fn harness_in_crate(pretty: &str, crate_name: &str) -> HarnessMetadata {
         HarnessMetadata {
             pretty_name: pretty.to_string(),
             mangled_name: "mangled".to_string(),
-            crate_name: "krate".to_string(),
+            crate_name: crate_name.to_string(),
             original_file: "src/lib.rs".to_string(),
             original_start_line: 10,
             original_end_line: 20,
@@ -628,6 +940,7 @@ mod tests {
 
     /// A minimal `RunContext` for tests that don't care about provenance/selection fields.
     /// Override individual fields with struct-update syntax where a test does care.
+    /// `matched_count` defaults to 1, matching the common single-harness-result test shape.
     fn test_context() -> RunContext {
         RunContext {
             cbmc_version: None,
@@ -638,10 +951,20 @@ mod tests {
                 requested_filters: Vec::new(),
                 exact: false,
                 unmatched_filters: Vec::new(),
+                matched_count: 1,
             },
+            harness_timeout_s: None,
+            outcome: RunOutcome::Completed,
             started_at: started(),
             wall_time: Duration::from_millis(1),
         }
+    }
+
+    /// Build an `ExportedRun` from a single harness result with the default test context and
+    /// no CLI-resolved unwind override -- the common case for tests that don't care about
+    /// `resolved_unwind`/`matched_count`/etc.
+    fn export_one(hr: HarnessResult<'_>) -> ExportedRun {
+        ExportedRun::from_harness_results(&[hr], &[None], test_context())
     }
 
     /// An all-successful run: no failed properties, and every cover satisfied.
@@ -660,32 +983,43 @@ mod tests {
             wall_time: Duration::from_millis(500),
             ..test_context()
         };
-        let export = ExportedRun::from_harness_results(&[hr], ctx);
+        let export = ExportedRun::from_harness_results(&[hr], &[None], ctx);
         let v = serde_json::to_value(&export).unwrap();
 
         assert_eq!(v["schema_version"], "0.1.0");
+        assert_eq!(v["run_status"], "COMPLETED");
+        assert_eq!(v["run_complete"], true);
+        assert!(v["abort_reason"].is_null());
         assert_eq!(v["cbmc_version"], "CBMC 6.8.0");
-        assert_eq!(v["solver"], "cadical");
+        assert_eq!(v["solver"]["state"], "UNIFORM");
+        assert_eq!(v["solver"]["solver"], "cadical");
         assert_eq!(v["summary"]["total"], 1);
         assert_eq!(v["summary"]["successful"], 1);
         assert_eq!(v["summary"]["failed"], 0);
         assert_eq!(v["summary"]["covers_total"], 1);
         assert_eq!(v["summary"]["covers_satisfied"], 1);
+        assert_eq!(v["summary"]["checks_total"], 1);
+        assert_eq!(v["summary"]["checks_success"], 1);
 
         let harness_json = &v["harnesses"][0];
         assert_eq!(harness_json["name"], "my_harness");
+        assert_eq!(harness_json["crate_name"], "krate");
         assert_eq!(harness_json["status"], "SUCCESSFUL");
         assert_eq!(harness_json["resolved_solver"], "cadical");
+        assert_eq!(harness_json["failure_kind"], "NONE");
         assert_eq!(harness_json["n_properties"], 2);
         assert_eq!(harness_json["n_failed"], 0);
         assert!(harness_json["failed_properties"].as_array().unwrap().is_empty());
         assert_eq!(harness_json["covers"]["total"], 1);
         assert_eq!(harness_json["covers"]["satisfied"], 1);
         assert!(harness_json["covers"]["unsatisfiable"].as_array().unwrap().is_empty());
+        assert_eq!(harness_json["checks"]["total"], 1);
+        assert_eq!(harness_json["checks"]["success"], 1);
         assert!(harness_json["exit_status"].is_null());
     }
 
-    /// A run with a failed (non-cover) property: `failed_properties` must name it.
+    /// A run with a failed (non-cover) property: `failed_properties` must name it, and it
+    /// must also show up in `checks.failure`.
     #[test]
     fn export_with_failed_property() {
         let h = harness("my_harness");
@@ -695,16 +1029,21 @@ mod tests {
         result.failed_properties = FailedProperties::PanicsOnly;
         let hr = HarnessResult { harness: &h, result };
 
-        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let export = export_one(hr);
         let v = serde_json::to_value(&export).unwrap();
 
         assert!(v["cbmc_version"].is_null());
         let harness_json = &v["harnesses"][0];
         assert_eq!(harness_json["status"], "FAILED");
+        assert_eq!(harness_json["failure_kind"], "PANICS_ONLY");
         assert_eq!(harness_json["n_failed"], 1);
         assert_eq!(harness_json["failed_properties"][0]["id"], "harness.assertion.1");
         assert_eq!(harness_json["failed_properties"][0]["class"], "assertion");
         assert_eq!(harness_json["failed_properties"][0]["trace_available"], false);
+        assert_eq!(
+            harness_json["checks"]["failure"].as_array().unwrap(),
+            &vec![serde_json::Value::String("harness.assertion.1".to_string())]
+        );
     }
 
     /// The vacuity case: an unsatisfiable cover in an otherwise-SUCCESSFUL run.
@@ -721,7 +1060,7 @@ mod tests {
         let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
-        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let export = export_one(hr);
         let v = serde_json::to_value(&export).unwrap();
 
         let harness_json = &v["harnesses"][0];
@@ -739,8 +1078,117 @@ mod tests {
         assert_eq!(v["summary"]["covers_satisfied"], 1);
     }
 
+    /// FIX 10, the headline reproduction: an over-constrained `kani::assume` makes every
+    /// ordinary check UNREACHABLE while the harness still reports SUCCESSFUL and has no
+    /// covers at all. `covers` alone (empty) says nothing; `checks.unreachable` must show it.
+    /// This pairing -- SUCCESSFUL status alongside a populated `checks.unreachable` -- is the
+    /// feature's entire thesis.
+    #[test]
+    fn export_checks_unreachable_under_contradictory_assume() {
+        let h = harness("check_contradictory_assume");
+        // Mirrors: kani::assume(x > 200); kani::assume(x < 100); assert!(x == 42); assert!(x != x);
+        let properties = vec![
+            property("assertion", 1, CheckStatus::Unreachable),
+            property("assertion", 2, CheckStatus::Unreachable),
+        ];
+        let result = success_result(properties, Some("cadical"));
+        let hr = HarnessResult { harness: &h, result };
+
+        let export = export_one(hr);
+        let v = serde_json::to_value(&export).unwrap();
+
+        let harness_json = &v["harnesses"][0];
+        // The pairing that has no test today, per the adversarial review: SUCCESSFUL status
+        // co-existing with a fully vacuous set of checks.
+        assert_eq!(harness_json["status"], "SUCCESSFUL");
+        assert_eq!(harness_json["n_failed"], 0);
+        assert!(harness_json["covers"]["total"].as_u64().unwrap() == 0);
+        assert!(harness_json["unsupported_constructs"].as_array().unwrap().is_empty());
+
+        let checks = &harness_json["checks"];
+        assert_eq!(checks["total"], 2);
+        assert_eq!(checks["success"], 0);
+        assert_eq!(checks["unreachable"].as_array().unwrap().len(), 2);
+        assert_eq!(v["summary"]["checks_total"], 2);
+        assert_eq!(v["summary"]["checks_success"], 0);
+    }
+
+    /// A check can carry `Error` status -- must be its own named `checks.error` bucket.
+    #[test]
+    fn export_checks_error_status_bucketed() {
+        let h = harness("solver_error_harness");
+        let properties = vec![
+            property("assertion", 1, CheckStatus::Success),
+            property("assertion", 2, CheckStatus::Error),
+        ];
+        let result = success_result(properties, Some("cadical"));
+        let hr = HarnessResult { harness: &h, result };
+
+        let export = export_one(hr);
+        let v = serde_json::to_value(&export).unwrap();
+
+        let checks = &v["harnesses"][0]["checks"];
+        assert_eq!(checks["total"], 2);
+        assert_eq!(checks["success"], 1);
+        assert_eq!(
+            checks["error"].as_array().unwrap(),
+            &vec![serde_json::Value::String("harness.assertion.2".to_string())]
+        );
+    }
+
+    /// The invariant, structurally: every bucket in `checks` sums to `total`.
+    #[test]
+    fn export_checks_invariant_holds() {
+        let h = harness("mixed_checks_harness");
+        let properties = vec![
+            property("assertion", 1, CheckStatus::Success),
+            property("assertion", 2, CheckStatus::Failure),
+            property("assertion", 3, CheckStatus::Unreachable),
+            property("assertion", 4, CheckStatus::Undetermined),
+            property("assertion", 5, CheckStatus::Error),
+            property("assertion", 6, CheckStatus::Unknown),
+        ];
+        let result = success_result(properties, Some("cadical"));
+        let hr = HarnessResult { harness: &h, result };
+
+        let export = export_one(hr);
+        let v = serde_json::to_value(&export).unwrap();
+        let checks = &v["harnesses"][0]["checks"];
+
+        let sum = checks["success"].as_u64().unwrap()
+            + checks["failure"].as_array().unwrap().len() as u64
+            + checks["unreachable"].as_array().unwrap().len() as u64
+            + checks["undetermined"].as_array().unwrap().len() as u64
+            + checks["error"].as_array().unwrap().len() as u64
+            + checks["unknown"].as_array().unwrap().len() as u64
+            + checks["other"].as_array().unwrap().len() as u64;
+        assert_eq!(sum, checks["total"].as_u64().unwrap());
+        assert_eq!(checks["total"], 6);
+    }
+
+    /// `checks` must not include cover or code_coverage properties (they have their own
+    /// dedicated fields).
+    #[test]
+    fn export_checks_excludes_covers_and_code_coverage() {
+        let h = harness("mixed_property_kinds_harness");
+        let properties = vec![
+            property("assertion", 1, CheckStatus::Success),
+            property("cover", 1, CheckStatus::Satisfied),
+            property("code_coverage", 1, CheckStatus::Covered),
+        ];
+        let result = success_result(properties, Some("cadical"));
+        let hr = HarnessResult { harness: &h, result };
+
+        let export = export_one(hr);
+        let v = serde_json::to_value(&export).unwrap();
+
+        assert_eq!(v["harnesses"][0]["checks"]["total"], 1);
+        assert_eq!(v["harnesses"][0]["covers"]["total"], 1);
+    }
+
     /// A harness that produced no properties at all (e.g. CBMC crashed/timed out) must
-    /// still be visibly FAILED with a reason, not silently reported as "0/0 covers".
+    /// still be visibly FAILED with a reason, not silently reported as "0/0 covers", and its
+    /// `exit_status` must use the tagged shape.
     #[test]
     fn export_with_exit_status_failure() {
         let h = harness("crashed_harness");
@@ -756,20 +1204,46 @@ mod tests {
         let hr = HarnessResult { harness: &h, result };
 
         let ctx = RunContext { wall_time: Duration::from_secs(300), ..test_context() };
-        let export = ExportedRun::from_harness_results(&[hr], ctx);
+        let export = ExportedRun::from_harness_results(&[hr], &[None], ctx);
         let v = serde_json::to_value(&export).unwrap();
 
         let harness_json = &v["harnesses"][0];
         assert_eq!(harness_json["status"], "FAILED");
         assert_eq!(harness_json["n_properties"], 0);
         assert_eq!(harness_json["covers"]["total"], 0);
+        assert_eq!(harness_json["checks"]["total"], 0);
         assert!(!harness_json["exit_status"].is_null());
-        assert_eq!(harness_json["exit_status"], "Timeout");
+        assert_eq!(harness_json["exit_status"]["kind"], "TIMEOUT");
+        assert!(harness_json["exit_status"]["code"].is_null());
     }
 
-    /// Mixed solvers across harnesses must not be reported as a false uniform value.
+    /// `ExitStatus::Other`'s tagged shape carries a `code`.
     #[test]
-    fn export_solver_not_uniform_is_null() {
+    fn export_exit_status_other_carries_code() {
+        let h = harness("crashed_harness");
+        let result = VerificationResult {
+            status: VerificationStatus::Failure,
+            failed_properties: FailedProperties::None,
+            results: Err(ExitStatus::Other(101)),
+            runtime: Duration::from_secs(1),
+            generated_concrete_test: false,
+            coverage_results: None,
+            resolved_solver: Some("cadical".to_string()),
+        };
+        let hr = HarnessResult { harness: &h, result };
+
+        let export = export_one(hr);
+        let v = serde_json::to_value(&export).unwrap();
+
+        let exit_status = &v["harnesses"][0]["exit_status"];
+        assert_eq!(exit_status["kind"], "OTHER");
+        assert_eq!(exit_status["code"], 101);
+    }
+
+    /// Mixed solvers across harnesses must be reported as the explicit `MIXED` state, not a
+    /// bare `null` that could equally mean "no harnesses" or "unknown".
+    #[test]
+    fn export_solver_mixed_is_explicit() {
         let h1 = harness("h1");
         let h2 = harness("h2");
         let r1 = success_result(vec![], Some("cadical"));
@@ -777,11 +1251,38 @@ mod tests {
         let hr1 = HarnessResult { harness: &h1, result: r1 };
         let hr2 = HarnessResult { harness: &h2, result: r2 };
 
-        let export = ExportedRun::from_harness_results(&[hr1, hr2], test_context());
+        let ctx = RunContext {
+            harness_selection: HarnessSelectionExport {
+                requested_filters: Vec::new(),
+                exact: false,
+                unmatched_filters: Vec::new(),
+                matched_count: 2,
+            },
+            ..test_context()
+        };
+        let export = ExportedRun::from_harness_results(&[hr1, hr2], &[None, None], ctx);
         let v = serde_json::to_value(&export).unwrap();
-        assert!(v["solver"].is_null());
-        assert_eq!(v["harnesses"][0]["resolved_solver"], "cadical");
-        assert_eq!(v["harnesses"][1]["resolved_solver"], "kissat");
+        assert_eq!(v["solver"]["state"], "MIXED");
+        assert!(v["solver"].get("solver").is_none());
+    }
+
+    /// A run with zero harnesses must report the explicit `NO_HARNESSES` solver state, not a
+    /// `null` indistinguishable from "mixed" or "unknown".
+    #[test]
+    fn export_solver_no_harnesses_is_explicit() {
+        let ctx = RunContext {
+            harness_selection: HarnessSelectionExport {
+                requested_filters: Vec::new(),
+                exact: false,
+                unmatched_filters: Vec::new(),
+                matched_count: 0,
+            },
+            ..test_context()
+        };
+        let export = ExportedRun::from_harness_results(&[], &[], ctx);
+        let v = serde_json::to_value(&export).unwrap();
+        assert_eq!(v["solver"]["state"], "NO_HARNESSES");
+        assert_eq!(v["run_complete"], true);
     }
 
     /// A harness can be FAILED purely because of `Error`-status properties (CBMC returns
@@ -802,11 +1303,12 @@ mod tests {
         result.failed_properties = FailedProperties::Error;
         let hr = HarnessResult { harness: &h, result };
 
-        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let export = export_one(hr);
         let v = serde_json::to_value(&export).unwrap();
 
         let harness_json = &v["harnesses"][0];
         assert_eq!(harness_json["status"], "FAILED");
+        assert_eq!(harness_json["failure_kind"], "ERROR");
         // The real bug: with only the (buggy) `Failure`-only filter this would be empty.
         assert_eq!(harness_json["n_failed"], 1);
         assert!(!harness_json["failed_properties"].as_array().unwrap().is_empty());
@@ -843,7 +1345,7 @@ mod tests {
         let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
-        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let export = export_one(hr);
         let v = serde_json::to_value(&export).unwrap();
 
         let covers = &v["harnesses"][0]["covers"];
@@ -881,7 +1383,7 @@ mod tests {
         let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
-        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let export = export_one(hr);
         let v = serde_json::to_value(&export).unwrap();
 
         let covers = &v["harnesses"][0]["covers"];
@@ -910,7 +1412,7 @@ mod tests {
         let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
-        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let export = export_one(hr);
         let v = serde_json::to_value(&export).unwrap();
 
         let covers = &v["harnesses"][0]["covers"];
@@ -939,7 +1441,7 @@ mod tests {
         let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
-        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let export = export_one(hr);
         let v = serde_json::to_value(&export).unwrap();
 
         let covers = &v["harnesses"][0]["covers"];
@@ -964,7 +1466,7 @@ mod tests {
         let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
-        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let export = export_one(hr);
         let v = serde_json::to_value(&export).unwrap();
 
         let covers = &v["harnesses"][0]["covers"];
@@ -973,19 +1475,20 @@ mod tests {
     }
 
     /// When `--cbmc-args` may have smuggled in a solver-selecting flag,
-    /// `VerificationResult::resolved_solver` is `None` -- confirm that surfaces as `null`
-    /// (never a guessed value) both per-harness and at the run-wide `solver` field.
+    /// `VerificationResult::resolved_solver` is `None` -- confirm that surfaces as
+    /// `UNKNOWN_FOR_SOME_HARNESS` (never a guessed value) at the run-wide `solver` field, and
+    /// `null` per-harness.
     #[test]
-    fn export_unknown_resolved_solver_is_null() {
+    fn export_unknown_resolved_solver_is_explicit() {
         let h = harness("cbmc_args_solver_harness");
         let result = success_result(vec![], None);
         let hr = HarnessResult { harness: &h, result };
 
-        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let export = export_one(hr);
         let v = serde_json::to_value(&export).unwrap();
 
         assert!(v["harnesses"][0]["resolved_solver"].is_null());
-        assert!(v["solver"].is_null());
+        assert_eq!(v["solver"]["state"], "UNKNOWN_FOR_SOME_HARNESS");
     }
 
     /// ADD A: an unsupported-construct property must be listed in `unsupported_constructs`
@@ -1003,7 +1506,7 @@ mod tests {
         result.status = VerificationStatus::Failure;
         let hr = HarnessResult { harness: &h, result };
 
-        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let export = export_one(hr);
         let v = serde_json::to_value(&export).unwrap();
 
         let harness_json = &v["harnesses"][0];
@@ -1038,7 +1541,7 @@ mod tests {
         let result = success_result(properties, Some("cadical"));
         let hr = HarnessResult { harness: &h, result };
 
-        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let export = export_one(hr);
         let v = serde_json::to_value(&export).unwrap();
 
         let harness_json = &v["harnesses"][0];
@@ -1063,7 +1566,7 @@ mod tests {
             kani_commit_dirty: Some(true),
             ..test_context()
         };
-        let export = ExportedRun::from_harness_results(&[hr], ctx);
+        let export = ExportedRun::from_harness_results(&[hr], &[None], ctx);
         let v = serde_json::to_value(&export).unwrap();
 
         assert_eq!(v["kani_commit"], "d4df833c8f8f18e632e7b0a7945bb2161f708990");
@@ -1077,36 +1580,38 @@ mod tests {
         let h = harness("h");
         let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
 
-        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let export = export_one(hr);
         let v = serde_json::to_value(&export).unwrap();
 
         assert!(v["kani_commit"].is_null());
         assert!(v["kani_commit_dirty"].is_null());
     }
 
-    /// ADD D: the enabled `-Z` unstable features must be recorded, since results produced
-    /// under different feature sets are not comparable -- e.g. a quantifier-bearing proof
-    /// verified without `-Z quantifiers` is a different claim than one verified with it.
+    /// ADD D: the enabled `-Z` unstable features must be recorded, and sorted (diff-
+    /// stability), since results produced under different feature sets are not comparable --
+    /// e.g. a quantifier-bearing proof verified without `-Z quantifiers` is a different claim
+    /// than one verified with it.
     #[test]
-    fn export_enabled_unstable_features() {
+    fn export_enabled_unstable_features_sorted() {
         let h = harness("h");
         let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
 
         let ctx = RunContext {
+            // Deliberately out of alphabetical (and CLI) order.
             enabled_unstable_features: vec![
                 "quantifiers".to_string(),
                 "function-contracts".to_string(),
             ],
             ..test_context()
         };
-        let export = ExportedRun::from_harness_results(&[hr], ctx);
+        let export = ExportedRun::from_harness_results(&[hr], &[None], ctx);
         let v = serde_json::to_value(&export).unwrap();
 
         assert_eq!(
             v["enabled_unstable_features"].as_array().unwrap(),
             &vec![
-                serde_json::Value::String("quantifiers".to_string()),
-                serde_json::Value::String("function-contracts".to_string())
+                serde_json::Value::String("function-contracts".to_string()),
+                serde_json::Value::String("quantifiers".to_string())
             ]
         );
     }
@@ -1126,10 +1631,11 @@ mod tests {
                 requested_filters: vec!["check_volatile_load_wrapper_contract".to_string()],
                 exact: true,
                 unmatched_filters: Vec::new(),
+                matched_count: 1,
             },
             ..test_context()
         };
-        let export = ExportedRun::from_harness_results(&[hr], ctx);
+        let export = ExportedRun::from_harness_results(&[hr], &[None], ctx);
         let v = serde_json::to_value(&export).unwrap();
 
         assert_eq!(
@@ -1137,6 +1643,7 @@ mod tests {
             &vec![serde_json::Value::String("check_volatile_load_wrapper_contract".to_string())]
         );
         assert_eq!(v["harness_selection"]["exact"], true);
+        assert_eq!(v["harness_selection"]["matched_count"], 1);
     }
 
     /// No `--harness` filter given (`requested_filters` empty) must not be confused with a
@@ -1147,7 +1654,7 @@ mod tests {
         let h = harness("h");
         let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
 
-        let export = ExportedRun::from_harness_results(&[hr], test_context());
+        let export = export_one(hr);
         let v = serde_json::to_value(&export).unwrap();
 
         assert!(v["harness_selection"]["requested_filters"].as_array().unwrap().is_empty());
@@ -1227,5 +1734,157 @@ mod tests {
         let unmatched = compute_unmatched_filters(&[], &matched, false);
 
         assert!(unmatched.is_empty());
+    }
+
+    /// FIX 9: a run that aborted before producing any results must still write a file, with
+    /// `run_status: "ABORTED"` and the error message -- never a bare missing file
+    /// indistinguishable from "verification never began".
+    #[test]
+    fn export_aborted_run_reports_status_and_reason() {
+        let ctx = RunContext {
+            harness_selection: HarnessSelectionExport {
+                requested_filters: Vec::new(),
+                exact: false,
+                unmatched_filters: Vec::new(),
+                matched_count: 3,
+            },
+            outcome: RunOutcome::Aborted("goto-instrument crashed on harness 2".to_string()),
+            ..test_context()
+        };
+        let export = ExportedRun::from_harness_results(&[], &[], ctx);
+        let v = serde_json::to_value(&export).unwrap();
+
+        assert_eq!(v["run_status"], "ABORTED");
+        assert_eq!(v["abort_reason"], "goto-instrument crashed on harness 2");
+        // 3 harnesses were matched, but 0 results exist: the run is NOT complete.
+        assert_eq!(v["run_complete"], false);
+        assert!(v["harnesses"].as_array().unwrap().is_empty());
+    }
+
+    /// FIX 12: `--fail-fast` truncating `results` to fewer than `matched_count` must be
+    /// visible via `run_complete`, not silently absorbed into a `summary.total` that looks
+    /// like the whole request.
+    #[test]
+    fn export_run_incomplete_when_fewer_results_than_matched() {
+        let h = harness("h");
+        let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
+
+        let ctx = RunContext {
+            harness_selection: HarnessSelectionExport {
+                requested_filters: Vec::new(),
+                exact: false,
+                unmatched_filters: Vec::new(),
+                // Pretend 50 harnesses matched, but only 1 result exists (fail-fast stopped
+                // after the first failure).
+                matched_count: 50,
+            },
+            ..test_context()
+        };
+        let export = ExportedRun::from_harness_results(&[hr], &[None], ctx);
+        let v = serde_json::to_value(&export).unwrap();
+
+        assert_eq!(v["run_status"], "COMPLETED");
+        assert_eq!(v["run_complete"], false);
+        assert_eq!(v["summary"]["total"], 1);
+        assert_eq!(v["harness_selection"]["matched_count"], 50);
+    }
+
+    /// FIX 15/16: harnesses must sort by `(crate_name, name)`, not the order they were
+    /// passed in -- runner order is nondeterministic under `--jobs`.
+    #[test]
+    fn export_harnesses_sorted_by_crate_and_name() {
+        let h_z_in_a = harness_in_crate("z_harness", "crate_a");
+        let h_a_in_b = harness_in_crate("a_harness", "crate_b");
+        let h_a_in_a = harness_in_crate("a_harness", "crate_a");
+        let hr1 = HarnessResult { harness: &h_z_in_a, result: success_result(vec![], None) };
+        let hr2 = HarnessResult { harness: &h_a_in_b, result: success_result(vec![], None) };
+        let hr3 = HarnessResult { harness: &h_a_in_a, result: success_result(vec![], None) };
+
+        let ctx = RunContext {
+            harness_selection: HarnessSelectionExport {
+                requested_filters: Vec::new(),
+                exact: false,
+                unmatched_filters: Vec::new(),
+                matched_count: 3,
+            },
+            ..test_context()
+        };
+        // Deliberately out of sorted order.
+        let export = ExportedRun::from_harness_results(&[hr1, hr2, hr3], &[None, None, None], ctx);
+        let v = serde_json::to_value(&export).unwrap();
+
+        let names: Vec<(&str, &str)> = v["harnesses"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|h| (h["crate_name"].as_str().unwrap(), h["name"].as_str().unwrap()))
+            .collect();
+        assert_eq!(
+            names,
+            vec![("crate_a", "a_harness"), ("crate_a", "z_harness"), ("crate_b", "a_harness")]
+        );
+    }
+
+    /// `resolved_unwind` must reflect the CLI-resolved value passed in (computed by
+    /// `resolve_unwind_value`, reused rather than reimplemented at the call site in
+    /// `write_export_json` -- this test only covers that the value passed through the
+    /// pipeline lands in the right field).
+    #[test]
+    fn export_resolved_unwind_passthrough() {
+        let h = harness("h");
+        let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
+
+        let export = ExportedRun::from_harness_results(&[hr], &[Some(7)], test_context());
+        let v = serde_json::to_value(&export).unwrap();
+
+        assert_eq!(v["harnesses"][0]["resolved_unwind"], 7);
+    }
+
+    /// `resolved_unwind` must be `null`, not a guessed `0`, when no unwind bound was resolved
+    /// from any source.
+    #[test]
+    fn export_resolved_unwind_null_when_unset() {
+        let h = harness("h");
+        let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
+
+        let export = export_one(hr);
+        let v = serde_json::to_value(&export).unwrap();
+
+        assert!(v["harnesses"][0]["resolved_unwind"].is_null());
+    }
+
+    /// `has_loop_contracts`/`generated_concrete_test` must pass through from
+    /// `HarnessMetadata`/`VerificationResult` verbatim.
+    #[test]
+    fn export_has_loop_contracts_and_generated_concrete_test() {
+        let mut h = harness("h");
+        h.has_loop_contracts = true;
+        let mut result = success_result(vec![], Some("cadical"));
+        result.generated_concrete_test = true;
+        let hr = HarnessResult { harness: &h, result };
+
+        let export = export_one(hr);
+        let v = serde_json::to_value(&export).unwrap();
+
+        assert_eq!(v["harnesses"][0]["has_loop_contracts"], true);
+        assert_eq!(v["harnesses"][0]["generated_concrete_test"], true);
+    }
+
+    /// `harness_timeout_s` must pass through from `RunContext` verbatim, and be `null` when
+    /// no `--harness-timeout` was given.
+    #[test]
+    fn export_harness_timeout_s() {
+        let h = harness("h");
+        let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
+
+        let ctx = RunContext { harness_timeout_s: Some(30.0), ..test_context() };
+        let export = ExportedRun::from_harness_results(&[hr], &[None], ctx);
+        let v = serde_json::to_value(&export).unwrap();
+        assert_eq!(v["harness_timeout_s"], 30.0);
+
+        let h2 = harness("h2");
+        let hr2 = HarnessResult { harness: &h2, result: success_result(vec![], Some("cadical")) };
+        let v2 = serde_json::to_value(export_one(hr2)).unwrap();
+        assert!(v2["harness_timeout_s"].is_null());
     }
 }

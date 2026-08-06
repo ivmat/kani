@@ -136,6 +136,12 @@ fn standalone_main() -> Result<()> {
 }
 
 /// Run verification on the given project.
+///
+/// `--export-json` contract: a failure here (an invalid `--harness` filter,
+/// `determine_targets` bailing before any harness runs) happens *before verification
+/// begins*, and is one of the cases where a missing `--export-json` output file is expected
+/// -- see `export_json`'s module doc comment. Once verification begins (past this point), a
+/// file is always written, even on an internal crash (`write_export_json_aborted`).
 fn verify_project(project: Project, session: KaniSession) -> Result<()> {
     debug!(?project, "verify_project");
     let harnesses = session.determine_targets(project.get_all_harnesses())?;
@@ -145,8 +151,45 @@ fn verify_project(project: Project, session: KaniSession) -> Result<()> {
     let runner = harness_runner::HarnessRunner { sess: &session, project: &project };
     let run_started_at = OffsetDateTime::now_utc();
     let run_start = Instant::now();
-    let results = runner.check_all_harnesses(&harnesses)?;
+    let results = match runner.check_all_harnesses(&harnesses) {
+        Ok(results) => results,
+        Err(err) => {
+            // Harnesses were determined (verification began), but something aborted before
+            // producing any results at all -- an internal crash unrelated to any single
+            // harness's outcome. (A `--fail-fast` stop is not this path: `check_all_harnesses`
+            // already turns that into `Ok` with a partial result.) An autonomous consumer
+            // waiting on `--export-json` must be able to tell "verification crashed mid-run"
+            // apart from "no file, because we never got this far" -- write what we can,
+            // explicitly marked aborted, before propagating the original error. Best-effort:
+            // if writing the aborted file itself also fails, that's secondary to the original
+            // error below, which is what actually gets reported and becomes the exit code.
+            let run_wall_time = run_start.elapsed();
+            if let Err(write_err) =
+                session.write_export_json_aborted(&harnesses, run_started_at, run_wall_time, &err)
+            {
+                debug!(?write_err, "failed to write aborted --export-json output");
+            }
+            return Err(err);
+        }
+    };
     let run_wall_time = run_start.elapsed();
+
+    // Written before SARIF/coverage/the final summary, and its own failure is handled rather
+    // than propagated with `?`. Two reasons, both load-bearing:
+    //   1. `print_final_summary` below calls `std::process::exit(1)` directly when any
+    //      harness failed, bypassing the rest of this function entirely -- so
+    //      `--export-json` MUST run before it to have any chance of writing anything for the
+    //      most common, most valuable-to-see case (a failing run), and placing it after
+    //      `write_sarif`/coverage would let *their* unrelated failures skip it too.
+    //   2. Its own failure (e.g. a bad `--export-json` output path) must not masquerade as
+    //      "verification failed": that would make a clean, fully-passing run exit non-zero
+    //      for a reason that has nothing to do with the proof -- indistinguishable, by exit
+    //      code alone, from an actual verification failure.
+    if let Err(write_err) =
+        session.write_export_json(&harnesses, &results, run_started_at, run_wall_time)
+    {
+        util::error(&format!("Failed to write --export-json output: {write_err:#}"));
+    }
 
     if session.args.coverage {
         // We generate a timestamp to save the coverage data in a folder named
@@ -168,7 +211,6 @@ fn verify_project(project: Project, session: KaniSession) -> Result<()> {
     }
 
     session.write_sarif(&results)?;
-    session.write_export_json(&harnesses, &results, run_started_at, run_wall_time)?;
     session.print_final_summary(&results)
 }
 
