@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 use std::ffi::OsString;
 use std::process::ExitCode;
+use std::time::Instant;
 
 use anyhow::Result;
 use autoharness::{autoharness_cargo, autoharness_standalone};
@@ -32,6 +33,7 @@ mod cbmc_output_parser;
 mod cbmc_property_renderer;
 mod concrete_playback;
 mod coverage;
+mod export_json;
 mod harness_runner;
 mod list;
 mod metadata;
@@ -141,7 +143,10 @@ fn verify_project(project: Project, session: KaniSession) -> Result<()> {
 
     // Verification
     let runner = harness_runner::HarnessRunner { sess: &session, project: &project };
+    let run_started_at = OffsetDateTime::now_utc();
+    let run_start = Instant::now();
     let results = runner.check_all_harnesses(&harnesses)?;
+    let run_wall_time = run_start.elapsed();
 
     if session.args.coverage {
         // We generate a timestamp to save the coverage data in a folder named
@@ -163,6 +168,7 @@ fn verify_project(project: Project, session: KaniSession) -> Result<()> {
     }
 
     session.write_sarif(&results)?;
+    session.write_export_json(&results, run_started_at, run_wall_time)?;
     session.print_final_summary(&results)
 }
 

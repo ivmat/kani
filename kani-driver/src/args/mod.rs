@@ -246,6 +246,14 @@ pub struct VerificationArgs {
     #[arg(long, requires("harnesses"))]
     pub exact: bool,
 
+    /// Write a single JSON file summarizing the whole verification run (per-harness
+    /// status, failed properties, cover satisfaction, and provenance such as the
+    /// CBMC version and solver actually used) to the given path, for consumption by
+    /// automation instead of grepping terse text output.
+    /// This feature is unstable and it requires `-Z export-json` to be used.
+    #[arg(long, value_name = "PATH", hide_short_help = true)]
+    pub export_json: Option<PathBuf>,
+
     /// Enable extra pointer checks such as invalid pointers in relation operations and pointer
     /// arithmetic overflow.
     /// This feature is unstable and it may yield false counter examples. It requires
@@ -708,6 +716,11 @@ impl ValidateArgs for VerificationArgs {
                 UnstableFeature::SourceCoverage,
             )?;
             self.common_args.check_unstable(
+                self.export_json.is_some(),
+                "export-json",
+                UnstableFeature::ExportJson,
+            )?;
+            self.common_args.check_unstable(
                 self.output_into_files,
                 "output-into-files",
                 UnstableFeature::UnstableOptions,
@@ -788,6 +801,12 @@ impl ValidateArgs for VerificationArgs {
                 return Err(Error::raw(
                     ErrorKind::ArgumentConflict,
                     "Conflicting options: --sarif isn't compatible with --only-codegen.",
+                ));
+            }
+            if self.export_json.is_some() && self.only_codegen {
+                return Err(Error::raw(
+                    ErrorKind::ArgumentConflict,
+                    "Conflicting options: --export-json isn't compatible with --only-codegen.",
                 ));
             }
             if self.jobs().will_multithread() && self.output_format != OutputFormat::Terse {
@@ -877,6 +896,18 @@ impl ValidateArgs for VerificationArgs {
                 ErrorKind::InvalidValue,
                 format!(
                     "Invalid argument: `--sarif` argument `{}` is a directory",
+                    out_file.display()
+                ),
+            ));
+        }
+        if let Some(out_file) = &self.export_json
+            && out_file.exists()
+            && out_file.is_dir()
+        {
+            return Err(Error::raw(
+                ErrorKind::InvalidValue,
+                format!(
+                    "Invalid argument: `--export-json` argument `{}` is a directory",
                     out_file.display()
                 ),
             ));
@@ -1180,6 +1211,33 @@ mod tests {
         );
         expect_validation_error(
             "kani file.rs --sarif out.sarif --only-codegen",
+            ErrorKind::ArgumentConflict,
+        );
+    }
+
+    /// `--export-json` must be rejected without `-Z export-json` ... (the exact
+    /// defect that shipped unstable-in-name-only in the previous attempt at this
+    /// feature, model-checking/kani#4472).
+    #[test]
+    fn check_export_json_rejected_without_unstable() {
+        let args = vec!["kani", "file.rs", "--export-json", "out.json"];
+        let err =
+            StandaloneArgs::try_parse_from(&args).unwrap().verify_opts.validate().unwrap_err();
+        assert_eq!(err.kind(), ErrorKind::MissingRequiredArgument);
+    }
+
+    /// ... and accepted with it.
+    #[test]
+    fn check_export_json_accepted_with_unstable() {
+        let args =
+            parse_unstable_enabled("--export-json out.json", UnstableFeature::ExportJson).unwrap();
+        assert_eq!(args.verify_opts.export_json, Some(PathBuf::from("out.json")));
+    }
+
+    #[test]
+    fn check_export_json_conflicts() {
+        expect_validation_error(
+            "kani file.rs -Z export-json --export-json out.json --only-codegen",
             ErrorKind::ArgumentConflict,
         );
     }

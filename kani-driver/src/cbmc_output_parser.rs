@@ -74,7 +74,7 @@ struct ResultStruct {
 ///
 /// Note: `reach` is not part of the parsed data, but it's useful to annotate
 /// its reachability status.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Property {
     pub description: String,
     #[serde(rename = "property")]
@@ -212,11 +212,55 @@ impl<'de> serde::Deserialize<'de> for PropertyId {
     }
 }
 
+impl PropertyId {
+    /// Reconstructs the original CBMC-style property ID string (`<function>.<class>.<counter>`,
+    /// or one of the shorter forms) from its parsed representation.
+    ///
+    /// This must remain the exact inverse of the hand-written `Deserialize` impl above,
+    /// including its two synthetic cases:
+    ///  * `class == "recursion"` is CBMC's `<function>.recursion` (or bare `.recursion`) form,
+    ///    which never had a real counter; `Deserialize` always sets `id = 1` for it.
+    ///  * `class == "missing_definition"` is not a real CBMC class name at all -- it's what
+    ///    `Deserialize` uses to remember "the id string had only two dot-separated parts, and
+    ///    the first one didn't look like a class", so on the way back out we must drop it and
+    ///    emit the original two-part form, not a fabricated three-part one.
+    fn to_property_id_string(&self) -> String {
+        if self.class == "recursion" && self.id == 1 {
+            return match &self.fn_name {
+                Some(name) => format!("{name}.recursion"),
+                None => ".recursion".to_string(),
+            };
+        }
+        if self.class == "missing_definition" {
+            return match &self.fn_name {
+                Some(name) => format!("{name}.{}", self.id),
+                None => self.id.to_string(),
+            };
+        }
+        match &self.fn_name {
+            Some(name) => format!("{name}.{}.{}", self.class, self.id),
+            None => format!("{}.{}", self.class, self.id),
+        }
+    }
+}
+
+impl Serialize for PropertyId {
+    /// Hand-written to match the hand-written `Deserialize` above -- there is no derive that
+    /// can invert that custom parsing, so this has to be kept in sync by hand. See the
+    /// round-trip test below.
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_property_id_string())
+    }
+}
+
 /// Struct that represents a CBMC source location.
 ///
 /// Source locations may be completely empty, which is why
 /// all members are optional.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SourceLocation {
     pub column: Option<String>,
     pub file: Option<String>,
@@ -284,7 +328,7 @@ fn filepath(file: String) -> String {
 ///
 /// In general, traces may include more information than this, but this is not
 /// documented anywhere. So we ignore the rest for now.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TraceItem {
     pub step_type: String,
@@ -297,7 +341,7 @@ pub struct TraceItem {
 ///
 /// Note: this struct can have a lot of different fields depending on the value type.
 /// The fields included right now are relevant to primitive types and arrays.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TraceValue {
     pub binary: Option<String>,
     pub data: Option<TraceData>,
@@ -307,13 +351,13 @@ pub struct TraceValue {
 }
 
 /// Struct that represents an element of an array in a trace.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TraceArrayValue {
     pub value: TraceValue,
 }
 
 /// Enum that represents a trace data item.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum TraceData {
     NonBool(String),
@@ -780,5 +824,50 @@ mod tests {
         let result_struct: Result<ResultStruct, _> = serde_json::from_str(data);
         assert!(parser_item.is_ok());
         assert!(result_struct.is_ok());
+    }
+
+    /// `serialize(deserialize(s)) == s` for a real CBMC property id, in its general
+    /// (three-part) form. `PropertyId`'s `Deserialize` is hand-written, and so is its
+    /// `Serialize`; nothing else checks they agree, and a pair that quietly disagreed
+    /// would be exactly the kind of silent defect `--export-json` output could ship for
+    /// a long time before anyone noticed the property ids it prints don't match CBMC's.
+    #[test]
+    fn check_property_id_round_trips_general() {
+        let prop_id_string = "\"alloc::raw_vec::RawVec::<u8>::allocate_in.sanity_check.1\"";
+        let prop_id: PropertyId = serde_json::from_str(prop_id_string).unwrap();
+        let round_tripped = serde_json::to_string(&prop_id).unwrap();
+        assert_eq!(round_tripped, prop_id_string);
+    }
+
+    /// Same round-trip property, for the two-part "class inferred from function name shape"
+    /// form, which `Deserialize` privately relabels as class `missing_definition` -- the
+    /// `Serialize` side must know to drop that synthetic class again on the way out, rather
+    /// than emitting a bogus three-part id CBMC never produced.
+    #[test]
+    fn check_property_id_round_trips_missing_definition() {
+        let prop_id_string = "\"alloc::raw_vec::RawVec::<u8>::allocate_in.1\"";
+        let prop_id: PropertyId = serde_json::from_str(prop_id_string).unwrap();
+        let round_tripped = serde_json::to_string(&prop_id).unwrap();
+        assert_eq!(round_tripped, prop_id_string);
+    }
+
+    /// Same round-trip property, for the two-part "class only, no function" form.
+    #[test]
+    fn check_property_id_round_trips_class_only() {
+        let prop_id_string = "\"assertion.1\"";
+        let prop_id: PropertyId = serde_json::from_str(prop_id_string).unwrap();
+        let round_tripped = serde_json::to_string(&prop_id).unwrap();
+        assert_eq!(round_tripped, prop_id_string);
+    }
+
+    /// Same round-trip property, for the special-cased `.recursion` form (whose real
+    /// counter is discarded and hardcoded back to 1 by `Deserialize`, so this is the one
+    /// case where the round trip depends on that hardcoding staying in sync too).
+    #[test]
+    fn check_property_id_round_trips_recursion() {
+        let prop_id_string = "\"alloc::raw_vec::RawVec::<u8>::allocate_in.recursion\"";
+        let prop_id: PropertyId = serde_json::from_str(prop_id_string).unwrap();
+        let round_tripped = serde_json::to_string(&prop_id).unwrap();
+        assert_eq!(round_tripped, prop_id_string);
     }
 }

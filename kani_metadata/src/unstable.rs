@@ -75,6 +75,11 @@ pub enum UnstableFeature {
     ConcretePlayback,
     /// Allow Kani to link against C code.
     CFfi,
+    /// Enable `--export-json`, a single machine-readable JSON file summarizing an
+    /// entire verification run (per-harness status, failed properties, cover
+    /// satisfaction, and provenance), for consumption by automation instead of
+    /// grepping terse text output.
+    ExportJson,
     /// Kani APIs related to floating-point operations (e.g. `float_to_int_in_range`)
     FloatLib,
     /// Enable function contracts [RFC 9](https://model-checking.github.io/kani/rfc/rfcs/0009-function-contracts.html)

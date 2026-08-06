@@ -38,7 +38,9 @@ impl KaniSession {
         // goto-synthesizer should take the same backend options as cbmc.
         // Backend options include
         // 1. solver options
-        self.handle_solver_args(&harness_metadata.attributes.solver, &mut args)?;
+        // (`handle_solver_args` also returns the resolved solver, but goto-synthesizer
+        // only needs the flags it pushes onto `args`, not the identity.)
+        let _ = self.handle_solver_args(&harness_metadata.attributes.solver, &mut args)?;
         // 2. object-bits option
         if let Some(object_bits) = self.args.cbmc_object_bits() {
             args.push("--object-bits".into());

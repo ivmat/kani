@@ -5,6 +5,7 @@ use anyhow::{Result, bail};
 use kani_metadata::{CbmcSolver, HarnessMetadata};
 use regex::Regex;
 use rustc_demangle::demangle;
+use serde::Serialize;
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 use std::ffi::OsString;
@@ -30,7 +31,7 @@ use crate::util::render_command;
 /// Note: Kissat was marginally better, but it is an external solver which could be more unstable.
 static DEFAULT_SOLVER: CbmcSolver = CbmcSolver::Cadical;
 
-#[derive(Clone, Copy, Debug, Display, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Display, Serialize, PartialEq, Eq)]
 pub enum VerificationStatus {
     Success,
     Failure,
@@ -38,7 +39,7 @@ pub enum VerificationStatus {
 
 /// Represents failed properties in three different categories.
 /// This simplifies the process to determine and format verification results.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize)]
 pub enum FailedProperties {
     // No failures
     None,
@@ -51,7 +52,7 @@ pub enum FailedProperties {
 }
 
 /// The possible CBMC exit statuses
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize)]
 pub enum ExitStatus {
     Timeout,
     OutOfMemory,
@@ -60,7 +61,7 @@ pub enum ExitStatus {
 }
 
 /// Our (kani-driver) notions of CBMC results.
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct VerificationResult {
     /// Whether verification should be considered to have succeeded, or have failed.
     pub status: VerificationStatus,
@@ -77,12 +78,23 @@ pub struct VerificationResult {
     pub generated_concrete_test: bool,
     /// The coverage results
     pub coverage_results: Option<CoverageResults>,
+    /// The solver CBMC actually ran this harness with, resolved (by
+    /// [`KaniSession::handle_solver_args`]) from `--solver` / the harness's `solver`
+    /// attribute / the driver's default, in that priority order.
+    ///
+    /// This is provenance for `--export-json`. It is deliberately *not* the same thing
+    /// as `HarnessAttributes::solver`: that field is only the harness's *request*, and
+    /// recording a request as if it were the fact actually invoked is the defect that had
+    /// months of results claiming `kissat` ran while CaDiCaL did.
+    pub resolved_solver: String,
 }
 
 impl KaniSession {
     /// Verify a goto binary that's been prepared with goto-instrument
     pub fn run_cbmc(&self, file: &Path, harness: &HarnessMetadata) -> Result<VerificationResult> {
-        let args: Vec<OsString> = self.cbmc_flags(file, harness)?;
+        let (args, resolved_solver): (Vec<OsString>, CbmcSolver) =
+            self.cbmc_flags(file, harness)?;
+        let resolved_solver = solver_identity(&resolved_solver);
 
         // TODO get cbmc path from self
         let mut cmd = TokioCommand::new("cbmc");
@@ -90,9 +102,9 @@ impl KaniSession {
 
         let verification_results = if self.args.output_format == crate::args::OutputFormat::Old {
             if self.run_terminal_timeout(cmd).is_err() {
-                VerificationResult::mock_failure()
+                VerificationResult::mock_failure(resolved_solver)
             } else {
-                VerificationResult::mock_success()
+                VerificationResult::mock_success(resolved_solver)
             }
         } else {
             // Add extra argument to receive the output in JSON format.
@@ -100,7 +112,7 @@ impl KaniSession {
             // TODO: move this now that we don't use --visualize
             cmd.arg("--json-ui");
 
-            self.runtime.block_on(self.run_cbmc_piped(cmd, harness))?
+            self.runtime.block_on(self.run_cbmc_piped(cmd, harness, resolved_solver))?
         };
 
         Ok(verification_results)
@@ -110,6 +122,7 @@ impl KaniSession {
         &self,
         mut cmd: TokioCommand,
         harness: &HarnessMetadata,
+        resolved_solver: String,
     ) -> Result<VerificationResult> {
         if self.args.common_args.verbose() {
             println!("[Kani] Running: `{}`", render_command(cmd.as_std()).to_string_lossy());
@@ -149,7 +162,12 @@ impl KaniSession {
 
         if let Ok(output) = res {
             // The timeout wasn't reached
-            Ok(VerificationResult::from(output?, harness.attributes.should_panic, start_time))
+            Ok(VerificationResult::from(
+                output?,
+                harness.attributes.should_panic,
+                start_time,
+                resolved_solver,
+            ))
         } else {
             // An error occurs if the timeout was reached
 
@@ -163,16 +181,19 @@ impl KaniSession {
                 runtime: start_time.elapsed(),
                 generated_concrete_test: false,
                 coverage_results: None,
+                resolved_solver,
             })
         }
     }
 
-    /// "Internal," but also used by call_cbmc_viewer
+    /// "Internal," but also used by call_cbmc_viewer.
+    /// Also returns the solver actually resolved for this harness (see
+    /// [`Self::handle_solver_args`]), for `--export-json` provenance.
     pub fn cbmc_flags(
         &self,
         file: &Path,
         harness_metadata: &HarnessMetadata,
-    ) -> Result<Vec<OsString>> {
+    ) -> Result<(Vec<OsString>, CbmcSolver)> {
         let mut args = self.cbmc_check_flags();
 
         if let Some(object_bits) = self.args.cbmc_object_bits() {
@@ -185,7 +206,8 @@ impl KaniSession {
             args.push(unwind_value.to_string().into());
         }
 
-        self.handle_solver_args(&harness_metadata.attributes.solver, &mut args)?;
+        let resolved_solver =
+            self.handle_solver_args(&harness_metadata.attributes.solver, &mut args)?;
 
         if self.args.run_sanity_checks {
             args.push("--validate-goto-model".into());
@@ -220,7 +242,7 @@ impl KaniSession {
         args.push("--verbosity".into());
         args.push("9".into());
 
-        Ok(args)
+        Ok((args, resolved_solver))
     }
 
     /// Just the flags to CBMC that enable property checking of any sort.
@@ -274,11 +296,16 @@ impl KaniSession {
         args
     }
 
+    /// Resolves which solver CBMC will actually run with (CLI `--solver` overrides the
+    /// harness `solver` attribute, else the driver default) and pushes the corresponding
+    /// CBMC flags onto `args`. Returns the resolved solver, so callers that need to
+    /// *record* what actually ran (as opposed to just requesting it) don't have to
+    /// duplicate this resolution logic -- see `--export-json`'s `resolved_solver`.
     pub fn handle_solver_args(
         &self,
         harness_solver: &Option<CbmcSolver>,
         args: &mut Vec<OsString>,
-    ) -> Result<()> {
+    ) -> Result<CbmcSolver> {
         let solver = if let Some(solver) = &self.args.solver {
             // `--solver` option takes precedence over attributes
             solver
@@ -319,7 +346,22 @@ impl KaniSession {
                 args.push(solver_binary.into());
             }
         }
-        Ok(())
+        Ok(solver.clone())
+    }
+}
+
+/// A human-readable identity for the solver CBMC actually ran with, suitable for
+/// `--export-json` provenance. Kept in a 1:1 match with `KaniSession::handle_solver_args`
+/// above so the recorded identity can never drift from the flags actually passed to CBMC.
+pub fn solver_identity(solver: &CbmcSolver) -> String {
+    match solver {
+        CbmcSolver::Bitwuzla => "bitwuzla".to_string(),
+        CbmcSolver::Cadical => "cadical".to_string(),
+        CbmcSolver::Cvc5 => "cvc5".to_string(),
+        CbmcSolver::Kissat => "kissat".to_string(),
+        CbmcSolver::Minisat => "minisat".to_string(),
+        CbmcSolver::Z3 => "z3".to_string(),
+        CbmcSolver::Binary(solver_binary) => solver_binary.clone(),
     }
 }
 
@@ -336,6 +378,7 @@ impl VerificationResult {
         output: VerificationOutput,
         should_panic: bool,
         start_time: Instant,
+        resolved_solver: String,
     ) -> VerificationResult {
         let runtime = start_time.elapsed();
         let (_, results) = extract_results(output.processed_items);
@@ -351,6 +394,7 @@ impl VerificationResult {
                 runtime,
                 generated_concrete_test: false,
                 coverage_results,
+                resolved_solver,
             }
         } else {
             // We never got results from CBMC - something went wrong (e.g. crash) so it's failure
@@ -366,11 +410,12 @@ impl VerificationResult {
                 runtime,
                 generated_concrete_test: false,
                 coverage_results: None,
+                resolved_solver,
             }
         }
     }
 
-    pub fn mock_success() -> VerificationResult {
+    pub fn mock_success(resolved_solver: String) -> VerificationResult {
         VerificationResult {
             status: VerificationStatus::Success,
             failed_properties: FailedProperties::None,
@@ -378,10 +423,11 @@ impl VerificationResult {
             runtime: Duration::from_secs(0),
             generated_concrete_test: false,
             coverage_results: None,
+            resolved_solver,
         }
     }
 
-    fn mock_failure() -> VerificationResult {
+    fn mock_failure(resolved_solver: String) -> VerificationResult {
         VerificationResult {
             status: VerificationStatus::Failure,
             failed_properties: FailedProperties::Other,
@@ -392,6 +438,7 @@ impl VerificationResult {
             runtime: Duration::from_secs(0),
             generated_concrete_test: false,
             coverage_results: None,
+            resolved_solver,
         }
     }
 
