@@ -168,7 +168,7 @@ fn verify_project(project: Project, session: KaniSession) -> Result<()> {
     }
 
     session.write_sarif(&results)?;
-    session.write_export_json(&results, run_started_at, run_wall_time)?;
+    session.write_export_json(&harnesses, &results, run_started_at, run_wall_time)?;
     session.print_final_summary(&results)
 }
 

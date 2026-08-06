@@ -20,8 +20,9 @@ use crate::harness_runner::HarnessResult;
 use crate::session::KaniSession;
 use crate::version::KANI_VERSION;
 use anyhow::{Context, Result};
-use kani_metadata::{AssignsContract, HarnessAttributes};
+use kani_metadata::{AssignsContract, HarnessAttributes, HarnessMetadata, find_proof_harnesses};
 use serde::Serialize;
+use std::collections::BTreeSet;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
@@ -78,11 +79,18 @@ impl KaniSession {
     /// Write the `--export-json` output for this run.
     /// Early-returns (writes nothing) when `--export-json` was not passed.
     ///
+    /// `matched_harnesses` is the post-`determine_targets`, pre-verification harness list
+    /// (i.e. what `main.rs` gets back from `determine_targets`, *not* derived from `results`):
+    /// with `--fail-fast`, `results` can be truncated to a single harness on the first
+    /// failure, which would make deriving the matched set from `results` alone wrongly
+    /// report other, unreached-but-genuinely-matched harnesses' filters as unmatched.
+    ///
     /// `started_at`/`wall_time` describe the whole verification run (all harnesses),
     /// not any single harness -- callers should measure them around
     /// `HarnessRunner::check_all_harnesses`.
     pub fn write_export_json(
         &self,
+        matched_harnesses: &[&HarnessMetadata],
         results: &[HarnessResult<'_>],
         started_at: OffsetDateTime,
         wall_time: Duration,
@@ -102,6 +110,11 @@ impl KaniSession {
             harness_selection: HarnessSelectionExport {
                 requested_filters: self.args.harnesses.clone(),
                 exact: self.args.exact,
+                unmatched_filters: compute_unmatched_filters(
+                    &self.args.harnesses,
+                    matched_harnesses,
+                    self.args.exact,
+                ),
             },
             started_at,
             wall_time,
@@ -109,6 +122,38 @@ impl KaniSession {
         let export = ExportedRun::from_harness_results(results, ctx);
         write_export_json_file(path, &export)
     }
+}
+
+/// Requested `--harness` filters that matched *zero* harnesses among `matched_harnesses`
+/// (the actual post-filtering set for this run), computed via Kani's own matching predicate
+/// (`find_proof_harnesses`, the same function `determine_targets` uses to double-check the
+/// compiler's filtering) rather than reimplementing the exact-name/unqualified-name/substring
+/// rules here, so this cannot silently drift from real filtering behavior.
+///
+/// With `--exact`, `determine_targets` already bails out with a hard error before
+/// verification ever runs if any filter matches nothing -- so in practice this only ever
+/// returns non-empty when `--exact` was *not* passed. That asymmetry is deliberate upstream
+/// behavior, not a bug in this function: without `--exact`, a filter that matches nothing is
+/// otherwise completely silent (`kani --harness A --harness TYPO` verifies only `A`, reports
+/// success, and nothing else indicates `TYPO` matched zero harnesses). This is that signal.
+///
+/// `matched_harnesses` being the union of every filter's matches (not the full, pre-filter
+/// crate harness list) does not weaken this: a single filter's match set is always a subset
+/// of that union, so re-testing each filter against the union gives the identical answer as
+/// testing against the full harness list would.
+fn compute_unmatched_filters(
+    requested: &[String],
+    matched_harnesses: &[&HarnessMetadata],
+    exact: bool,
+) -> Vec<String> {
+    requested
+        .iter()
+        .filter(|filter| {
+            let targets: BTreeSet<&String> = BTreeSet::from([*filter]);
+            find_proof_harnesses(&targets, matched_harnesses.iter().copied(), exact).is_empty()
+        })
+        .cloned()
+        .collect()
 }
 
 fn write_export_json_file(path: &Path, export: &ExportedRun) -> Result<()> {
@@ -163,11 +208,11 @@ struct ExportedRun {
     /// The `-Z` unstable features enabled for this run (kebab-case, as passed on the command
     /// line, e.g. `"quantifiers"`). See `RunContext::enabled_unstable_features`.
     enabled_unstable_features: Vec<String>,
-    /// The `--harness` filters requested and whether `--exact` was set, so a consumer can
-    /// notice under-matching (a filter that matched fewer harnesses than intended) by
-    /// comparing this against `harnesses`/`summary.total`, rather than a smaller-than-
-    /// expected run silently reporting success for what it did run and saying nothing about
-    /// what it skipped.
+    /// The `--harness` filters requested, whether `--exact` was set, and (see
+    /// `compute_unmatched_filters`) which requested filters matched zero harnesses -- so a
+    /// consumer can directly see under-matching rather than a smaller-than-expected run
+    /// silently reporting success for what it did run and saying nothing about what it
+    /// skipped.
     harness_selection: HarnessSelectionExport,
     target: &'static str,
     /// RFC3339-ish UTC timestamp (`YYYY-MM-DDTHH:MM:SSZ`) for when harness checking began.
@@ -186,10 +231,13 @@ struct HarnessSelectionExport {
     /// in the crate ran).
     requested_filters: Vec<String>,
     /// Whether `--exact` was set: without it, `requested_filters` are substring matches, so
-    /// more harnesses can match than a consumer expects; with it, a filter that matches
-    /// nothing is already a hard error (`kani-driver` refuses to proceed) rather than a
-    /// silent under-match.
+    /// more harnesses can match than a consumer expects.
     exact: bool,
+    /// Requested filters that matched zero harnesses in this run -- see
+    /// `compute_unmatched_filters`'s doc comment for why this is necessary (in short: without
+    /// `--exact`, nothing else in Kani's output says so, and a consumer would otherwise have
+    /// to reimplement Kani's own matching rules to work it out).
+    unmatched_filters: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -589,6 +637,7 @@ mod tests {
             harness_selection: HarnessSelectionExport {
                 requested_filters: Vec::new(),
                 exact: false,
+                unmatched_filters: Vec::new(),
             },
             started_at: started(),
             wall_time: Duration::from_millis(1),
@@ -1076,6 +1125,7 @@ mod tests {
             harness_selection: HarnessSelectionExport {
                 requested_filters: vec!["check_volatile_load_wrapper_contract".to_string()],
                 exact: true,
+                unmatched_filters: Vec::new(),
             },
             ..test_context()
         };
@@ -1102,5 +1152,80 @@ mod tests {
 
         assert!(v["harness_selection"]["requested_filters"].as_array().unwrap().is_empty());
         assert_eq!(v["harness_selection"]["exact"], false);
+        assert!(v["harness_selection"]["unmatched_filters"].as_array().unwrap().is_empty());
+    }
+
+    /// The precise scenario this field exists for: a non-exact run with one filter that
+    /// matches a real harness and one that matches nothing (a typo). Kani itself is silent
+    /// about the typo -- it just verifies the one harness that matched and reports success --
+    /// so `unmatched_filters` must name exactly the typo, and the run must still be reported
+    /// as successful (this field is informational, not a failure signal).
+    #[test]
+    fn compute_unmatched_filters_flags_the_nonmatching_one() {
+        let h = harness("check_volatile_load_wrapper_contract");
+        let matched: Vec<&HarnessMetadata> = vec![&h];
+        let requested = vec![
+            "check_volatile_load_wrapper_contract".to_string(),
+            "check_totally_bogus_typo".to_string(),
+        ];
+
+        let unmatched = compute_unmatched_filters(&requested, &matched, false);
+
+        assert_eq!(unmatched, vec!["check_totally_bogus_typo".to_string()]);
+    }
+
+    /// A filter that matches via Kani's substring rule (not just an exact name) must not be
+    /// flagged as unmatched -- this exercises the actual matching predicate
+    /// (`find_proof_harnesses`), not a simplified reimplementation of it.
+    #[test]
+    fn compute_unmatched_filters_respects_substring_matching() {
+        let h = harness("mymod::check_volatile_load_wrapper_contract");
+        let matched: Vec<&HarnessMetadata> = vec![&h];
+        let requested = vec!["volatile_load".to_string()];
+
+        let unmatched = compute_unmatched_filters(&requested, &matched, false);
+
+        assert!(unmatched.is_empty());
+    }
+
+    /// The same substring filter, under `--exact`, must NOT match (it isn't the fully
+    /// qualified name) -- and must therefore be reported as unmatched (in real usage,
+    /// `determine_targets` would have already bailed with a hard error before this point is
+    /// ever reached, but the predicate itself must still be exact-aware).
+    #[test]
+    fn compute_unmatched_filters_exact_mode_rejects_substring() {
+        let h = harness("mymod::check_volatile_load_wrapper_contract");
+        let matched: Vec<&HarnessMetadata> = vec![&h];
+        let requested = vec!["volatile_load".to_string()];
+
+        let unmatched = compute_unmatched_filters(&requested, &matched, true);
+
+        assert_eq!(unmatched, vec!["volatile_load".to_string()]);
+    }
+
+    /// An all-matching request (every filter matches at least one harness) must come back
+    /// with an empty `unmatched_filters`.
+    #[test]
+    fn compute_unmatched_filters_empty_when_everything_matched() {
+        let h1 = harness("check_a");
+        let h2 = harness("check_b");
+        let matched: Vec<&HarnessMetadata> = vec![&h1, &h2];
+        let requested = vec!["check_a".to_string(), "check_b".to_string()];
+
+        let unmatched = compute_unmatched_filters(&requested, &matched, false);
+
+        assert!(unmatched.is_empty());
+    }
+
+    /// No filter requested at all must never produce any unmatched filters (there is nothing
+    /// to have failed to match).
+    #[test]
+    fn compute_unmatched_filters_empty_when_no_filter_requested() {
+        let h = harness("check_a");
+        let matched: Vec<&HarnessMetadata> = vec![&h];
+
+        let unmatched = compute_unmatched_filters(&[], &matched, false);
+
+        assert!(unmatched.is_empty());
     }
 }
