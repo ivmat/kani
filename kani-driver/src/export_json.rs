@@ -4,9 +4,14 @@
 //! `--export-json`: one JSON file per verification run, for automated consumption instead of
 //! grepping terse text output. Answers Kani issue #942.
 //!
-//! Contract: a *missing* file means verification never began (compilation error, or a
-//! rejected `--harness` filter). Once it begins, a file is always written, even on an abort
-//! (`outcome.kind != "COMPLETED"`).
+//! Contract: the target file is deleted at the start of the run (`write_export_json_file`),
+//! before anything is written -- so a file that *exists* at this path was written by this
+//! run's completion path, never a stale leftover from an earlier one. A *missing* file means
+//! this run did not complete its export: that covers "verification never began" (compilation
+//! error, a rejected `--harness` filter) but also an export failure (unwritable path, disk
+//! full) and abnormal termination (OOM-kill, Ctrl-C) -- none of those leave a file behind, and
+//! none of them are distinguishable from each other by absence alone. An export failure is
+//! reported like other write errors but never changes the run's verdict.
 
 use crate::call_cbmc::{ExitStatus, FailedProperties, VerificationStatus, resolve_unwind_value};
 use crate::cbmc_output_parser::{CheckStatus, Property};
@@ -148,6 +153,7 @@ impl KaniSession {
                     overflow: self.args.checks.overflow_on(),
                     unwinding: self.args.checks.unwinding_on(),
                     undefined_function: self.args.checks.undefined_function_on(),
+                    assertion_reach_checks: self.args.assertion_reach_checks(),
                 },
                 // The honest comparability limit: we cannot see what this smuggles (e.g. a
                 // different solver, per `cbmc_args_may_override_solver`), so we record it
@@ -193,6 +199,24 @@ fn write_export_json_file(path: &Path, export: &ExportedRun) -> Result<()> {
         std::fs::create_dir_all(parent).with_context(|| {
             format!("Failed to create --export-json output directory `{}`", parent.display())
         })?;
+    }
+
+    // Delete any pre-existing file at this path before writing: without this, a run that dies
+    // mid-way (export failure, OOM-kill, Ctrl-C -- everything short of the `File::create` +
+    // `to_writer_pretty` + final write below all succeeding) leaves a stale file from an
+    // *earlier* run sitting at the target path, indistinguishable from this run's real output.
+    // Deleting first makes "a file exists at this path" mean "this run's completion path wrote
+    // it" -- see the module doc comment. `NotFound` is the expected common case (no prior run);
+    // any other removal failure is reported the same way as other export failures below,
+    // without touching the verdict.
+    match std::fs::remove_file(path) {
+        Ok(()) => {}
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => {
+            return Err(e).with_context(|| {
+                format!("Failed to remove stale --export-json output file `{}`", path.display())
+            });
+        }
     }
 
     let file = File::create(path).with_context(|| {
@@ -329,6 +353,13 @@ struct ChecksFlags {
     overflow: bool,
     unwinding: bool,
     undefined_function: bool,
+    /// Whether Kani inserted reachability checks ahead of ordinary assertions
+    /// (`--no-assertion-reach-checks` flips this to `false`). This is the flag the schema's
+    /// vacuity signal depends on: with reach-checks off, an assertion made unreachable by a
+    /// contradictory `kani::assume` reports as `checks.success` instead of
+    /// `checks.unreachable`, silently defeating `ChecksExport`'s vacuity story. Record it so a
+    /// consumer can tell the two situations apart.
+    assertion_reach_checks: bool,
 }
 
 /// Same tagged shape at both harness and run level. `Completed.verdict` is
@@ -392,6 +423,9 @@ struct HarnessExport {
     resolved_unwind: Option<u32>,
     generated_concrete_test: bool,
     resources: ResourcesExport,
+    /// Count of properties this schema accounts for: `checks.total + covers.total`. Excludes
+    /// `code_coverage` properties (`--coverage`'s COVERED/UNCOVERED), which this schema does
+    /// not export -- see the exclusion in `from_harness_result`.
     n_properties: usize,
     n_failed: usize,
     /// `NONE`/`PANICS_ONLY`/`OTHER`/`ERROR` verbatim from `determine_failed_properties`.
@@ -686,7 +720,17 @@ impl HarnessExport {
             covers,
         ) = match &result.results {
             Ok(properties) => {
-                let n_properties = properties.len();
+                // Excludes `code_coverage` properties (COVERED/UNCOVERED, present only under
+                // `--coverage`): they land in neither `checks` (excluded, see
+                // `ChecksExport::from_properties`) nor `covers` (a different property class
+                // entirely, see `CoversExport::from_properties`), and this schema does not
+                // export them at all today. Counting them here without a place to bucket them
+                // would break the exhaustive-partition invariant
+                // `n_properties == checks.total + covers.total`, so we hold the invariant by
+                // scoping `n_properties` to only the properties this schema actually accounts
+                // for.
+                let n_properties =
+                    properties.iter().filter(|p| !p.is_code_coverage_property()).count();
                 // Mirrors `call_cbmc::determine_failed_properties`: `Error` fails a
                 // harness even with zero `Failure`-status properties.
                 let failed_properties: Vec<PropertyExport> = properties
@@ -850,6 +894,7 @@ mod tests {
                     overflow: true,
                     unwinding: true,
                     undefined_function: true,
+                    assertion_reach_checks: true,
                 },
                 cbmc_args: Vec::new(),
             },
@@ -1008,6 +1053,30 @@ mod tests {
         let v = serde_json::to_value(export_one(hr)).unwrap();
         assert_eq!(v["harnesses"][0]["checks"]["total"], 1);
         assert_eq!(v["harnesses"][0]["covers"]["total"], 1);
+    }
+
+    /// `--coverage` interleaves `code_coverage` properties (COVERED/UNCOVERED) with ordinary
+    /// checks and covers. This schema exports neither in a dedicated bucket, so `n_properties`
+    /// must exclude them -- otherwise `n_properties > checks.total + covers.total`, breaking
+    /// the exhaustive-partition invariant the two buckets are supposed to hold together.
+    #[test]
+    fn export_n_properties_excludes_code_coverage_under_coverage() {
+        let h = harness("coverage_harness");
+        let properties = vec![
+            property("assertion", 1, CheckStatus::Success),
+            property("cover", 1, CheckStatus::Satisfied),
+            property("code_coverage", 1, CheckStatus::Covered),
+            property("code_coverage", 2, CheckStatus::Uncovered),
+        ];
+        let result = success_result(properties, Some("cadical"));
+        let hr = HarnessResult { harness: &h, result };
+
+        let v = serde_json::to_value(export_one(hr)).unwrap();
+        let hj = &v["harnesses"][0];
+        let checks_total = hj["checks"]["total"].as_u64().unwrap();
+        let covers_total = hj["covers"]["total"].as_u64().unwrap();
+        assert_eq!(hj["n_properties"], 2, "excludes the two code_coverage properties");
+        assert_eq!(hj["n_properties"].as_u64().unwrap(), checks_total + covers_total);
     }
 
     #[test]
@@ -1214,6 +1283,7 @@ mod tests {
                     overflow: true,
                     unwinding: true,
                     undefined_function: true,
+                    assertion_reach_checks: false,
                 },
                 cbmc_args: vec!["--object-bits".to_string(), "16".to_string()],
             },
@@ -1224,6 +1294,7 @@ mod tests {
         assert_eq!(v["harness_selection"]["exact"], true);
         assert_eq!(v["harness_selection"]["matched_count"], 1);
         assert_eq!(v["configuration"]["checks"]["memory_safety"], false);
+        assert_eq!(v["configuration"]["checks"]["assertion_reach_checks"], false);
         assert_eq!(
             v["configuration"]["cbmc_args"].as_array().unwrap(),
             &vec![
@@ -1399,6 +1470,40 @@ mod tests {
         let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
         let v = serde_json::to_value(export_one(hr)).unwrap();
         assert!(v["harnesses"][0]["resources"]["peak_memory_bytes"].is_null());
+    }
+
+    /// A stale file from an earlier run must not survive: `write_export_json_file` deletes
+    /// whatever is at the target path before writing, so its content is always this call's,
+    /// never a leftover (the vacuous case a "missing file" contract cannot express).
+    #[test]
+    fn write_export_json_file_overwrites_stale_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("export.json");
+        std::fs::write(&path, b"stale content from an earlier, crashed run").unwrap();
+
+        let h = harness("h");
+        let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
+        let export = export_one(hr);
+        write_export_json_file(&path, &export).unwrap();
+
+        let contents = std::fs::read_to_string(&path).unwrap();
+        assert!(!contents.contains("stale content"));
+        assert!(contents.contains("\"schema_version\""));
+    }
+
+    /// Removal of a genuinely absent file (the common case: no prior run at this path) must
+    /// not be treated as an error.
+    #[test]
+    fn write_export_json_file_succeeds_when_no_stale_file_present() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("fresh").join("export.json");
+
+        let h = harness("h");
+        let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
+        let export = export_one(hr);
+        write_export_json_file(&path, &export).unwrap();
+
+        assert!(path.exists());
     }
 
     #[test]
