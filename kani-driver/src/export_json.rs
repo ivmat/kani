@@ -4,14 +4,25 @@
 //! `--export-json`: one JSON file per verification run, for automated consumption instead of
 //! grepping terse text output. Answers Kani issue #942.
 //!
-//! Contract: the target file is deleted at the start of the run (`write_export_json_file`),
-//! before anything is written -- so a file that *exists* at this path was written by this
-//! run's completion path, never a stale leftover from an earlier one. A *missing* file means
-//! this run did not complete its export: that covers "verification never began" (compilation
-//! error, a rejected `--harness` filter) but also an export failure (unwritable path, disk
-//! full) and abnormal termination (OOM-kill, Ctrl-C) -- none of those leave a file behind, and
-//! none of them are distinguishable from each other by absence alone. An export failure is
-//! reported like other write errors but never changes the run's verdict.
+//! Contract: `write_export_json_file` writes the export to a temporary file in the same
+//! directory as the target, `sync_all`s it, then `rename`s it onto the target -- an atomic
+//! replace on the same filesystem. A file that *exists* at the target path is therefore always
+//! a *complete* export: there is no way to observe a half-written JSON file there, because the
+//! target name never refers to the in-progress write. A *missing* file means this run did not
+//! complete its export: that covers "verification never began" (compilation error, a rejected
+//! `--harness` filter) but also an export failure (unwritable path, disk full) and abnormal
+//! termination (OOM-kill, Ctrl-C) -- none of those leave a file behind, and none of them are
+//! distinguishable from each other by absence alone. An export failure is reported like other
+//! write errors but never changes the run's verdict.
+//!
+//! We still delete any pre-existing file at the target path *before* starting the write (not
+//! for the completeness guarantee above -- the rename already gives us that -- but to bound a
+//! different failure mode: a run that dies before ever reaching the rename, e.g. it crashes
+//! while still producing harness results, must not leave an *earlier* run's file sitting at
+//! the target, wrongly telling a consumer this run produced it. Without the upfront delete,
+//! "the file exists" would mean "some run, not necessarily this one, completed" -- the
+//! temp+rename step alone only protects against *this* run's own write being incomplete, not
+//! against it never starting a write at all.
 
 use crate::call_cbmc::{ExitStatus, FailedProperties, VerificationStatus, resolve_unwind_value};
 use crate::cbmc_output_parser::{CheckStatus, Property};
@@ -154,6 +165,8 @@ impl KaniSession {
                     unwinding: self.args.checks.unwinding_on(),
                     undefined_function: self.args.checks.undefined_function_on(),
                     assertion_reach_checks: self.args.assertion_reach_checks(),
+                    ignore_global_asm: self.args.ignore_global_asm,
+                    extra_pointer_checks: self.args.extra_pointer_checks,
                 },
                 // The honest comparability limit: we cannot see what this smuggles (e.g. a
                 // different solver, per `cbmc_args_may_override_solver`), so we record it
@@ -201,14 +214,11 @@ fn write_export_json_file(path: &Path, export: &ExportedRun) -> Result<()> {
         })?;
     }
 
-    // Delete any pre-existing file at this path before writing: without this, a run that dies
-    // mid-way (export failure, OOM-kill, Ctrl-C -- everything short of the `File::create` +
-    // `to_writer_pretty` + final write below all succeeding) leaves a stale file from an
-    // *earlier* run sitting at the target path, indistinguishable from this run's real output.
-    // Deleting first makes "a file exists at this path" mean "this run's completion path wrote
-    // it" -- see the module doc comment. `NotFound` is the expected common case (no prior run);
-    // any other removal failure is reported the same way as other export failures below,
-    // without touching the verdict.
+    // Delete any pre-existing file at this path before we even start writing -- see the module
+    // doc comment for why this is still needed alongside the atomic rename below (it bounds a
+    // *different* failure mode: dying before the rename, not a truncated write at the target).
+    // `NotFound` is the expected common case (no prior run); any other removal failure is
+    // reported the same way as other export failures below, without touching the verdict.
     match std::fs::remove_file(path) {
         Ok(()) => {}
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
@@ -219,14 +229,58 @@ fn write_export_json_file(path: &Path, export: &ExportedRun) -> Result<()> {
         }
     }
 
-    let file = File::create(path).with_context(|| {
-        format!("Failed to create --export-json output file `{}`", path.display())
-    })?;
-    let mut writer = BufWriter::new(file);
-    serde_json::to_writer_pretty(&mut writer, export)
-        .with_context(|| format!("Failed to write --export-json output to `{}`", path.display()))?;
-    writer.write_all(b"\n")?;
-    Ok(())
+    // Write to a same-directory temp file, then `rename` onto the target: `rename` within one
+    // filesystem is atomic, so the target path never observably holds a partial write -- see
+    // the module doc comment. Same directory (not `std::env::temp_dir()`) so the rename is
+    // guaranteed to stay on one filesystem, where POSIX `rename` is atomic; a cross-filesystem
+    // rename can fall back to a non-atomic copy, which would defeat the whole point.
+    let tmp_path = tmp_path_for(path);
+    let write_result = (|| -> Result<()> {
+        let file = File::create(&tmp_path).with_context(|| {
+            format!("Failed to create --export-json temporary file `{}`", tmp_path.display())
+        })?;
+        let mut writer = BufWriter::new(file);
+        serde_json::to_writer_pretty(&mut writer, export).with_context(|| {
+            format!("Failed to write --export-json output to `{}`", tmp_path.display())
+        })?;
+        writer.write_all(b"\n")?;
+        // Flush our own buffer, then ask the OS to persist the underlying file to storage
+        // before the rename: without this, the rename can be durable while the data it points
+        // to is not (a crash right after could leave the target pointing at zero-length or
+        // stale disk contents on some filesystems/power-loss scenarios).
+        let file = writer.into_inner().with_context(|| {
+            format!("Failed to flush --export-json temporary file `{}`", tmp_path.display())
+        })?;
+        file.sync_all().with_context(|| {
+            format!("Failed to sync --export-json temporary file `{}`", tmp_path.display())
+        })?;
+        drop(file);
+        std::fs::rename(&tmp_path, path).with_context(|| {
+            format!(
+                "Failed to rename --export-json temporary file `{}` to `{}`",
+                tmp_path.display(),
+                path.display()
+            )
+        })?;
+        Ok(())
+    })();
+
+    if write_result.is_err() {
+        // Best-effort: don't let a cleanup failure shadow the real error above.
+        let _ = std::fs::remove_file(&tmp_path);
+    }
+    write_result
+}
+
+/// Same directory as `path`, so the later `rename` is guaranteed to stay on one filesystem
+/// (see `write_export_json_file`). File name is `path`'s file name with a `.tmp` suffix, which
+/// cannot collide with a concurrent `--export-json` run at a *different* target path; a
+/// concurrent run at the *same* target path is not a case this module tries to serialize
+/// against (callers don't run two Kani invocations at one `--export-json` path concurrently).
+fn tmp_path_for(path: &Path) -> std::path::PathBuf {
+    let mut file_name = path.file_name().unwrap_or_default().to_os_string();
+    file_name.push(".tmp");
+    path.with_file_name(file_name)
 }
 
 /// Invokes CBMC once for its version (the driver otherwise doesn't know which build ran --
@@ -360,6 +414,17 @@ struct ChecksFlags {
     /// `checks.unreachable`, silently defeating `ChecksExport`'s vacuity story. Record it so a
     /// consumer can tell the two situations apart.
     assertion_reach_checks: bool,
+    /// `--ignore-global-asm`: when `true`, Kani did not error out on `global_asm!` in the
+    /// crate, so any code reachable only through that inline assembly is simply absent from
+    /// the model -- a proof against a crate with this set can vacuously pass by never seeing
+    /// the assembly's effects at all.
+    ignore_global_asm: bool,
+    /// `--extra-pointer-checks`: when `true`, Kani additionally checks for invalid pointers in
+    /// relational operations and pointer-arithmetic overflow. These are real obligations CBMC
+    /// verifies (not vacuity risks like the two fields above) -- but they change which
+    /// properties exist at all, so a run with this on and a run with it off are not
+    /// apples-to-apples comparable via `checks.total`/`checks.success` alone.
+    extra_pointer_checks: bool,
 }
 
 /// Same tagged shape at both harness and run level. `Completed.verdict` is
@@ -890,6 +955,8 @@ mod tests {
                     unwinding: true,
                     undefined_function: true,
                     assertion_reach_checks: true,
+                    ignore_global_asm: false,
+                    extra_pointer_checks: false,
                 },
                 cbmc_args: Vec::new(),
             },
@@ -1278,6 +1345,8 @@ mod tests {
                     unwinding: true,
                     undefined_function: true,
                     assertion_reach_checks: false,
+                    ignore_global_asm: true,
+                    extra_pointer_checks: true,
                 },
                 cbmc_args: vec!["--object-bits".to_string(), "16".to_string()],
             },
@@ -1289,6 +1358,8 @@ mod tests {
         assert_eq!(v["harness_selection"]["matched_count"], 1);
         assert_eq!(v["configuration"]["checks"]["memory_safety"], false);
         assert_eq!(v["configuration"]["checks"]["assertion_reach_checks"], false);
+        assert_eq!(v["configuration"]["checks"]["ignore_global_asm"], true);
+        assert_eq!(v["configuration"]["checks"]["extra_pointer_checks"], true);
         assert_eq!(
             v["configuration"]["cbmc_args"].as_array().unwrap(),
             &vec![
@@ -1449,8 +1520,10 @@ mod tests {
     }
 
     /// A stale file from an earlier run must not survive: `write_export_json_file` deletes
-    /// whatever is at the target path before writing, so its content is always this call's,
-    /// never a leftover (the vacuous case a "missing file" contract cannot express).
+    /// whatever is at the target path up front, then writes the new content via a
+    /// same-directory temp file and an atomic rename, so its content is always this call's,
+    /// never a leftover (the vacuous case a "missing file" contract cannot express). Also
+    /// checks the temp file left no trace at `<path>.tmp` once the rename lands.
     #[test]
     fn write_export_json_file_overwrites_stale_file() {
         let dir = tempfile::tempdir().unwrap();
@@ -1465,6 +1538,7 @@ mod tests {
         let contents = std::fs::read_to_string(&path).unwrap();
         assert!(!contents.contains("stale content"));
         assert!(contents.contains("\"schema_version\""));
+        assert!(!tmp_path_for(&path).exists(), "temp file must not survive a successful export");
     }
 
     /// Removal of a genuinely absent file (the common case: no prior run at this path) must
@@ -1480,6 +1554,34 @@ mod tests {
         write_export_json_file(&path, &export).unwrap();
 
         assert!(path.exists());
+        assert!(!tmp_path_for(&path).exists());
+    }
+
+    /// A write that fails before the rename (here: the temp file can't even be created,
+    /// permission denied on its directory) must leave no target file behind -- there was
+    /// nothing to rename, so the "a file at the target is always a complete export" contract
+    /// holds trivially -- and must not leave its temp file lying around either.
+    #[test]
+    #[cfg(unix)]
+    fn write_export_json_file_leaves_no_target_on_failed_write() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("export.json");
+
+        let h = harness("h");
+        let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
+        let export = export_one(hr);
+
+        let readonly = std::fs::Permissions::from_mode(0o555);
+        std::fs::set_permissions(dir.path(), readonly).unwrap();
+        let result = write_export_json_file(&path, &export);
+        // Restore write permission so `tempfile` can clean up the directory on drop.
+        std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o755)).unwrap();
+
+        assert!(result.is_err(), "write into a read-only directory must fail");
+        assert!(!path.exists(), "a failed write must leave no target file");
+        assert!(!tmp_path_for(&path).exists(), "a failed write must leave no temp file");
     }
 
     #[test]
