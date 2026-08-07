@@ -447,7 +447,6 @@ struct HarnessExport {
 #[derive(Serialize)]
 struct ResourcesExport {
     verification_time_s: f64,
-    peak_memory_bytes: Option<u64>,
 }
 
 #[derive(Serialize)]
@@ -785,10 +784,7 @@ impl HarnessExport {
             resolved_solver: result.resolved_solver.clone(),
             resolved_unwind,
             generated_concrete_test: result.generated_concrete_test,
-            resources: ResourcesExport {
-                verification_time_s: result.runtime.as_secs_f64(),
-                peak_memory_bytes: result.peak_memory_bytes,
-            },
+            resources: ResourcesExport { verification_time_s: result.runtime.as_secs_f64() },
             n_properties,
             n_failed,
             failure_kind: result.failed_properties,
@@ -865,7 +861,6 @@ mod tests {
             coverage_results: None,
             resolved_solver: resolved_solver.map(str::to_string),
             warnings: Vec::new(),
-            peak_memory_bytes: None,
         }
     }
 
@@ -1091,7 +1086,6 @@ mod tests {
             coverage_results: None,
             resolved_solver: Some("cadical".to_string()),
             warnings: Vec::new(),
-            peak_memory_bytes: None,
         };
 
         let timeout_v = serde_json::to_value(export_one(HarnessResult {
@@ -1452,24 +1446,6 @@ mod tests {
         let hr = HarnessResult { harness: &h, result };
         let v = serde_json::to_value(export_one(hr)).unwrap();
         assert_eq!(v["harnesses"][0]["warnings"][0]["message"], "ignoring forall");
-    }
-
-    #[test]
-    fn export_peak_memory_passthrough() {
-        let h = harness("h");
-        let mut result = success_result(vec![], Some("cadical"));
-        result.peak_memory_bytes = Some(2_180_136_000);
-        let hr = HarnessResult { harness: &h, result };
-        let v = serde_json::to_value(export_one(hr)).unwrap();
-        assert_eq!(v["harnesses"][0]["resources"]["peak_memory_bytes"], 2_180_136_000_u64);
-    }
-
-    #[test]
-    fn export_peak_memory_null_when_unmeasured() {
-        let h = harness("h");
-        let hr = HarnessResult { harness: &h, result: success_result(vec![], Some("cadical")) };
-        let v = serde_json::to_value(export_one(hr)).unwrap();
-        assert!(v["harnesses"][0]["resources"]["peak_memory_bytes"].is_null());
     }
 
     /// A stale file from an earlier run must not survive: `write_export_json_file` deletes

@@ -107,10 +107,6 @@ pub struct VerificationResult {
     /// obligation that a green result otherwise hides completely). No taxonomy: free text,
     /// non-contractual, for `--export-json` only.
     pub warnings: Vec<String>,
-    /// Peak RSS in bytes across CBMC and its descendants (e.g. an external SAT solver),
-    /// via `getrusage(RUSAGE_CHILDREN)`. `None` -- never a guess -- whenever it cannot be
-    /// honestly attributed to this specific harness; see `peak_memory_delta_bytes`.
-    pub peak_memory_bytes: Option<u64>,
 }
 
 impl KaniSession {
@@ -158,9 +154,6 @@ impl KaniSession {
         if self.args.common_args.verbose() {
             println!("[Kani] Running: `{}`", render_command(cmd.as_std()).to_string_lossy());
         }
-        // See `peak_memory_delta_bytes`: only meaningful single-threaded.
-        let peak_memory_before =
-            if self.args.jobs().will_multithread() { None } else { getrusage_children_maxrss_kb() };
 
         // Spawn the CBMC process and process its output below
         let mut cbmc_process = cmd
@@ -197,13 +190,11 @@ impl KaniSession {
 
         if let Ok(output) = res {
             // The timeout wasn't reached
-            let peak_memory_bytes = peak_memory_before.and_then(peak_memory_delta_bytes);
             Ok(VerificationResult::from(
                 output?,
                 harness.attributes.should_panic,
                 start_time,
                 resolved_solver,
-                peak_memory_bytes,
             ))
         } else {
             // An error occurs if the timeout was reached
@@ -220,7 +211,6 @@ impl KaniSession {
                 coverage_results: None,
                 resolved_solver,
                 warnings: Vec::new(),
-                peak_memory_bytes: None,
             })
         }
     }
@@ -479,38 +469,6 @@ fn extract_warnings(items: &[ParserItem]) -> Vec<String> {
         .collect()
 }
 
-/// `getrusage(RUSAGE_CHILDREN).ru_maxrss` in KiB (Linux only -- other platforms use different
-/// units or don't have this field). `None` if unavailable.
-#[cfg(target_os = "linux")]
-fn getrusage_children_maxrss_kb() -> Option<i64> {
-    let mut usage: libc::rusage = unsafe { std::mem::zeroed() };
-    // SAFETY: `usage` is a correctly-sized out-param for a standard, precondition-free read
-    // of kernel-maintained accounting.
-    if unsafe { libc::getrusage(libc::RUSAGE_CHILDREN, &mut usage) } == 0 {
-        Some(usage.ru_maxrss)
-    } else {
-        None
-    }
-}
-
-#[cfg(not(target_os = "linux"))]
-fn getrusage_children_maxrss_kb() -> Option<i64> {
-    None
-}
-
-/// `RUSAGE_CHILDREN` is a running MAXIMUM across every child this process has ever reaped
-/// (not a per-child figure, and not summable), and it propagates through a child's own
-/// `wait()` calls on its descendants (so an external solver spawned by CBMC is included). A
-/// value read after one specific child is only honestly attributable to it if it is a NEW
-/// record versus `before_kb` (measured immediately before spawning) -- otherwise some earlier
-/// process already set a higher mark and we cannot tell how much of it is this child's.
-/// Callers only attempt this single-threaded: under `--jobs`, the counter is shared across
-/// threads, so a "new record" could belong to a concurrently-running sibling instead.
-fn peak_memory_delta_bytes(before_kb: i64) -> Option<u64> {
-    let after_kb = getrusage_children_maxrss_kb()?;
-    if after_kb > before_kb { Some(after_kb as u64 * 1024) } else { None }
-}
-
 impl VerificationResult {
     /// Computes a `VerificationResult` (kani-driver's notion of the result of a CBMC call) from a
     /// `VerificationOutput` (cbmc_output_parser's idea of CBMC results).
@@ -525,7 +483,6 @@ impl VerificationResult {
         should_panic: bool,
         start_time: Instant,
         resolved_solver: Option<String>,
-        peak_memory_bytes: Option<u64>,
     ) -> VerificationResult {
         let runtime = start_time.elapsed();
         let (other_items, results) = extract_results(output.processed_items);
@@ -544,7 +501,6 @@ impl VerificationResult {
                 coverage_results,
                 resolved_solver,
                 warnings,
-                peak_memory_bytes,
             }
         } else {
             // We never got results from CBMC - something went wrong (e.g. crash) so it's failure
@@ -562,7 +518,6 @@ impl VerificationResult {
                 coverage_results: None,
                 resolved_solver,
                 warnings,
-                peak_memory_bytes,
             }
         }
     }
@@ -577,7 +532,6 @@ impl VerificationResult {
             coverage_results: None,
             resolved_solver,
             warnings: Vec::new(),
-            peak_memory_bytes: None,
         }
     }
 
@@ -594,7 +548,6 @@ impl VerificationResult {
             coverage_results: None,
             resolved_solver,
             warnings: Vec::new(),
-            peak_memory_bytes: None,
         }
     }
 

@@ -331,7 +331,6 @@ mod tests {
             coverage_results: None,
             resolved_solver: Some("cadical".to_string()),
             warnings: Vec::new(),
-            peak_memory_bytes: None,
         }
     }
 
@@ -347,7 +346,6 @@ mod tests {
             coverage_results: None,
             resolved_solver: Some("cadical".to_string()),
             warnings: Vec::new(),
-            peak_memory_bytes: None,
         };
         let harness_result = HarnessResult { harness: &harness, result };
 
