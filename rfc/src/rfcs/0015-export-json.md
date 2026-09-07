@@ -174,7 +174,9 @@ kani-driver src/main.rs -Z export-json --export-json out.json
       "undefined_function": true,
       "assertion_reach_checks": true,
       "ignore_global_asm": false,
-      "extra_pointer_checks": false
+      "extra_pointer_checks": false,
+      "assert_contracts": true,
+      "prove_safety_only": false
     },
     "coverage_enabled": false,
     "cbmc_args": []
@@ -332,7 +334,7 @@ no verdict to trust. Writing it invalidates any stale earlier file and records t
 normal completion the terminal write sets `run_state` to one of three **terminal, successfully-published**
 values: `COMPLETE` (every selected harness produced a result), `PARTIAL` (some did not, e.g. a
 `--fail-fast` run aborted after the first failure), or `NO_HARNESSES_SELECTED` (nothing was selected —
-see "`NO_HARNESSES_SELECTED` versus a crate with no harnesses at all" below).
+see "`NO_HARNESSES_SELECTED` means exactly one thing" in the appendix).
 
 A consumer reads in that order: first confirm `schema_version` is supported (see Compatibility policy —
 on an unrecognized major, or, pre-1.0, an unrecognized minor, refuse to parse), *then* read `run_state`:
@@ -424,7 +426,9 @@ says how the two relate:
 - `run_state == "PARTIAL"` ⟹ `summary.total < harness_selection.matched_count`: some matched harnesses
   have no entry at all, because Kani stopped before running them (e.g. `--fail-fast` after the first
   failure) — missing from the array, not present with a `TIMEOUT`/`CRASHED` placeholder.
-- `run_state == "NO_HARNESSES_SELECTED"` ⟹ `harness_selection.matched_count == 0 == summary.total`.
+- `run_state == "NO_HARNESSES_SELECTED"` ⟹ `harness_selection.matched_count == 0 == summary.total` and
+  `harness_selection.requested_filters == []` (a filter that matches nothing is an error before any
+  export; see "`NO_HARNESSES_SELECTED` means exactly one thing" in the appendix).
 - `run_state == "INCOMPLETE"` (the marker): `summary` is absent entirely (see the presence matrix
   in the Normative schema reference appendix), so this invariant does not apply.
 
@@ -466,8 +470,11 @@ backward-compatibility guarantee takes effect at `1.0`. This is why `schema_vers
 resolved before stabilization; see `rfc/src/template.md`):
 
 1. Every open question below is resolved, in particular the processed-vs-raw view, not merely narrowed.
-2. At least one release cycle of feedback from a real out-of-tree consumer, and migration of Kani's own
-   `benchcomp` parser onto this artifact as the first in-tree consumer.
+2. At least one release cycle of feedback from a real consumer of the *verdict-level* data, in-tree or
+   out-of-tree. `benchcomp`'s `kani_perf` parser is **not** that consumer and its migration is **not** a
+   prerequisite: it needs solver time, symex time, VCC counts and program-step figures, which this
+   schema excludes by design (see "Why is CBMC statistics data excluded?"); it moves onto this artifact
+   only in the follow-up that adds structured CBMC statistics.
 3. The JSON-Schema-document question (the `schemars` decision below) is settled either way, not left
    open.
 
@@ -642,10 +649,10 @@ separate, narrower shape governed by its own presence matrix below: several fiel
 | `enabled_unstable_features` | array of strings | never null, may be empty | Sorted `-Z` flags active for this run. |
 | `harness_selection.requested_filters` | array of strings | never null, may be empty | Raw `--harness` values; empty means no filter. |
 | `harness_selection.exact` | bool | — | Whether `--exact` was passed. |
-| `harness_selection.unmatched_filters` | array of strings | never null, may be empty | Filters that matched nothing; only populated without `--exact`. |
+| `harness_selection.unmatched_filters` | array of strings | never null, may be empty | Filters that matched nothing while at least one other filter matched; only populated without `--exact`. A filter set matching nothing at all is an error before export (#4743), so this is never the whole set. |
 | `harness_selection.matched_count` | integer | — | Pre-verification match count; compare against `summary.total`/`run_state`. |
 | `harness_timeout_s` | number | nullable | `--harness-timeout` value in seconds; `null` when unset. |
-| `configuration.checks.*` (7 bools) | bool | — each | See the `configuration.checks.*` entries below and the "Policy for `configuration`" section. |
+| `configuration.checks.*` (9 bools) | bool | — each | See the `configuration.checks.*` entries below and the "Policy for `configuration`" section. |
 | `configuration.coverage_enabled` | bool | — | Whether `--coverage` was passed; see the `configuration.coverage_enabled` entry below. |
 | `configuration.cbmc_args` | array of strings | never null, may be empty | Verbatim (UTF-8-lossy) `--cbmc-args`; a comparability signal, not a replayable argv. |
 | `outcome.kind` (run level) | `"COMPLETED"` | — | Always `COMPLETED` in a terminal document; absent in the `INCOMPLETE` marker. There is no run-level `"CRASHED"` value: see "How `run_state` and `outcome.kind` co-occur" below for why the writer can never produce one. |
@@ -832,7 +839,35 @@ name records the check being *on*, not the flag that turns it off):
   functions instead of asserting on them, so behavior reachable only through an unmodeled function is
   absent from the proof.
 
-All seven meet the same "changes which properties are generated" test as the three above.
+**`configuration.checks.assert_contracts` and `.prove_safety_only`.** Two flags that change what a
+*status* means rather than which properties exist, and so meet the second half of the policy test:
+
+- `assert_contracts` mirrors `--no-assert-contracts` (`true` unless it was passed; it requires
+  `-Z function-contracts`). When `false`, the contracts of *called* functions are assumed rather than
+  asserted (`kani_middle/transform/contracts.rs`), so a `SUCCESS` on a harness that calls contracted
+  code says nothing about whether those callees meet their contracts — a materially weaker run whose
+  `checks.*` counts can be identical to the asserting run's.
+- `prove_safety_only` mirrors `--prove-safety-only` (default `false`; requires `-Z unstable-options`).
+  When `true`, every `Assertion`-class property is emitted as an *assumption* instead of a check
+  (`codegen_cprover_gotoc/codegen/assert.rs`): the run answers "memory-safe, given that no assertion
+  fails," and a `SUCCESS` covers no user assertion at all. Without this field a consumer cannot tell
+  that pass from a full one.
+
+All nine meet the same "changes which properties are generated, or what a status means" test.
+
+**Audit of `VerificationArgs` under this policy (at this RFC's base commit).** Recorded directly: the
+nine `checks` bools, `coverage_enabled`, and `cbmc_args`. Recorded elsewhere in the document, so not
+duplicated here: `-Z` features that add or remove properties (`uninit-checks`, `function-contracts`,
+`loop-contracts`, `mem-predicates`, `quantifiers`, `stubbing`) are visible by name in
+`enabled_unstable_features`; `--unwind`/`--default-unwind` in the per-harness `is_bounded`;
+`--solver` in the per-harness `resolved_solver`; `--harness-timeout` in `harness_timeout_s` and the
+per-harness `outcome.kind`. Considered and excluded, with the policy's own reason: `--randomize-layout
+[seed]` changes the *program under test* (type layout), not which properties are generated or what a
+status means — two runs differing in it are different subjects, not two readings of one, and it belongs
+in a future subject/provenance block rather than here; `--concrete-playback`, `--jobs`,
+`--output-format`, `--output-into-files`, `--keep-temps`, `--quiet` change presentation or side effects
+only. The test a future PR applies is the one in the next paragraph; a flag that fails it gets a field
+in the same PR that adds the flag.
 
 **`configuration.coverage_enabled`.** Mirrors `--coverage` (mandatory bool, default `false`). It is what
 makes `code_coverage` (`COVERED`/`UNCOVERED`) properties exist — the ones carved out of `checks`,
@@ -842,9 +877,9 @@ tell "no coverage properties in this schema yet" from "`--coverage` never passed
 
 **Policy for `configuration`.** A flag belongs in this block when it changes *which properties are
 generated* or *what a status means* — when two runs differing only in it are not apples-to-apples
-comparable, or when it can make a passing result mean less than it appears to. The seven `checks` flags
-and `coverage_enabled` meet that test; future flags are added under this rule, each a minor schema
-change (a new field). `cbmc_args` is the catch-all for what this rule cannot name individually: anything
+comparable, or when it can make a passing result mean less than it appears to. The nine `checks` flags
+and `coverage_enabled` meet that test (the audit above is the record of applying it); future flags are
+added under this rule, each a minor schema change (a new field). `cbmc_args` is the catch-all for what this rule cannot name individually: anything
 passed straight to CBMC via `--cbmc-args` can change results in ways Kani cannot introspect, so it is
 recorded and two runs with different `cbmc_args` are not assumed comparable. It is recorded *verbatim
 modulo UTF-8* (captured with `to_string_lossy`, so a non-UTF-8 argument is rendered with U+FFFD rather
@@ -900,11 +935,16 @@ Per-harness `outcome.kind == "CRASHED"` is unaffected and remains real: the run 
 terminal write, and still report CBMC crashed on one harness — a fact about *one harness* in a document
 Kani *did* finish, distinct from Kani never reaching the write.
 
-**`NO_HARNESSES_SELECTED` versus a crate with no harnesses at all.** Both leave `harnesses[]` empty and
-`harness_selection.matched_count == 0`; they are told apart by `harness_selection.requested_filters`:
-non-empty means a `--harness` filter matched nothing in a crate that does define harnesses (an
-`unmatched_filters` entry names which); empty means no filter was given and the crate defines no
-`#[kani::proof]` (or, under `autoharness`, no eligible function).
+**`NO_HARNESSES_SELECTED` means exactly one thing: an unfiltered run of a crate that defines no
+selectable harness** (no `#[kani::proof]`, or under `autoharness` no eligible function). It cannot arise
+from a `--harness` filter: a filter set that matches nothing — and, with `--exact`, any single filter
+that matches nothing — is rejected at harness selection (`no_harness_match_error` in
+`kani-driver/src/metadata.rs`, since #4743) with a non-zero exit. Harness selection precedes the
+`INCOMPLETE` marker write and every export, so that case produces **no document at all**, not a
+terminal document with a non-empty `requested_filters`. Hence in a `NO_HARNESSES_SELECTED` document
+`harness_selection.requested_filters == []`, `unmatched_filters == []`, and `matched_count == 0`.
+`unmatched_filters` is non-empty only in a `COMPLETE`/`PARTIAL` document written without `--exact`, where
+at least one filter matched and the named ones did not.
 
 **A vacuity hole this schema does not close on its own: cover-only vacuity.** The normative and advisory
 vacuity predicates above read only `checks.*`; an `unreachable` *cover* lands in `covers.unreachable` and
