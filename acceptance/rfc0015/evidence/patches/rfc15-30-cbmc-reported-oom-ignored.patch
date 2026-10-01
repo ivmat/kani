@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index 00149b7..4babb97 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -453,7 +453,7 @@ fn cbmc_completed_results(process_status: i32, results: &[Property]) -> bool {
+ fn cbmc_reported_out_of_memory(items: &[ParserItem]) -> bool {
+     items.iter().any(|item| {
+         matches!(item, ParserItem::Message { message_text, message_type }
+-            if message_type == "ERROR" && message_text == "Out of memory")
++            if message_type == "ERROR" && message_text == "Out of memory (not reported)")
+     })
+ }
+ 

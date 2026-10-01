@@ -1,7 +1,7 @@
-kani commit: 0e71661f12396b2df509b5397975f130854832c6
+kani commit: c1c626e42d16ed45814b578c0431dd0e2a975aef
 command: cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun live-configuration
-start (UTC): 2026-10-01T15:46:39Z
-end (UTC): 2026-10-01T15:46:42Z
+start (UTC): 2026-10-01T19:54:04Z
+end (UTC): 2026-10-01T19:54:06Z
 exit: 1
 normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
 observed red: yes
@@ -13,14 +13,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -69,14 +69,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -126,14 +126,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -182,14 +182,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -256,20 +256,20 @@ warning: unused variable: `harness`
     |     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_harness`
 
 warning: `kani-driver` (bin "kani-driver") generated 3 warnings (run `cargo fix --bin "kani-driver" -p kani-driver` to apply 3 suggestions)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.80s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.82s
 warning: missing `[lints]` to inherit `[workspace.lints]`
   --> Cargo.toml
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -318,14 +318,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -383,14 +383,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -439,14 +439,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -516,14 +516,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -572,14 +572,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -667,14 +667,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -723,14 +723,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -793,40 +793,40 @@ CBMC 6.11.0
 Checking harness configured_harness...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCshiEI65Jex71_7fixture18configured_harness.out
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCsiiGzxApvfcP_7fixture18configured_harness.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Not unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Runtime Symex: 0.00251397s
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Not unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Runtime Symex: 0.00282371s
 size of program expression: 313 steps
 slicing removed 211 assignments
 Generated 23 VCC(s), 13 remaining after simplification
-Runtime Postprocess Equation: 2.167e-05s
+Runtime Postprocess Equation: 2.938e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 0.000149131s
+Runtime Convert SSA: 0.000168371s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 3.23e-06s
+Runtime Post-process: 3.11e-06s
 Solving with MiniSAT 2.2.1 with simplifier
 94 variables, 216 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 0.000174701s
-Runtime decision procedure: 0.000346142s
+Runtime Solver: 0.000174971s
+Runtime decision procedure: 0.000364382s
 Running propositional reduction
 Solving with MiniSAT 2.2.1 with simplifier
 95 variables, 135 clauses
 SAT checker inconsistent: instance is UNSATISFIABLE
-Runtime Solver: 3.75e-06s
-Runtime decision procedure: 8.81e-06s
+Runtime Solver: 3.98e-06s
+Runtime decision procedure: 8.96e-06s
 
 RESULTS:
 Check 1: configured_harness.assertion.1
@@ -854,7 +854,7 @@ SUMMARY:
  ** 0 of 4 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.012989331s
+Verification Time: 0.013501162s
 
 Manual Harness Summary:
 Complete - 1 successfully verified harnesses, 0 failures, 1 total.
@@ -864,41 +864,41 @@ CBMC 6.11.0
 Checking harness configured_harness...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCshiEI65Jex71_7fixture18configured_harness.out
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCsiiGzxApvfcP_7fixture18configured_harness.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Not unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 6 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Runtime Symex: 0.00276097s
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Not unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 6 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Runtime Symex: 0.00289387s
 size of program expression: 351 steps
 slicing removed 242 assignments
 Generated 27 VCC(s), 15 remaining after simplification
-Runtime Postprocess Equation: 2.396e-05s
+Runtime Postprocess Equation: 2.404e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 0.000160461s
+Runtime Convert SSA: 0.000166241s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 2.94e-06s
+Runtime Post-process: 2.9e-06s
 Solving with MiniSAT 2.2.1 with simplifier
 108 variables, 252 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 0.000187501s
-Runtime decision procedure: 0.000367932s
+Runtime Solver: 0.000185001s
+Runtime decision procedure: 0.000371722s
 Running propositional reduction
 Solving with MiniSAT 2.2.1 with simplifier
 109 variables, 157 clauses
 SAT checker inconsistent: instance is UNSATISFIABLE
-Runtime Solver: 3.71e-06s
-Runtime decision procedure: 8.65e-06s
+Runtime Solver: 3.86e-06s
+Runtime decision procedure: 9.14e-06s
 
 RESULTS:
 Check 1: configured_harness.assertion.1
@@ -926,7 +926,7 @@ SUMMARY:
  ** 0 of 4 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.013328932s
+Verification Time: 0.014098924s
 
 Manual Harness Summary:
 Complete - 1 successfully verified harnesses, 0 failures, 1 total.
@@ -936,46 +936,46 @@ CBMC 6.11.0
 Checking harness configured_harness...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCshiEI65Jex71_7fixture18configured_harness.out
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCsiiGzxApvfcP_7fixture18configured_harness.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Not unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Runtime Symex: 0.00248172s
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Not unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Runtime Symex: 0.00256939s
 size of program expression: 313 steps
 slicing removed 211 assignments
 Generated 23 VCC(s), 13 remaining after simplification
-Runtime Postprocess Equation: 2.122e-05s
+Runtime Postprocess Equation: 2.19e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 0.000148311s
+Runtime Convert SSA: 0.000151711s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 3.54e-06s
+Runtime Post-process: 3.37e-06s
 Solving with CaDiCaL 3.0.0
 94 variables, 221 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 2.563e-05s
-Runtime decision procedure: 0.000199361s
+Runtime Solver: 2.928e-05s
+Runtime decision procedure: 0.000207861s
 Running propositional reduction
 Solving with CaDiCaL 3.0.0
 95 variables, 222 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 1.0281e-05s
-Runtime decision procedure: 1.6831e-05s
+Runtime Solver: 1.589e-05s
+Runtime decision procedure: 2.6061e-05s
 Running propositional reduction
 Solving with CaDiCaL 3.0.0
 96 variables, 223 clauses
 SAT checker: instance is UNSATISFIABLE
-Runtime Solver: 8.587e-05s
-Runtime decision procedure: 8.979e-05s
+Runtime Solver: 8.375e-05s
+Runtime decision procedure: 8.818e-05s
 
 RESULTS:
 Check 1: configured_harness.assertion.1
@@ -1003,7 +1003,7 @@ SUMMARY:
  ** 0 of 4 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.012596839s
+Verification Time: 0.01307632s
 
 Manual Harness Summary:
 Complete - 1 successfully verified harnesses, 0 failures, 1 total.
@@ -1013,46 +1013,46 @@ CBMC 6.11.0
 Checking harness configured_harness...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCshiEI65Jex71_7fixture18configured_harness.out
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCsiiGzxApvfcP_7fixture18configured_harness.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Not unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Runtime Symex: 0.0024964s
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Not unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Runtime Symex: 0.00257074s
 size of program expression: 313 steps
 slicing removed 211 assignments
 Generated 23 VCC(s), 13 remaining after simplification
-Runtime Postprocess Equation: 2.191e-05s
+Runtime Postprocess Equation: 2.299e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 0.000147371s
+Runtime Convert SSA: 0.0001568s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 2.78e-06s
+Runtime Post-process: 3.13e-06s
 Solving with CaDiCaL 3.0.0
 94 variables, 221 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 2.598e-05s
-Runtime decision procedure: 0.000195551s
+Runtime Solver: 2.806e-05s
+Runtime decision procedure: 0.000206701s
 Running propositional reduction
 Solving with CaDiCaL 3.0.0
 95 variables, 222 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 1.045e-05s
-Runtime decision procedure: 1.681e-05s
+Runtime Solver: 1.029e-05s
+Runtime decision procedure: 1.658e-05s
 Running propositional reduction
 Solving with CaDiCaL 3.0.0
 96 variables, 223 clauses
 SAT checker: instance is UNSATISFIABLE
-Runtime Solver: 8.331e-05s
-Runtime decision procedure: 8.726e-05s
+Runtime Solver: 8.6011e-05s
+Runtime decision procedure: 9.0011e-05s
 
 RESULTS:
 Check 1: configured_harness.assertion.1
@@ -1080,7 +1080,7 @@ SUMMARY:
  ** 0 of 4 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.012591259s
+Verification Time: 0.01304863s
 
 Manual Harness Summary:
 Complete - 1 successfully verified harnesses, 0 failures, 1 total.
@@ -1090,32 +1090,32 @@ CBMC 6.11.0
 Checking harness configured_harness...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCshiEI65Jex71_7fixture18configured_harness.out
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCsiiGzxApvfcP_7fixture18configured_harness.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Not unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Runtime Symex: 0.00241815s
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Not unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Runtime Symex: 0.00257645s
 size of program expression: 313 steps
 slicing removed 211 assignments
 Generated 23 VCC(s), 13 remaining after simplification
-Runtime Postprocess Equation: 2.109e-05s
+Runtime Postprocess Equation: 2.368e-05s
 Passing problem to SMT2 QF_AUFBV using Z3
 converting SSA
-Runtime Convert SSA: 0.00018903s
+Runtime Convert SSA: 0.000210641s
 Running SMT2 QF_AUFBV using Z3
-Runtime Solver: 0.0041426s
-Runtime decision procedure: 0.00436146s
+Runtime Solver: 0.00436766s
+Runtime decision procedure: 0.00461005s
 Running SMT2 QF_AUFBV using Z3
-Runtime Solver: 0.00289055s
-Runtime decision procedure: 0.00290331s
+Runtime Solver: 0.00312052s
+Runtime decision procedure: 0.0031394s
 
 RESULTS:
 Check 1: configured_harness.assertion.1
@@ -1143,7 +1143,7 @@ SUMMARY:
  ** 0 of 4 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.019904481s
+Verification Time: 0.020876616s
 
 Manual Harness Summary:
 Complete - 1 successfully verified harnesses, 0 failures, 1 total.
@@ -1153,40 +1153,40 @@ CBMC 6.11.0
 Checking harness configured_harness...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCshiEI65Jex71_7fixture18configured_harness.out
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCsiiGzxApvfcP_7fixture18configured_harness.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Not unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Runtime Symex: 0.00258769s
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Not unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Runtime Symex: 0.00259887s
 size of program expression: 313 steps
 slicing removed 211 assignments
 Generated 23 VCC(s), 13 remaining after simplification
-Runtime Postprocess Equation: 2.237e-05s
+Runtime Postprocess Equation: 2.325e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 0.000148261s
+Runtime Convert SSA: 0.000153791s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 3.24e-06s
+Runtime Post-process: 3.45e-06s
 Solving with MiniSAT 2.2.1 with simplifier
 94 variables, 216 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 0.000173411s
-Runtime decision procedure: 0.000341822s
+Runtime Solver: 0.000181501s
+Runtime decision procedure: 0.000357782s
 Running propositional reduction
 Solving with MiniSAT 2.2.1 with simplifier
 95 variables, 135 clauses
 SAT checker inconsistent: instance is UNSATISFIABLE
-Runtime Solver: 3.63e-06s
-Runtime decision procedure: 8.51e-06s
+Runtime Solver: 3.57e-06s
+Runtime decision procedure: 8.59e-06s
 
 RESULTS:
 Check 1: configured_harness.assertion.1
@@ -1214,7 +1214,7 @@ SUMMARY:
  ** 0 of 4 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.013043921s
+Verification Time: 0.01315673s
 
 Manual Harness Summary:
 Complete - 1 successfully verified harnesses, 0 failures, 1 total.
@@ -1224,41 +1224,41 @@ CBMC 6.11.0
 Checking harness configured_harness...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCshiEI65Jex71_7fixture18configured_harness.out
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCsiiGzxApvfcP_7fixture18configured_harness.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Not unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 6 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Runtime Symex: 0.00289107s
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Not unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 6 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Runtime Symex: 0.00285917s
 size of program expression: 351 steps
 slicing removed 242 assignments
 Generated 27 VCC(s), 15 remaining after simplification
-Runtime Postprocess Equation: 2.471e-05s
+Runtime Postprocess Equation: 2.451e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 0.000169001s
+Runtime Convert SSA: 0.00016098s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 3.37e-06s
+Runtime Post-process: 2.99e-06s
 Solving with MiniSAT 2.2.1 with simplifier
 108 variables, 252 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 0.000191571s
-Runtime decision procedure: 0.000381002s
+Runtime Solver: 0.00018643s
+Runtime decision procedure: 0.000369791s
 Running propositional reduction
 Solving with MiniSAT 2.2.1 with simplifier
 109 variables, 157 clauses
 SAT checker inconsistent: instance is UNSATISFIABLE
-Runtime Solver: 3.62e-06s
-Runtime decision procedure: 8.87e-06s
+Runtime Solver: 4.01e-06s
+Runtime decision procedure: 9.29e-06s
 
 RESULTS:
 Check 1: configured_harness.assertion.1
@@ -1286,7 +1286,7 @@ SUMMARY:
  ** 0 of 4 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.013437833s
+Verification Time: 0.013614162s
 
 Manual Harness Summary:
 Complete - 1 successfully verified harnesses, 0 failures, 1 total.
@@ -1296,32 +1296,32 @@ CBMC 6.11.0
 Checking harness configured_harness...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCshiEI65Jex71_7fixture18configured_harness.out
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCsiiGzxApvfcP_7fixture18configured_harness.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Not unwinding loop _RNvCshiEI65Jex71_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
-Runtime Symex: 0.00239655s
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Not unwinding loop _RNvCsiiGzxApvfcP_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Runtime Symex: 0.00251737s
 size of program expression: 313 steps
 slicing removed 211 assignments
 Generated 23 VCC(s), 13 remaining after simplification
-Runtime Postprocess Equation: 2.108e-05s
+Runtime Postprocess Equation: 2.206e-05s
 Passing problem to SMT2 QF_AUFBV using Z3
 converting SSA
-Runtime Convert SSA: 0.000190791s
+Runtime Convert SSA: 0.000198491s
 Running SMT2 QF_AUFBV using Z3
-Runtime Solver: 0.0042482s
-Runtime decision procedure: 0.00447129s
+Runtime Solver: 0.00404198s
+Runtime decision procedure: 0.00426967s
 Running SMT2 QF_AUFBV using Z3
-Runtime Solver: 0.00309024s
-Runtime decision procedure: 0.00310908s
+Runtime Solver: 0.00276361s
+Runtime decision procedure: 0.00277935s
 
 RESULTS:
 Check 1: configured_harness.assertion.1
@@ -1349,7 +1349,7 @@ SUMMARY:
  ** 0 of 4 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.020310717s
+Verification Time: 0.020020302s
 
 Manual Harness Summary:
 Complete - 1 successfully verified harnesses, 0 failures, 1 total.
@@ -1359,41 +1359,41 @@ CBMC 6.11.0
 Checking harness coverage_harness...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCshiEI65Jex71_7fixture16coverage_harness.out
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCsiiGzxApvfcP_7fixture16coverage_harness.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000963435s
+Runtime Symex: 0.000954275s
 size of program expression: 173 steps
 slicing removed 80 assignments
 Generated 8 VCC(s), 8 remaining after simplification
-Runtime Postprocess Equation: 1.381e-05s
+Runtime Postprocess Equation: 1.348e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 9.169e-05s
+Runtime Convert SSA: 9.459e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 3.31e-06s
+Runtime Post-process: 3.25e-06s
 Solving with CaDiCaL 3.0.0
 31 variables, 50 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 2.29e-05s
-Runtime decision procedure: 0.00013323s
+Runtime Solver: 2.3971e-05s
+Runtime decision procedure: 0.000138361s
 Running propositional reduction
 Solving with CaDiCaL 3.0.0
 32 variables, 51 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 6.52e-06s
-Runtime decision procedure: 1.323e-05s
+Runtime Solver: 6.4e-06s
+Runtime decision procedure: 1.322e-05s
 Running propositional reduction
 Solving with CaDiCaL 3.0.0
 33 variables, 52 clauses
 SAT checker: instance is UNSATISFIABLE
-Runtime Solver: 2.269e-05s
-Runtime decision procedure: 2.655e-05s
+Runtime Solver: 2.0031e-05s
+Runtime decision procedure: 2.4031e-05s
 
 RESULTS:
 Check 1: coverage_harness.assertion.1
@@ -1420,9 +1420,9 @@ Source-based code coverage results:
  * 25:9 - 25:24 COVERED
  * 27:1 - 27:2 COVERED
 
-Verification Time: 0.011808905s
+Verification Time: 0.012203376s
 
-[info] Coverage results saved to <kani>/tests/json-handler/live-configuration/kanicov_2026-10-01_15-46
+[info] Coverage results saved to <kani>/tests/json-handler/live-configuration/kanicov_2026-10-01_19-54
 Manual Harness Summary:
 Complete - 1 successfully verified harnesses, 0 failures, 1 total.
 All validations passed for coverage.json
@@ -1431,41 +1431,41 @@ CBMC 6.11.0
 Checking harness coverage_harness...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCshiEI65Jex71_7fixture16coverage_harness.out
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCsiiGzxApvfcP_7fixture16coverage_harness.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000929105s
+Runtime Symex: 0.000938194s
 size of program expression: 169 steps
 slicing removed 81 assignments
 Generated 4 VCC(s), 4 remaining after simplification
-Runtime Postprocess Equation: 1.306e-05s
+Runtime Postprocess Equation: 1.271e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 8.71e-05s
+Runtime Convert SSA: 8.841e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 3.21e-06s
+Runtime Post-process: 3.39e-06s
 Solving with CaDiCaL 3.0.0
 30 variables, 49 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 2.186e-05s
-Runtime decision procedure: 0.00012672s
+Runtime Solver: 2.1591e-05s
+Runtime decision procedure: 0.000126361s
 Running propositional reduction
 Solving with CaDiCaL 3.0.0
 31 variables, 50 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 6.49e-06s
-Runtime decision procedure: 1.225e-05s
+Runtime Solver: 6.27e-06s
+Runtime decision procedure: 1.187e-05s
 Running propositional reduction
 Solving with CaDiCaL 3.0.0
 32 variables, 51 clauses
 SAT checker: instance is UNSATISFIABLE
-Runtime Solver: 2.26e-05s
-Runtime decision procedure: 2.628e-05s
+Runtime Solver: 2.264e-05s
+Runtime decision procedure: 2.63e-05s
 
 RESULTS:
 Check 1: coverage_harness.assertion.1
@@ -1483,7 +1483,7 @@ SUMMARY:
  ** 0 of 2 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.010378459s
+Verification Time: 0.010673149s
 
 Manual Harness Summary:
 Complete - 1 successfully verified harnesses, 0 failures, 1 total.
@@ -1493,29 +1493,29 @@ CBMC 6.11.0
 Checking harness coverage_harness...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCshiEI65Jex71_7fixture16coverage_harness.out
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCsiiGzxApvfcP_7fixture16coverage_harness.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000923625s
+Runtime Symex: 0.00100016s
 size of program expression: 167 steps
 slicing removed 81 assignments
 Generated 2 VCC(s), 2 remaining after simplification
-Runtime Postprocess Equation: 1.193e-05s
+Runtime Postprocess Equation: 1.313e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 8.263e-05s
+Runtime Convert SSA: 8.265e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 3.12e-06s
+Runtime Post-process: 3.09e-06s
 Solving with CaDiCaL 3.0.0
 29 variables, 46 clauses
 SAT checker: instance is UNSATISFIABLE
-Runtime Solver: 6.1191e-05s
-Runtime decision procedure: 0.000158421s
+Runtime Solver: 6.3091e-05s
+Runtime decision procedure: 0.000159901s
 
 RESULTS:
 Check 1: coverage_harness.assertion.1
@@ -1533,7 +1533,7 @@ SUMMARY:
  ** 0 of 2 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.009081452s
+Verification Time: 0.009619764s
 
 Manual Harness Summary:
 Complete - 1 successfully verified harnesses, 0 failures, 1 total.
@@ -1657,8 +1657,8 @@ warning: use of an unstable feature
 warning: 1 warning emitted
 
 Command exited with non-zero status 1
-0.96user 0.35system 0:01.32elapsed 99%CPU (0avgtext+0avgdata 132868maxresident)k
-0inputs+5160outputs (0major+344963minor)pagefaults 0swaps
+1.00user 0.33system 0:01.34elapsed 100%CPU (0avgtext+0avgdata 177056maxresident)k
+0inputs+5160outputs (0major+336722minor)pagefaults 0swaps
 
 ------------------------------------------
 
@@ -1667,14 +1667,14 @@ Command exited with non-zero status 1
 failures:
     [exec] json-handler/live-configuration
 
-test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 15 filtered out; finished in 1.32s
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 15 filtered out; finished in 1.34s
 
 Some tests failed in compiletest suite=json-handler mode=exec host=(none) target=(none)
           Finished with result: exit-code
 Main processes terminated with: code=exited, status=1/FAILURE
-               Service runtime: 2.433s
-             CPU time consumed: 3.125s
-                   Memory peak: 643.6M (swap: 0B)
+               Service runtime: 2.485s
+             CPU time consumed: 3.224s
+                   Memory peak: 642.9M (swap: 0B)
 
 
 --- patch ---

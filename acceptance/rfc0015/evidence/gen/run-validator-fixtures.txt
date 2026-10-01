@@ -1,7 +1,7 @@
-kani commit: 0e71661f12396b2df509b5397975f130854832c6
+kani commit: c1c626e42d16ed45814b578c0431dd0e2a975aef
 command: cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py && echo 'check_fixtures: every valid fixture and twin accepted, every malformed one rejected, every extension accepted, every predicate checked'
-start (UTC): 2026-10-01T15:44:30Z
-end (UTC): 2026-10-01T15:44:33Z
+start (UTC): 2026-10-01T19:51:46Z
+end (UTC): 2026-10-01T19:51:48Z
 exit: 0
 normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
 expect matched: yes; exit as expected: yes

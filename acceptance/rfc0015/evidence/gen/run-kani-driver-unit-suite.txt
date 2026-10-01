@@ -1,7 +1,7 @@
-kani commit: 0e71661f12396b2df509b5397975f130854832c6
+kani commit: c1c626e42d16ed45814b578c0431dd0e2a975aef
 command: cargo test -p kani-driver
-start (UTC): 2026-10-01T15:44:23Z
-end (UTC): 2026-10-01T15:44:24Z
+start (UTC): 2026-10-01T19:51:39Z
+end (UTC): 2026-10-01T19:51:39Z
 exit: 0
 normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
 expect matched: yes; exit as expected: yes
@@ -12,14 +12,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -68,14 +68,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -119,17 +119,17 @@ help: to clarify your intent to not inherit, add:
    |
 warning: `std` (manifest) generated 1 warning
    Compiling kani-driver v0.68.0 (<kani>/kani-driver)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.50s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.52s
      Running unittests src/main.rs (target/debug/build/kani-driver/624126ba5da2628e/out/kani_driver-624126ba5da2628e)
 
-running 199 tests
+running 202 tests
 test args::autoharness_args::tests::bound_defaults_do_not_require_bounded_arguments ... ok
 test args::autoharness_args::tests::bound_options_parse_alongside_bounded_arguments ... ok
 test args::autoharness_args::tests::zero_bounds_are_rejected ... ok
 test args::autoharness_args::tests::bound_options_require_bounded_arguments ... ok
-test args::playback_args::tests::check_kani_no_unstable_fails ... ok
-test args::playback_args::tests::check_cargo_parse_test_works ... ok
 test args::playback_args::tests::check_cargo_parse_pkg_works ... ok
+test args::playback_args::tests::check_cargo_parse_test_works ... ok
+test args::playback_args::tests::check_kani_no_unstable_fails ... ok
 test args::playback_args::tests::check_kani_parse_extra_args ... ok
 test args::playback_args::tests::check_kani_parse_test_works ... ok
 test args::playback_args::tests::check_parse_format_works ... ok
@@ -141,27 +141,26 @@ test args::tests::check_dry_run_fails ... ok
 test args::tests::check_disable_slicing_unstable ... ok
 test args::tests::check_export_json_unstable ... ok
 test args::tests::check_enable_stubbing ... ok
-test args::tests::check_export_json_conflicts ... ok
 test args::tests::check_export_json_unstable_options_alone_is_not_sufficient ... ok
+test args::tests::check_export_json_conflicts ... ok
 test args::tests::check_invalid_input_fails ... ok
-test args::tests::check_kani_playback ... ok
 test args::tests::check_autoharness_parallel_defaults ... ok
+test args::tests::check_kani_playback ... ok
 test args::tests::check_features_parsing ... ok
 test args::tests::check_jobs_still_requires_terse ... ok
 test args::tests::check_log_file_conflicts ... ok
-test args::tests::check_multiple_harnesses_without_flag_fail ... ok
 test args::tests::check_multiple_harnesses ... ok
+test args::tests::check_multiple_harnesses_without_flag_fail ... ok
 test args::tests::check_log_file_allowed_formats ... ok
-test args::tests::check_multiple_packages ... ok
 test args::tests::check_no_assert_contracts ... ok
-test args::tests::check_restrict_cbmc_args ... ok
+test args::tests::check_multiple_packages ... ok
 test args::tests::check_output_file_flags_reject_existing_directory ... ok
+test args::tests::check_restrict_cbmc_args ... ok
 test args::tests::check_restrict_vtable_unstable ... ok
-test args::tests::check_sarif_conflicts ... ok
+test args::tests::check_sarif_parsing ... ok
 test args_toml::tests::check_merge_args_order ... ok
 test args_toml::tests::check_merge_args_with_only_command_line_args ... ok
 test args_toml::tests::check_merge_args_with_only_config_kani_args ... ok
-test args::tests::check_sarif_parsing ... ok
 test args_toml::tests::check_multiple_table_works ... ok
 test args_toml::tests::check_toml_parsing ... ok
 test args_toml::tests::check_unstable_entry_disabled ... ok
@@ -169,6 +168,9 @@ test args_toml::tests::check_unstable_entry_enabled ... ok
 test args_toml::tests::check_unstable_entry_invalid ... ok
 test args_toml::tests::check_unstable_table_works ... ok
 test call_cbmc::tests::captured_warnings_cap_boundary ... ok
+test args::tests::check_unwind_conflicts ... ok
+test call_cbmc::tests::check_complete_results_decide_verdict ... ok
+test call_cbmc::tests::check_truncated_results_fail ... ok
 test call_cbmc::tests::determine_failed_properties_classifies_by_status_and_class ... ok
 test call_cbmc::tests::solver_flags_per_solver ... ok
 test call_cbmc::tests::verification_outcome_from_properties_truth_table ... ok
@@ -176,7 +178,7 @@ test call_cbmc::tests::verification_result_from_ignored_quantifiers_overrides_wi
 test call_cbmc::tests::verification_result_from_no_results_reports_other_for_non_137_process_status ... ok
 test call_cbmc::tests::verification_result_from_no_results_reports_out_of_memory_for_process_status_137 ... ok
 test call_cbmc::tests::verification_result_from_without_ignored_quantifiers_does_not_override ... ok
-test args::tests::check_unwind_conflicts ... ok
+test args::tests::check_sarif_conflicts ... ok
 test call_cbmc::tests::warning_capturing_filter_ignores_warnings_when_export_json_disabled ... ok
 test call_cbmc::tests::warning_capturing_filter_only_captures_warning_typed_messages ... ok
 test call_cbmc::tests::warning_message_truncation_boundary ... ok
@@ -189,16 +191,16 @@ test cbmc_output_parser::tests::check_property_id_deserialization_special_name .
 test cbmc_output_parser::tests::check_property_id_round_trips ... ok
 test call_cbmc::tests::warning_capture_survives_a_real_timeout_cancellation ... ok
 test cbmc_output_parser::tests::check_result_deserialization_works ... ok
-test cbmc_output_parser::tests::check_trace_value_deserialization_works ... ok
 test cbmc_output_parser::tests::to_cbmc_id_general_form ... ok
+test cbmc_output_parser::tests::check_trace_value_deserialization_works ... ok
 test cbmc_output_parser::tests::to_cbmc_id_missing_definition_shorter_forms ... ok
 test cbmc_output_parser::tests::to_cbmc_id_recursion_form ... ok
 test concrete_playback::test_generator::tests::check_concrete_vals_extractor_primitive ... ok
 test concrete_playback::test_generator::tests::check_concrete_vals_extractor_array ... ok
 test concrete_playback::test_generator::tests::check_extract_parent_dir_and_src_file ... ok
 test concrete_playback::test_generator::tests::check_rustfmt_args_no_line_ranges ... ok
-test concrete_playback::test_generator::tests::check_rustfmt_args_some_line_ranges ... ok
 test concrete_playback::test_generator::tests::check_hashes_are_unique ... ok
+test concrete_playback::test_generator::tests::check_rustfmt_args_some_line_ranges ... ok
 test concrete_playback::test_generator::tests::format_two_concrete_vals ... ok
 test concrete_playback::test_generator::tests::format_zero_concrete_vals ... ok
 test concrete_playback::test_generator::tests::format_unit_test_full_func ... ok
@@ -208,8 +210,8 @@ test frontend::schema_utils::tests::configuration_mapping_tests::configuration_f
 test frontend::schema_utils::tests::configuration_mapping_tests::configuration_from_serializes_coverage_enabled ... ok
 test frontend::schema_utils::tests::configuration_mapping_tests::configuration_from_serializes_defaults ... ok
 test frontend::schema_utils::tests::configuration_mapping_tests::configuration_from_serializes_no_default_checks_group ... ok
+test args::tests::check_standalone_does_not_accept_cargo_opts ... ok
 test frontend::schema_utils::tests::configuration_mapping_tests::configuration_from_serializes_prove_safety_only_enabled ... ok
-test call_cbmc::tests::check_resolve_unwind_value ... ok
 test frontend::schema_utils::tests::effective_solver_tests::bare_smt2_lets_cbmc_choose ... ok
 test frontend::schema_utils::tests::effective_solver_tests::base_smt_flag_beats_lower_priority_cbmc_args_flag ... ok
 test frontend::schema_utils::tests::effective_solver_tests::cbmc_args_flag_beats_lower_priority_base_flag ... ok
@@ -223,29 +225,29 @@ test frontend::schema_utils::tests::effective_solver_tests::named_smt_priority_i
 test frontend::schema_utils::tests::effective_solver_tests::named_smt_solvers_resolve_to_their_names ... ok
 test frontend::schema_utils::tests::effective_solver_tests::no_override_uses_base_solver ... ok
 test frontend::schema_utils::tests::effective_solver_tests::repeated_external_smt_executable_first_occurrence_wins ... ok
-test args::tests::check_standalone_does_not_accept_cargo_opts ... ok
 test frontend::schema_utils::tests::effective_solver_tests::repeated_sat_solver_first_occurrence_wins ... ok
-test frontend::schema_utils::tests::configuration_mapping_tests::configuration_from_wires_cbmc_args_verbatim ... ok
+test call_cbmc::tests::check_resolve_unwind_value ... ok
 test frontend::schema_utils::tests::effective_solver_tests::sat_flags_take_their_value ... ok
 test frontend::schema_utils::tests::effective_solver_tests::smt_flag_outranks_sat_solver_either_order ... ok
 test frontend::schema_utils::tests::effective_solver_tests::unrelated_cbmc_arg_does_not_affect_resolution ... ok
 test frontend::schema_utils::tests::export_all_successful ... ok
+test frontend::schema_utils::tests::export_attributes_kind_domain_closed ... ok
+test frontend::schema_utils::tests::configuration_mapping_tests::configuration_from_wires_cbmc_args_verbatim ... ok
 test frontend::schema_utils::tests::export_autoharness_generated_flag_is_true_for_generated_harness ... ok
 test frontend::schema_utils::tests::export_attributes_solver_serializes_named_variants ... ok
-test frontend::schema_utils::tests::export_attributes_kind_domain_closed ... ok
-test frontend::schema_utils::tests::export_checks_satisfied_status_falls_to_other ... ok
-test frontend::schema_utils::tests::export_checks_invariant_holds ... ok
 test frontend::schema_utils::tests::export_checks_excludes_covers_and_code_coverage ... ok
-test frontend::schema_utils::tests::export_configuration_assert_contracts ... ok
+test frontend::schema_utils::tests::export_checks_invariant_holds ... ok
 test frontend::schema_utils::tests::export_checks_unreachable_under_contradictory_assume ... ok
+test frontend::schema_utils::tests::export_configuration_assert_contracts ... ok
+test frontend::schema_utils::tests::export_checks_satisfied_status_falls_to_other ... ok
 test frontend::schema_utils::tests::export_configuration_prove_safety_only ... ok
 test frontend::schema_utils::tests::export_configuration_coverage_enabled ... ok
 test frontend::schema_utils::tests::export_covers_all_four_states_and_invariant ... ok
 test frontend::schema_utils::tests::export_contract_null_and_present ... ok
 test frontend::schema_utils::tests::export_covers_unexpected_status_goes_to_other ... ok
 test frontend::schema_utils::tests::export_enabled_unstable_features_sorted ... ok
-test frontend::schema_utils::tests::export_error_property_excluded_from_failed_properties_but_sets_failure_kind ... ok
 test frontend::schema_utils::tests::export_failed_properties_matches_checks_failure_exactly ... ok
+test frontend::schema_utils::tests::export_error_property_excluded_from_failed_properties_but_sets_failure_kind ... ok
 test frontend::schema_utils::tests::export_failed_property_full_record_fields ... ok
 test frontend::schema_utils::tests::export_file_is_repo_relative ... ok
 test frontend::schema_utils::tests::export_harness_attributes_round_trip ... ok
@@ -254,45 +256,46 @@ test frontend::schema_utils::tests::export_harness_timeout_s ... ok
 test frontend::schema_utils::tests::export_harness_timeout_s_null_when_unset ... ok
 test frontend::schema_utils::tests::export_is_bounded_true_iff_autoharness_bounded_argument ... ok
 test frontend::schema_utils::tests::export_harnesses_sorted_by_crate_file_line_name ... ok
+test frontend::schema_utils::tests::export_json_path_dash_is_literal_filename ... ok
 test frontend::schema_utils::tests::export_kani_commit_and_dirty_flag ... ok
 test frontend::schema_utils::tests::export_kani_commit_null_when_unavailable ... ok
 test frontend::schema_utils::tests::export_parent_dir_resolves_bare_and_rootless_paths_to_cwd ... ok
 test frontend::schema_utils::tests::export_n_properties_excludes_code_coverage_under_coverage ... ok
-test frontend::schema_utils::tests::export_json_path_dash_is_literal_filename ... ok
 test frontend::schema_utils::tests::export_resolved_unwind_and_has_loop_contracts_and_generated_test ... ok
-test frontend::schema_utils::tests::export_run_level_outcome_has_no_crashed_variant ... ok
 test frontend::schema_utils::tests::export_resolved_unwind_null_when_unset ... ok
-test frontend::schema_utils::tests::export_solver_domain_accepts_unfamiliar_names ... ok
+test frontend::schema_utils::tests::export_run_level_outcome_has_no_crashed_variant ... ok
 test frontend::schema_utils::tests::export_run_state_partial_when_fewer_results_than_matched ... ok
+test frontend::schema_utils::tests::export_solver_domain_accepts_unfamiliar_names ... ok
 test frontend::schema_utils::tests::export_summary_fields_computed_over_completed_only ... ok
 test frontend::schema_utils::tests::export_tools_rustc_null_when_unavailable ... ok
 test frontend::schema_utils::tests::export_tools_rustc_present_when_available ... ok
-test frontend::schema_utils::tests::export_warnings_passthrough ... ok
 test frontend::schema_utils::tests::export_unsupported_construct_listed_separately ... ok
+test frontend::schema_utils::tests::export_warnings_passthrough ... ok
+test frontend::schema_utils::tests::export_outcome_follows_cbmc_exit_status_and_results ... ok
+test frontend::schema_utils::tests::export_with_exit_status_outcomes ... ok
 test frontend::schema_utils::tests::export_with_failed_property ... ok
 test frontend::schema_utils::tests::export_with_other_failure_kind ... ok
-test frontend::schema_utils::tests::export_with_exit_status_outcomes ... ok
 test frontend::schema_utils::tests::configuration_mapping_tests::configuration_from_serializes_each_check_toggle ... ok
 test frontend::schema_utils::tests::resolve_effective_unwind_tests::harness_attribute_bound_counts_as_native ... ok
 test frontend::schema_utils::tests::exported_rustc_is_the_build_time_toolchain_release ... ok
 test frontend::schema_utils::tests::resolve_effective_unwind_tests::first_of_two_raw_cbmc_args_unwind_wins ... ok
 test frontend::schema_utils::tests::export_started_at_is_utc_iso8601 ... ok
-test frontend::schema_utils::tests::resolve_effective_unwind_tests::no_native_bound_and_no_raw_unwind_is_null ... ok
 test frontend::schema_utils::tests::resolve_effective_unwind_tests::native_bound_beats_raw_cbmc_args_unwind ... ok
+test frontend::schema_utils::tests::resolve_effective_unwind_tests::no_native_bound_and_no_raw_unwind_is_null ... ok
 test frontend::schema_utils::tests::write_json_atomically_creates_the_file_with_the_mode_std_fs_write_would ... ok
 test frontend::schema_utils::tests::write_json_atomically_fails_deterministically_when_parent_path_is_a_regular_file ... ok
-test frontend::schema_utils::tests::write_json_atomically_preserves_existing_target_when_persist_fails ... ok
 test frontend::schema_utils::tests::write_json_atomically_overwrites_stale_file ... ok
+test frontend::schema_utils::tests::write_json_atomically_preserves_existing_target_when_persist_fails ... ok
 test frontend::schema_utils::tests::resolve_effective_unwind_tests::raw_only_cbmc_args_unwind_applies_when_no_native_bound ... ok
 test frontend::schema_utils::tests::write_json_atomically_succeeds_when_no_stale_file_present ... ok
-test frontend::schema_utils::tests::write_json_atomically_succeeds_with_max_length_destination_basename ... ok
-test harness_runner::tests::a_clean_run_reports_no_abort ... ok
 test frontend::schema_utils::tests::resolve_effective_unwind_tests::unparsable_raw_unwind_value_is_null_not_a_panic ... ok
-test harness_runner::tests::a_genuine_error_propagates_on_its_own ... ok
+test harness_runner::tests::a_clean_run_reports_no_abort ... ok
+test frontend::schema_utils::tests::write_json_atomically_succeeds_with_max_length_destination_basename ... ok
 test harness_runner::tests::an_abort_is_not_reported_as_an_error ... ok
+test harness_runner::tests::a_genuine_error_propagates_on_its_own ... ok
 test harness_runner::tests::in_input_order_handles_sorted_and_empty_inputs ... ok
-test harness_runner::tests::payloads_are_restored_to_input_order ... ok
 test harness_runner::tests::an_abort_stops_units_that_have_not_started ... ok
+test harness_runner::tests::payloads_are_restored_to_input_order ... ok
 test harness_runner::tests::units_completed_before_an_abort_are_kept_in_order ... ok
 test log_file::tests::a_new_run_replaces_the_previous_log ... ok
 test log_file::tests::formatting_into_the_writer_splits_the_line ... ok
@@ -305,8 +308,8 @@ test project::tests::parallel_link_failures_are_propagated ... ok
 test frontend::schema_utils::tests::write_json_atomically_preserves_sentinel_file_when_serialization_fails ... ok
 test project::tests::serial_job_settings_do_not_use_rayon_workers ... ok
 test log_file::tests::concurrent_appends_arrive_whole ... ok
-test sarif::tests::sarif_includes_failed_properties ... ok
 test harness_runner::tests::a_genuine_error_is_not_displaced_by_a_concurrent_abort ... ok
+test sarif::tests::sarif_includes_failed_properties ... ok
 test sarif::tests::sarif_includes_timeouts ... ok
 test tests::check_invocation_type ... ok
 test util::tests::check_alter_extension ... ok
@@ -323,5 +326,5 @@ test version::tests::parses_unquoted_dependency_var ... ok
 test project::tests::parallel_link_jobs_respect_job_limit_and_order ... ok
 test project::tests::shared_destinations_are_linked_serially ... ok
 
-test result: ok. 199 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+test result: ok. 202 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
 

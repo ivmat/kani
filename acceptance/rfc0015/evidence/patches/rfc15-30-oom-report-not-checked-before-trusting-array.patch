@@ -1,0 +1,12 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index 00149b7..6fcf48a 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -479,7 +479,6 @@ pub(crate) fn from(
+         let (remaining_items, results) = extract_results(output.processed_items);
+ 
+         if let Some(results) = results
+-            && !cbmc_reported_out_of_memory(&remaining_items)
+             && cbmc_completed_results(output.process_status, &results)
+         {
+             let (mut status, mut failed_properties) =

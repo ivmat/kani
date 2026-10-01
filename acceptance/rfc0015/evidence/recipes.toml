@@ -127,8 +127,9 @@ coverage_value_regex = 'RFC0015_BRANCH_COVERAGE .*\bvalue=([0-9]+\.[0-9]+)'
 id      = "call-cbmc-verdict-branch-coverage"
 kani    = false
 # R4 scope: the verdict/failure-kind functions of kani-driver/src/call_cbmc.rs -- verification_outcome_from_properties
-# (590-609), determine_failed_properties (612-632) and VerificationResult::from (441-492), where RFC15-15's
-# logic lives. Measured by LINE RANGE over cargo-llvm-cov's per-branch TEXT report: its explicit per-branch
+# (626-645), determine_failed_properties (648-667), VerificationResult::from (472-528) and the two helpers that decide
+# whether CBMC's results are used, cbmc_completed_results (443-449) and cbmc_reported_out_of_memory (453-458), where
+# RFC15-15's logic lives. Measured by LINE RANGE over cargo-llvm-cov's per-branch TEXT report: its explicit per-branch
 # `[True: N, False: N]` / `[Folded - Ignored]` annotations are the ground truth the file-level summaries are built
 # from (a raw JSON entry with (0,0) is ambiguous between folded and never-executed). The python step asserts that
 # each range still starts at its function, so a moved function fails the recipe instead of silently measuring
@@ -146,7 +147,7 @@ if len(matches) != 1:
     raise SystemExit(f"expected exactly one file section for call_cbmc.rs, got {len(matches)}: {matches}")
 section = sections[matches[0]]
 source = open(matches[0]).read().split("\n")
-ranges = [(441, 492, "    fn from("), (590, 609, "fn verification_outcome_from_properties("), (612, 632, "fn determine_failed_properties(")]
+ranges = [(443, 449, "fn cbmc_completed_results("), (453, 458, "fn cbmc_reported_out_of_memory("), (472, 528, "    pub(crate) fn from("), (626, 645, "fn verification_outcome_from_properties("), (648, 667, "fn determine_failed_properties(")]
 for lo, hi, start in ranges:
     if not source[lo - 1].startswith(start):
         raise SystemExit(f"line {lo} of call_cbmc.rs is {source[lo - 1]!r}, expected it to start with {start!r}")
@@ -174,7 +175,7 @@ exit    = 0
 coverage_value_regex = 'RFC0015_CALL_CBMC_VERDICT_BRANCH_COVERAGE .*\bvalue=([0-9]+\.[0-9]+)'
   [run.coverage]
   metric = "branch"
-  of     = "kani-driver/src/call_cbmc.rs: branches inside verification_outcome_from_properties (590-609), determine_failed_properties (612-632) and VerificationResult::from (441-492) ONLY, by source line range over cargo-llvm-cov's per-branch text report (see this recipe's own comment)"
+  of     = "kani-driver/src/call_cbmc.rs: branches inside verification_outcome_from_properties (626-645), determine_failed_properties (648-667), VerificationResult::from (472-528), cbmc_completed_results (443-449) and cbmc_reported_out_of_memory (453-458) ONLY, by source line range over cargo-llvm-cov's per-branch text report (see this recipe's own comment)"
 
 # End-to-end suites (kani/cbmc, one at a time through the capped service). Each runs ONE suite of tests/json-handler
 # (or the script-based-pre case named) against the dev build.
@@ -396,7 +397,7 @@ clause      = ["R1"]
 patch       = "evidence/patches/rfc15-20-crash-message-skip-serializing.patch"
 command     = "cargo test -p kani-driver schema_utils::tests::export_with_exit_status_outcomes"
 kani        = false
-expect_red  = 'assertion failed: crashed_v\["harnesses"\]\[0\]\["outcome"\]\.get\("message"\)\.is_some\(\)'
+expect_red  = 'left: Null\s*\n\s*right: "CBMC failed with status 101"'
 
 [[control]]
 id          = "rfc15-20-verification-time-hardcode-zero-off-completed"
@@ -1215,6 +1216,51 @@ command     = "cargo test -p kani-driver schema_utils::tests::export_with_exit_s
 kani        = false
 expect_red  = 'left: String\("CRASHED"\)\s*\n\s*right: "TIMEOUT"'
 
+[[control]]
+id          = "rfc15-30-cbmc-reported-oom-ignored"
+claim       = "RFC15-30"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-30-cbmc-reported-oom-ignored.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_outcome_follows_cbmc_exit_status_and_results"
+kani        = false
+expect_red  = 'failed: status 6, Success, oom true'
+
+[[control]]
+id          = "rfc15-30-oom-report-not-checked-before-trusting-array"
+claim       = "RFC15-30"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-30-oom-report-not-checked-before-trusting-array.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_outcome_follows_cbmc_exit_status_and_results"
+kani        = false
+expect_red  = 'failed: status 6, Error, oom true'
+
+[[control]]
+id          = "rfc15-30-status-6-trusted-without-error-property"
+claim       = "RFC15-30"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-30-status-6-trusted-without-error-property.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_outcome_follows_cbmc_exit_status_and_results"
+kani        = false
+expect_red  = 'failed: status 6, Success, oom false'
+
+[[control]]
+id          = "rfc15-30-nonzero-status-trusted"
+claim       = "RFC15-30"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-30-nonzero-status-trusted.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_outcome_follows_cbmc_exit_status_and_results"
+kani        = false
+expect_red  = 'failed: status 137, Success, oom false'
+
+[[control]]
+id          = "rfc15-30-crashed-message-without-status"
+claim       = "RFC15-30"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-30-crashed-message-without-status.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_with_exit_status_outcomes"
+kani        = false
+expect_red  = 'right: "CBMC failed with status 101"'
+
 # ----- R10 -- completeness (terminal run_state, selection, untouched files)
 
 [[control]]
@@ -1278,7 +1324,7 @@ clause      = ["R10"]
 patch       = "evidence/patches/rfc15-21-zero-match-error-off-e2e.patch"
 command     = "cargo build-dev && cargo run -p compiletest -- --suite script-based-pre --mode exec --force-rerun harness_filter_no_match"
 kani        = true
-expect_red  = 'FAIL: zero-match run under --quiet exited 0'
+expect_red  = 'FAIL: --export-json modified the pre-existing export for a zero-match run'
 
 [[control]]
 id          = "rfc15-26-wall-time-not-serialized"

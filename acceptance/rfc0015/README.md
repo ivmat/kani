@@ -5,14 +5,18 @@ This directory holds an acceptance package for the three commits that implement
 
 | commit | change |
 |---|---|
-| `b90379c7d` | PR 1: the writer produces the RFC 0015 document |
-| `dd914b1ea` | PR 2: the reference consumer (`scripts/validate_json_export.py`) checks the cross-field rules |
-| `0e71661f1` | PR 3: end-to-end tests |
+| `447e60e28` | PR 1: the writer produces the RFC 0015 document |
+| `15aec4f7d` | PR 2: the reference consumer (`scripts/validate_json_export.py`) checks the cross-field rules |
+| `c1c626e42` | PR 3: end-to-end tests |
+
+The three commits sit on upstream `main` at `b44b964b3`.
 
 The package is written in the [acceptance format](https://github.com/ivmat/acceptance-format)
 version 0.3.2. It records, in machine-checkable form, what the contract asks for, which claims the
 evidence supports, and which parts are not delivered. It is not part of the Kani build and no
 Kani test reads it.
+
+The package measures semantic coverage of the RFC (which RFC clauses are shown to hold, by which test, with a control that turns the test red if the code breaks) rather than code coverage.
 
 ## How to read the ids in this document
 
@@ -47,7 +51,7 @@ The higher bands (`A2` to `A4`) need stronger evidence, for example Kani proofs.
 
 ## Current status
 
-- The package describes the code at commit `0e71661f12396b2df509b5397975f130854832c6`
+- The package describes the code at commit `c1c626e42d16ed45814b578c0431dd0e2a975aef`
   (the top of the stack). It is in this branch only because the branch adds this directory on top of that commit.
 - **Requirement coverage is 12/15, and `acceptable=False`.** Always read the two together.
   These 12 requirements are satisfied:
@@ -79,7 +83,7 @@ The higher bands (`A2` to `A4`) need stronger evidence, for example Kani proofs.
   only partly assert. The 12/15 above counts requirements. It says nothing about clauses.
 - The evidence is dynamic: unit tests, end-to-end test suites, and recorded runs checked by a script.
   For each evidenced claim, a control (a small patch that breaks the code) was shown to turn the check red.
-  21 runs and 129 controls were executed, all at commit `0e71661f1`.
+  21 runs and 134 controls were executed, all at commit `c1c626e42`.
 - The RFC text that the contract pins (`spec/`) has an older wording of `resolved_solver` and
   `resolved_unwind` than the one PR 1 implements. See "Open points".
 
@@ -159,7 +163,7 @@ and a separate, clean checkout of the stack top. The generator refuses to start 
 so do not use the checkout that holds this directory. The commands below put the new checkout next to the Kani clone.
 
 ```sh
-git worktree add --detach ../../../kani-rfc0015-stack 0e71661f12396b2df509b5397975f130854832c6
+git worktree add --detach ../../../kani-rfc0015-stack c1c626e42d16ed45814b578c0431dd0e2a975aef
 export RFC0015_KANI_WORKTREE=$(cd ../../../kani-rfc0015-stack && pwd)   # the checkout above
 export RFC0015_CBMC_DIR=/path/to/your/cbmc/install                      # its usr/bin has cbmc 6.11.0
 python3 -B ledger/gen_ledger.py --check      # the ledger still matches the package (no Kani build needed)
@@ -209,6 +213,13 @@ These are proposals. None of them has been applied.
 - **Pinned RFC text.** PR 1 corrects the RFC: `resolved_solver` and `resolved_unwind` are what CBMC runs. The copy in `spec/`
   and the clauses `RFC0015-S-7.2-13` and `RFC0015-S-7.2-14` keep the older wording. After the corrected RFC is merged, pin the new
   text and update both clauses. Then `S-7.2-13` can be mapped to the effective-solver tests.
+- **OUT_OF_MEMORY clause.** `RFC0015-S-7.5-10` and the pinned RFC text keep the earlier wording: OUT_OF_MEMORY is inferred from a
+  CBMC-child status of 137 when no property array exists. PR 1 corrects the RFC sentence: it is also inferred from CBMC's own
+  `Out of memory` report, even when a property array exists, and a property array counts only when CBMC's exit status shows it
+  finished reporting (0, 10, or 6 with an `ERROR` property); otherwise the harness is `CRASHED` with that status as `code`. After the
+  corrected RFC is merged, pin the new text and update the clause. Until then the clause is credited only for its stated 137 case, and the
+  unit test of the corrected behaviour (`export_outcome_follows_cbmc_exit_status_and_results`) is listed under the partly evidenced
+  clauses `S-7.1-40` and `S-7.1-41`.
 - **Applicability record.** 29 rows are marked "applicable, PR 2". That text is from before the work was split in three commits. Some of those rows are now delivered.
   The consumer-guidance rows `S-3.3-2`, `-22`, `-23`, `-24` and `S-5-15`, `-16` are applicable but no test evidences them.
 - **Compound clauses.** The 51 partly evidenced clauses state more than one obligation. If the inventory splits them, the evidenced half can be counted.

@@ -1,5 +1,5 @@
 diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
-index bb9fb5ea6..b4166a2f7 100644
+index 8affab8..28a23d8 100644
 --- a/kani-driver/src/frontend/schema_utils.rs
 +++ b/kani-driver/src/frontend/schema_utils.rs
 @@ -346,7 +346,11 @@ enum Verdict {
@@ -9,7 +9,7 @@ index bb9fb5ea6..b4166a2f7 100644
 -    Crashed { code: Option<i32>, message: Option<String> },
 +    Crashed {
 +        code: Option<i32>,
-+        #[serde(skip_serializing_if = "Option::is_none")]
++        #[serde(skip_serializing)]
 +        message: Option<String>,
 +    },
      OutOfMemory,

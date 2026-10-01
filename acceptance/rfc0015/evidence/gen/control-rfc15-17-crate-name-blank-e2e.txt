@@ -1,7 +1,7 @@
-kani commit: 0e71661f12396b2df509b5397975f130854832c6
+kani commit: c1c626e42d16ed45814b578c0431dd0e2a975aef
 command: cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun multi-crate-export
-start (UTC): 2026-10-01T16:32:50Z
-end (UTC): 2026-10-01T16:32:51Z
+start (UTC): 2026-10-01T19:54:15Z
+end (UTC): 2026-10-01T19:54:17Z
 exit: 1
 normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
 observed red: yes
@@ -13,14 +13,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -69,14 +69,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -126,14 +126,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -182,14 +182,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -233,20 +233,20 @@ help: to clarify your intent to not inherit, add:
    |
 warning: `std` (manifest) generated 1 warning
    Compiling kani-driver v0.68.0 (<kani>/kani-driver)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.51s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.68s
 warning: missing `[lints]` to inherit `[workspace.lints]`
   --> Cargo.toml
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -295,14 +295,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -360,14 +360,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -416,14 +416,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -493,14 +493,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -549,14 +549,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -644,14 +644,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -700,14 +700,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -786,35 +786,35 @@ warning: use of an unstable feature
 Checking harness check_shared...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <tmp>/target/kani/x86_64-unknown-linux-gnu/debug/build/multi_crate_export_a/92973625f2d4d5ab/out/multi_crate_export_a-92973625f2d4d5ab__RNvCseI2PZXo04l7_20multi_crate_export_a12check_shared.out
+Reading GOTO program from file <tmp>/target/kani/x86_64-unknown-linux-gnu/debug/build/multi_crate_export_a/dc9c39e9a9cae2b5/out/multi_crate_export_a-dc9c39e9a9cae2b5__RNvCsjZxKs7lF8Fr_20multi_crate_export_a12check_shared.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000598693s
+Runtime Symex: 0.000622752s
 size of program expression: 100 steps
 slicing removed 45 assignments
 Generated 2 VCC(s), 2 remaining after simplification
-Runtime Postprocess Equation: 9.77e-06s
+Runtime Postprocess Equation: 9.83e-06s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 7.094e-05s
+Runtime Convert SSA: 7.039e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 2.93e-06s
+Runtime Post-process: 3e-06s
 Solving with CaDiCaL 3.0.0
 30 variables, 45 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 2.482e-05s
-Runtime decision procedure: 0.00011025s
+Runtime Solver: 2.286e-05s
+Runtime decision procedure: 0.000109791s
 Running propositional reduction
 Solving with CaDiCaL 3.0.0
 31 variables, 46 clauses
 SAT checker: instance is UNSATISFIABLE
 Runtime Solver: 3.83e-06s
-Runtime decision procedure: 9.1e-06s
+Runtime decision procedure: 1.147e-05s
 
 RESULTS:
 Check 1: check_shared.assertion.1
@@ -827,40 +827,40 @@ SUMMARY:
  ** 0 of 1 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.009672065s
+Verification Time: 0.010277597s
 
 Checking harness check_a...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <tmp>/target/kani/x86_64-unknown-linux-gnu/debug/build/multi_crate_export_a/92973625f2d4d5ab/out/multi_crate_export_a-92973625f2d4d5ab__RNvCseI2PZXo04l7_20multi_crate_export_a7check_a.out
+Reading GOTO program from file <tmp>/target/kani/x86_64-unknown-linux-gnu/debug/build/multi_crate_export_a/dc9c39e9a9cae2b5/out/multi_crate_export_a-dc9c39e9a9cae2b5__RNvCsjZxKs7lF8Fr_20multi_crate_export_a7check_a.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000604963s
+Runtime Symex: 0.000655183s
 size of program expression: 100 steps
 slicing removed 45 assignments
 Generated 2 VCC(s), 2 remaining after simplification
-Runtime Postprocess Equation: 9.74e-06s
+Runtime Postprocess Equation: 1.535e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 6.848e-05s
+Runtime Convert SSA: 9.5361e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 2.79e-06s
+Runtime Post-process: 4.24e-06s
 Solving with CaDiCaL 3.0.0
 30 variables, 45 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 2.175e-05s
-Runtime decision procedure: 0.00010583s
+Runtime Solver: 3.187e-05s
+Runtime decision procedure: 0.000148601s
 Running propositional reduction
 Solving with CaDiCaL 3.0.0
 31 variables, 46 clauses
 SAT checker: instance is UNSATISFIABLE
-Runtime Solver: 3.76e-06s
-Runtime decision procedure: 8.83e-06s
+Runtime Solver: 4.23e-06s
+Runtime decision procedure: 1.059e-05s
 
 RESULTS:
 Check 1: check_a.assertion.1
@@ -873,40 +873,40 @@ SUMMARY:
  ** 0 of 1 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.009075753s
+Verification Time: 0.009537654s
 
 Checking harness check_shared...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <tmp>/target/kani/x86_64-unknown-linux-gnu/debug/build/multi_crate_export_b/fda8e3d7c077c802/out/multi_crate_export_b-fda8e3d7c077c802__RNvCsdb0ZA86Mv1U_20multi_crate_export_b12check_shared.out
+Reading GOTO program from file <tmp>/target/kani/x86_64-unknown-linux-gnu/debug/build/multi_crate_export_b/94552a753214f863/out/multi_crate_export_b-94552a753214f863__RNvCsk4wLrByxGOz_20multi_crate_export_b12check_shared.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000606893s
+Runtime Symex: 0.000698244s
 size of program expression: 102 steps
 slicing removed 46 assignments
 Generated 2 VCC(s), 2 remaining after simplification
-Runtime Postprocess Equation: 9.84e-06s
+Runtime Postprocess Equation: 2.656e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 6.5101e-05s
+Runtime Convert SSA: 7.884e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 2.69e-06s
+Runtime Post-process: 3.08e-06s
 Solving with CaDiCaL 3.0.0
 30 variables, 45 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 2.245e-05s
-Runtime decision procedure: 0.000102741s
+Runtime Solver: 2.314e-05s
+Runtime decision procedure: 0.0001267s
 Running propositional reduction
 Solving with CaDiCaL 3.0.0
 31 variables, 46 clauses
 SAT checker: instance is UNSATISFIABLE
-Runtime Solver: 3.89e-06s
-Runtime decision procedure: 1.021e-05s
+Runtime Solver: 4.14e-06s
+Runtime decision procedure: 9.5e-06s
 
 RESULTS:
 Check 1: check_shared.assertion.1
@@ -919,40 +919,40 @@ SUMMARY:
  ** 0 of 1 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.008959803s
+Verification Time: 0.009467983s
 
 Checking harness check_b...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <tmp>/target/kani/x86_64-unknown-linux-gnu/debug/build/multi_crate_export_b/fda8e3d7c077c802/out/multi_crate_export_b-fda8e3d7c077c802__RNvCsdb0ZA86Mv1U_20multi_crate_export_b7check_b.out
+Reading GOTO program from file <tmp>/target/kani/x86_64-unknown-linux-gnu/debug/build/multi_crate_export_b/94552a753214f863/out/multi_crate_export_b-94552a753214f863__RNvCsk4wLrByxGOz_20multi_crate_export_b7check_b.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000732473s
+Runtime Symex: 0.000621163s
 size of program expression: 100 steps
 slicing removed 45 assignments
 Generated 2 VCC(s), 2 remaining after simplification
-Runtime Postprocess Equation: 9.81e-06s
+Runtime Postprocess Equation: 9.62e-06s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 6.4281e-05s
+Runtime Convert SSA: 6.726e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 2.6e-06s
+Runtime Post-process: 2.64e-06s
 Solving with CaDiCaL 3.0.0
 30 variables, 45 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 2.288e-05s
-Runtime decision procedure: 0.000102801s
+Runtime Solver: 2.213e-05s
+Runtime decision procedure: 0.00010356s
 Running propositional reduction
 Solving with CaDiCaL 3.0.0
 31 variables, 46 clauses
 SAT checker: instance is UNSATISFIABLE
-Runtime Solver: 3.94e-06s
-Runtime decision procedure: 1.081e-05s
+Runtime Solver: 3.85e-06s
+Runtime decision procedure: 9.57e-06s
 
 RESULTS:
 Check 1: check_b.assertion.1
@@ -965,7 +965,7 @@ SUMMARY:
  ** 0 of 1 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.009160024s
+Verification Time: 0.009613314s
 
 Manual Harness Summary:
 Complete - 4 successfully verified harnesses, 0 failures, 4 total.
@@ -980,10 +980,10 @@ stderr:
    Compiling multi_crate_export_a v0.1.0 (<tmp>/crate_a)
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
    Compiling multi_crate_export_b v0.1.0 (<tmp>/crate_b)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.04s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
 Command exited with non-zero status 1
-0.28user 0.09system 0:00.37elapsed 102%CPU (0avgtext+0avgdata 134424maxresident)k
-0inputs+0outputs (0major+116957minor)pagefaults 0swaps
+0.29user 0.10system 0:00.38elapsed 102%CPU (0avgtext+0avgdata 179688maxresident)k
+0inputs+0outputs (0major+120126minor)pagefaults 0swaps
 
 ------------------------------------------
 
@@ -992,14 +992,14 @@ Command exited with non-zero status 1
 failures:
     [exec] json-handler/multi-crate-export
 
-test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.37s
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.39s
 
 Some tests failed in compiletest suite=json-handler mode=exec host=(none) target=(none)
           Finished with result: exit-code
 Main processes terminated with: code=exited, status=1/FAILURE
-               Service runtime: 1.200s
-             CPU time consumed: 1.625s
-                   Memory peak: 648.4M (swap: 0B)
+               Service runtime: 1.390s
+             CPU time consumed: 1.992s
+                   Memory peak: 652.5M (swap: 0B)
 
 
 --- patch ---

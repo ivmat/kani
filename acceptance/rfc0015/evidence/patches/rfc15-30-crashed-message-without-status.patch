@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index 8affab8..b30f414 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -364,7 +364,7 @@ fn from(status: &ExitStatus) -> Self {
+             ExitStatus::OutOfMemory => Outcome::OutOfMemory,
+             ExitStatus::Other(code) => Outcome::Crashed {
+                 code: Some(*code),
+-                message: Some(format!("CBMC failed with status {code}")),
++                message: Some(String::from("CBMC failed")),
+             },
+         }
+     }

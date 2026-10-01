@@ -1,5 +1,5 @@
 # ledger/test_clauses.toml -- see README.md "Test-to-clause mapping" for the format and the rule.
-# HAND-MAINTAINED. Every entry names a test that EXISTS in the final tree (kani 0e71661f1) and was checked by
+# HAND-MAINTAINED. Every entry names a test that EXISTS in the final tree (kani c1c626e42) and was checked by
 # reading the test (or the suite's script) against the clause text.
 #
 # THE RULE. A test is listed against a clause only if it asserts an obligation of that clause on the PRODUCTION
@@ -24,6 +24,13 @@
 # A clause that fails the rule has no [[test]] line. It is listed once under [[partial]] with what IS asserted and what
 # is not, and the ledger generator reports it as a gap ("partly evidenced"). The frozen clause inventory is not edited;
 # splitting these clauses is a proposal (README.md, "Open points").
+#
+# Clause RFC0015-S-7.5-10 keeps its pre-correction text (OUT_OF_MEMORY from status 137 "when no property array exists").
+# The code now also reports OUT_OF_MEMORY from CBMC's own "Out of memory" message even with a property array, and no
+# array counts unless the exit status shows CBMC finished reporting. The two tests mapped to it assert only the stated
+# 137 / no-array case, which the code still implements, so they stay. The tests of the corrected behaviour
+# (export_outcome_follows_cbmc_exit_status_and_results, check_truncated_results_fail) are NOT mapped to it: its text does
+# not state that behaviour (README, "Open points": proposed update of the clause).
 #
 # Clause RFC0015-S-7.2-13 is deliberately mapped by NO test: its frozen text is the pre-correction precedence ("last
 # --cbmc-args override wins"), which the effective-solver tests contradict on repeated flags (the RFC text is
@@ -701,16 +708,16 @@ tests     = ["export_all_successful", "export_autoharness_generated_flag_is_true
 [[partial]]
 clause    = "RFC0015-S-7.1-40"
 class     = "exact set / absence"
-supported = "outcome.code is the exit status on CRASHED (101 in a unit test, 1 from a real crash of a fake cbmc) and is absent on TIMEOUT and OUT_OF_MEMORY"
+supported = "outcome.code is the exit status on CRASHED (101 in a unit test; 5, 6 and 139 from CBMC runs fed through the production result constructor and the exporter; 1 from a real crash of a fake cbmc) and is absent on TIMEOUT and OUT_OF_MEMORY"
 missing   = "'present only when CRASHED': absence on COMPLETED is asserted by no mapped test's own assertions (the validator run inside a suite accepts or rejects a document, nothing more)"
-tests     = ["export_with_exit_status_outcomes", "structured-warnings"]
+tests     = ["export_with_exit_status_outcomes", "export_outcome_follows_cbmc_exit_status_and_results", "structured-warnings"]
 
 [[partial]]
 clause    = "RFC0015-S-7.1-41"
 class     = "exact set / absence"
-supported = "outcome.message is present on CRASHED and absent on TIMEOUT and OUT_OF_MEMORY"
+supported = "outcome.message is present on CRASHED (\"CBMC failed with status N\", for 101 and, through the production result constructor, for 5, 6 and 139) and absent on TIMEOUT and OUT_OF_MEMORY"
 missing   = "'present only when CRASHED': absence on COMPLETED is asserted by no mapped test's own assertions (the validator run inside a suite accepts or rejects a document, nothing more)"
-tests     = ["export_with_exit_status_outcomes", "structured-warnings"]
+tests     = ["export_with_exit_status_outcomes", "export_outcome_follows_cbmc_exit_status_and_results", "structured-warnings"]
 
 [[partial]]
 clause    = "RFC0015-S-7.1-44"

@@ -1,7 +1,7 @@
-kani commit: 0e71661f12396b2df509b5397975f130854832c6
+kani commit: c1c626e42d16ed45814b578c0431dd0e2a975aef
 command: cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py
-start (UTC): 2026-10-01T15:45:48Z
-end (UTC): 2026-10-01T15:45:50Z
+start (UTC): 2026-10-01T19:53:11Z
+end (UTC): 2026-10-01T19:53:13Z
 exit: 1
 normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
 observed red: yes

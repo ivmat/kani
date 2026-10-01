@@ -1,7 +1,7 @@
-kani commit: 0e71661f12396b2df509b5397975f130854832c6
+kani commit: c1c626e42d16ed45814b578c0431dd0e2a975aef
 command: cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun autoharness-export
-start (UTC): 2026-10-01T15:46:54Z
-end (UTC): 2026-10-01T15:46:56Z
+start (UTC): 2026-10-01T19:54:19Z
+end (UTC): 2026-10-01T19:54:21Z
 exit: 1
 normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
 observed red: yes
@@ -13,14 +13,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -69,14 +69,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -126,14 +126,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -182,14 +182,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -235,32 +235,32 @@ warning: `std` (manifest) generated 1 warning
    Compiling kani-driver v0.68.0 (<kani>/kani-driver)
    Compiling kani-compiler v0.68.0 (<kani>/kani-compiler)
 warning: field `is_bounded` is never read
-    --> kani-compiler/src/kani_middle/codegen_units.rs:1075:5
+    --> kani-compiler/src/kani_middle/codegen_units.rs:1080:5
      |
-1073 | struct AutoHarnessCaveats {
+1078 | struct AutoHarnessCaveats {
      |        ------------------ field in this struct
-1074 |     /// Some argument uses *bounded* nondeterministic values, c.f. `--bounded-arguments`.
-1075 |     is_bounded: bool,
+1079 |     /// Some argument uses *bounded* nondeterministic values, c.f. `--bounded-arguments`.
+1080 |     is_bounded: bool,
      |     ^^^^^^^^^^
      |
      = note: `AutoHarnessCaveats` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
      = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
 
 warning: `kani-compiler` (bin "kani-compiler") generated 1 warning
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.13s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.19s
 warning: missing `[lints]` to inherit `[workspace.lints]`
   --> Cargo.toml
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -309,14 +309,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -374,14 +374,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -430,14 +430,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -489,7 +489,7 @@ warning: unused dependency `strum`
    = note: `cargo::unused_dependencies` is set to `warn` by default
 help: consider removing the dependency on `strum`
 warning: `kani_macros` (manifest) generated 1 warning
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.03s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.04s
 [1m[33mwarning[0m[1m: `feature(generic_const_exprs)` is not supported with the next-generation trait solver[0m
   [1m[94m--> [0mlibrary/kani/src/lib.rs:12:12
    [1m[94m|[0m
@@ -507,14 +507,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -563,14 +563,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -658,14 +658,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -714,14 +714,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -794,37 +794,37 @@ Kani generated automatic harnesses for 3 function(s):
 +---------+-------------------+
 
 Skipped Functions: None. Kani generated automatic harnesses for all functions in the available crate(s).
-Thread 12: Autoharness: Checking function add_one against all possible inputs...
-Thread 7: Checking harness manual_harness...
-Thread 12: 
+Thread 9: Checking harness manual_harness...
+Thread 8: Autoharness: Checking function add_one against all possible inputs...
+Thread 8: 
 VERIFICATION RESULT:
  ** 0 of 0 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.008416399s
+Verification Time: 0.008634929s
 
-Thread 7: 
+Thread 9: 
 VERIFICATION RESULT:
  ** 0 of 1 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.011137882s
+Verification Time: 0.010518428s
 
-Thread 2: Autoharness: Checking function packet_len against all possible inputs...
-Thread 2: 
+Thread 5: Autoharness: Checking function packet_len against all possible inputs...
+Thread 5: 
 VERIFICATION RESULT:
  ** 0 of 154 failed (2 unreachable)
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.057285096s
+Verification Time: 0.058960687s
 
-Thread 11: Autoharness: Checking function first_byte against all possible inputs...
-Thread 11: 
+Thread 2: Autoharness: Checking function first_byte against all possible inputs...
+Thread 2: 
 VERIFICATION RESULT:
  ** 0 of 22 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.061308216s
+Verification Time: 0.061910734s
 
 Manual Harness Summary:
 Complete - 1 successfully verified harnesses, 0 failures, 1 total.
@@ -864,8 +864,8 @@ warning: Found the following unsupported constructs:
 warning: 2 warnings emitted
 
 Command exited with non-zero status 1
-1.18user 0.13system 0:00.92elapsed 142%CPU (0avgtext+0avgdata 275372maxresident)k
-0inputs+21224outputs (4major+131150minor)pagefaults 0swaps
+1.20user 0.14system 0:00.96elapsed 140%CPU (0avgtext+0avgdata 317840maxresident)k
+0inputs+21216outputs (3major+130039minor)pagefaults 0swaps
 
 ------------------------------------------
 
@@ -874,13 +874,13 @@ Command exited with non-zero status 1
 failures:
     [exec] json-handler/autoharness-export
 
-test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.93s
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.96s
 
 Some tests failed in compiletest suite=json-handler mode=exec host=(none) target=(none)
           Finished with result: exit-code
 Main processes terminated with: code=exited, status=1/FAILURE
-               Service runtime: 2.401s
-             CPU time consumed: 4.943s
+               Service runtime: 2.493s
+             CPU time consumed: 5.068s
                    Memory peak: 1G (swap: 0B)
 
 

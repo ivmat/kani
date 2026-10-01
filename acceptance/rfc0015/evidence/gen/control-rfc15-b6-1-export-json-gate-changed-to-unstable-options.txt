@@ -1,7 +1,7 @@
-kani commit: 0e71661f12396b2df509b5397975f130854832c6
+kani commit: c1c626e42d16ed45814b578c0431dd0e2a975aef
 command: cargo test -p kani-driver args::tests::check_export_json_unstable_options_alone_is_not_sufficient
-start (UTC): 2026-10-01T15:46:23Z
-end (UTC): 2026-10-01T15:46:24Z
+start (UTC): 2026-10-01T19:53:47Z
+end (UTC): 2026-10-01T19:53:48Z
 exit: 101
 normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
 observed red: yes
@@ -12,14 +12,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -68,14 +68,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -119,7 +119,7 @@ help: to clarify your intent to not inherit, add:
    |
 warning: `std` (manifest) generated 1 warning
    Compiling kani-driver v0.68.0 (<kani>/kani-driver)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.50s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.51s
      Running unittests src/main.rs (target/debug/build/kani-driver/624126ba5da2628e/out/kani_driver-624126ba5da2628e)
 
 running 1 test
@@ -129,7 +129,7 @@ failures:
 
 ---- args::tests::check_export_json_unstable_options_alone_is_not_sufficient stdout ----
 
-thread 'args::tests::check_export_json_unstable_options_alone_is_not_sufficient' (670956) panicked at kani-driver/src/args/mod.rs:1336:18:
+thread 'args::tests::check_export_json_unstable_options_alone_is_not_sufficient' (1886357) panicked at kani-driver/src/args/mod.rs:1364:18:
 called `Result::unwrap_err()` on an `Ok` value: StandaloneArgs { input: Some("file.rs"), verify_opts: VerificationArgs { c_lib: [], cbmc_args: [], concrete_playback: None, coverage: false, default_unwind: None, export_json: Some("results.json"), exact: false, extra_pointer_checks: false, fail_fast: false, force_build: false, gen_c: false, harnesses: [], harness_timeout: None, ignore_global_asm: false, no_assert_overrides: false, jobs: None, keep_temps: false, no_assert_contracts: false, no_assertion_reach_checks: false, no_codegen: false, no_restrict_vtable: false, no_slice_formula: false, only_codegen: false, output_format: None, output_into_files: false, log_file: None, print_llbc: false, prove_safety_only: false, randomize_layout: None, restrict_vtable: false, run_sanity_checks: false, sarif: None, solver: None, synthesize_loop_contracts: false, target_dir: None, tests: false, unwind: None, write_json_symtab: false, checks: CheckArgs { no_default_checks: false, no_memory_safety_checks: false, no_overflow_checks: false, no_undefined_function_checks: false, no_unwinding_checks: false }, common_args: CommonArgs { debug: false, quiet: false, verbose: false, enable_unstable: false, dry_run: false, unstable_features: EnabledUnstableFeatures { enabled_unstable_features: [UnstableOptions] } }, cargo: CargoCommonArgs { all_features: false, exclude: [], features: [], manifest_path: None, no_default_features: false, package: [], workspace: false }, target: CargoTargetArgs { bin: [], bins: false, lib: false } }, command: None, crate_name: None, version: false }
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 
@@ -137,7 +137,7 @@ note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 failures:
     args::tests::check_export_json_unstable_options_alone_is_not_sufficient
 
-test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 198 filtered out; finished in 0.00s
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 201 filtered out; finished in 0.00s
 
 error: test failed, to rerun pass `-p kani-driver --bin kani-driver`
 

@@ -1,7 +1,7 @@
-kani commit: 0e71661f12396b2df509b5397975f130854832c6
+kani commit: c1c626e42d16ed45814b578c0431dd0e2a975aef
 command: cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun vacuity-check
-start (UTC): 2026-10-01T15:46:20Z
-end (UTC): 2026-10-01T15:46:23Z
+start (UTC): 2026-10-01T19:53:44Z
+end (UTC): 2026-10-01T19:53:46Z
 exit: 1
 normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
 observed red: yes
@@ -13,14 +13,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -69,14 +69,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -119,21 +119,21 @@ help: to clarify your intent to not inherit, add:
 18 + [lints]
    |
 warning: `std` (manifest) generated 1 warning
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.02s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.03s
      Running `target/tools/debug/build-kani build-dev`
 warning: missing `[lints]` to inherit `[workspace.lints]`
   --> Cargo.toml
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -182,14 +182,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -235,20 +235,20 @@ warning: `std` (manifest) generated 1 warning
    Compiling kani_metadata v0.68.0 (<kani>/kani_metadata)
    Compiling kani-driver v0.68.0 (<kani>/kani-driver)
    Compiling kani-compiler v0.68.0 (<kani>/kani-compiler)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.01s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.42s
 warning: missing `[lints]` to inherit `[workspace.lints]`
   --> Cargo.toml
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -297,14 +297,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -356,20 +356,20 @@ warning: unused dependency `strum`
    = note: `cargo::unused_dependencies` is set to `warn` by default
 help: consider removing the dependency on `strum`
 warning: `kani_macros` (manifest) generated 1 warning
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.03s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.04s
 warning: missing `[lints]` to inherit `[workspace.lints]`
   --> Cargo.toml
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -418,14 +418,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -495,14 +495,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -551,14 +551,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -646,14 +646,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -702,14 +702,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -772,29 +772,29 @@ CBMC 6.11.0
 Checking harness check_should_panic_failing_vacuous...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test34check_should_panic_failing_vacuous.out
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCs2SuoitUwizz_4test34check_should_panic_failing_vacuous.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000929134s
+Runtime Symex: 0.000891534s
 size of program expression: 165 steps
 slicing removed 76 assignments
 Generated 4 VCC(s), 4 remaining after simplification
-Runtime Postprocess Equation: 1.3361e-05s
+Runtime Postprocess Equation: 1.265e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 9.576e-05s
+Runtime Convert SSA: 9.4781e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 2.97e-06s
+Runtime Post-process: 3.44e-06s
 Solving with CaDiCaL 3.0.0
 39 variables, 67 clauses
 SAT checker: instance is UNSATISFIABLE
-Runtime Solver: 0.000219421s
-Runtime decision procedure: 0.000329881s
+Runtime Solver: 0.000221481s
+Runtime decision procedure: 0.000329902s
 
 RESULTS:
 Check 1: check_should_panic_failing_vacuous.assertion.1
@@ -812,34 +812,34 @@ SUMMARY:
  ** 0 of 2 failed (2 unreachable)
 
 VERIFICATION:- FAILED (encountered no panics, but at least one was expected)
-Verification Time: 0.009880416s
+Verification Time: 0.010070686s
 
 Checking harness check_should_panic_success...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test26check_should_panic_success.out
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCs2SuoitUwizz_4test26check_should_panic_success.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000475623s
+Runtime Symex: 0.000470342s
 size of program expression: 77 steps
 slicing removed 43 assignments
 Generated 2 VCC(s), 2 remaining after simplification
-Runtime Postprocess Equation: 6.95e-06s
+Runtime Postprocess Equation: 7.23e-06s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 2.151e-05s
+Runtime Convert SSA: 2.117e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 4.23e-06s
+Runtime Post-process: 9.03e-06s
 Solving with CaDiCaL 3.0.0
 1 variables, 0 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 2.612e-05s
-Runtime decision procedure: 6.024e-05s
+Runtime Solver: 3.293e-05s
+Runtime decision procedure: 6.811e-05s
 
 RESULTS:
 Check 1: check_should_panic_success.assertion.1
@@ -854,23 +854,23 @@ Failed Checks: "always panics"
  File: "test.rs", line 33, in check_should_panic_success
 
 VERIFICATION:- SUCCESSFUL (encountered one or more panics as expected)
-Verification Time: 0.008892442s
+Verification Time: 0.009187272s
 
 Checking harness check_checkless_success...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test23check_checkless_success.out
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCs2SuoitUwizz_4test23check_checkless_success.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.00016602s
+Runtime Symex: 0.000169571s
 size of program expression: 17 steps
 slicing removed 6 assignments
 Generated 0 VCC(s), 0 remaining after simplification
-Runtime Postprocess Equation: 5.31e-06s
+Runtime Postprocess Equation: 5.28e-06s
 
 RESULTS:
 
@@ -878,40 +878,40 @@ SUMMARY:
  ** 0 of 0 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.007394814s
+Verification Time: 0.007554285s
 
 Checking harness check_real_success...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test18check_real_success.out
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCs2SuoitUwizz_4test18check_real_success.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000602752s
+Runtime Symex: 0.000628563s
 size of program expression: 102 steps
 slicing removed 46 assignments
 Generated 2 VCC(s), 2 remaining after simplification
-Runtime Postprocess Equation: 9.76e-06s
+Runtime Postprocess Equation: 9.36e-06s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 6.65e-05s
+Runtime Convert SSA: 6.6411e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 2.81e-06s
+Runtime Post-process: 3.38e-06s
 Solving with CaDiCaL 3.0.0
 30 variables, 45 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 2.128e-05s
-Runtime decision procedure: 0.00010362s
+Runtime Solver: 2.436e-05s
+Runtime decision procedure: 0.000106521s
 Running propositional reduction
 Solving with CaDiCaL 3.0.0
 31 variables, 46 clauses
 SAT checker: instance is UNSATISFIABLE
-Runtime Solver: 3.93e-06s
-Runtime decision procedure: 1.028e-05s
+Runtime Solver: 3.91e-06s
+Runtime decision procedure: 1.094e-05s
 
 RESULTS:
 Check 1: check_real_success.assertion.1
@@ -924,34 +924,34 @@ SUMMARY:
  ** 0 of 1 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.009141083s
+Verification Time: 0.009060721s
 
 Checking harness check_real_failure...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test18check_real_failure.out
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCs2SuoitUwizz_4test18check_real_failure.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000603263s
+Runtime Symex: 0.000578972s
 size of program expression: 100 steps
 slicing removed 45 assignments
 Generated 2 VCC(s), 2 remaining after simplification
-Runtime Postprocess Equation: 9.44e-06s
+Runtime Postprocess Equation: 1.176e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 6.258e-05s
+Runtime Convert SSA: 7.0121e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 3.1e-06s
+Runtime Post-process: 3.61e-06s
 Solving with CaDiCaL 3.0.0
 30 variables, 45 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 2.109e-05s
-Runtime decision procedure: 9.701e-05s
+Runtime Solver: 2.695e-05s
+Runtime decision procedure: 0.000113981s
 
 RESULTS:
 Check 1: check_real_failure.assertion.1
@@ -966,34 +966,34 @@ Failed Checks: assertion failed: x > 10
  File: "test.rs", line 16, in check_real_failure
 
 VERIFICATION:- FAILED
-Verification Time: 0.009406963s
+Verification Time: 0.009723134s
 
 Checking harness check_contradictory_assume...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test26check_contradictory_assume.out
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCs2SuoitUwizz_4test26check_contradictory_assume.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000890184s
+Runtime Symex: 0.000972704s
 size of program expression: 165 steps
 slicing removed 76 assignments
 Generated 4 VCC(s), 4 remaining after simplification
-Runtime Postprocess Equation: 1.225e-05s
+Runtime Postprocess Equation: 1.187e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 8.7651e-05s
+Runtime Convert SSA: 8.611e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 3.24e-06s
+Runtime Post-process: 2.79e-06s
 Solving with CaDiCaL 3.0.0
 39 variables, 67 clauses
 SAT checker: instance is UNSATISFIABLE
-Runtime Solver: 0.000216671s
-Runtime decision procedure: 0.000318112s
+Runtime Solver: 0.000216981s
+Runtime decision procedure: 0.000319091s
 
 RESULTS:
 Check 1: check_contradictory_assume.assertion.1
@@ -1011,7 +1011,7 @@ SUMMARY:
  ** 0 of 2 failed (2 unreachable)
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.009305583s
+Verification Time: 0.009492584s
 
 Manual Harness Summary:
 Verification failed for - check_should_panic_failing_vacuous
@@ -1023,29 +1023,29 @@ CBMC 6.11.0
 Checking harness check_should_panic_failing_vacuous...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test34check_should_panic_failing_vacuous.out
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCs2SuoitUwizz_4test34check_should_panic_failing_vacuous.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000940925s
+Runtime Symex: 0.000951004s
 size of program expression: 163 steps
 slicing removed 76 assignments
 Generated 2 VCC(s), 2 remaining after simplification
-Runtime Postprocess Equation: 1.355e-05s
+Runtime Postprocess Equation: 1.265e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 9.405e-05s
+Runtime Convert SSA: 9.3391e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 3.38e-06s
+Runtime Post-process: 3.42e-06s
 Solving with CaDiCaL 3.0.0
 39 variables, 67 clauses
 SAT checker: instance is UNSATISFIABLE
-Runtime Solver: 7.2521e-05s
-Runtime decision procedure: 0.000179091s
+Runtime Solver: 7.471e-05s
+Runtime decision procedure: 0.000180861s
 
 RESULTS:
 Check 1: check_should_panic_failing_vacuous.assertion.1
@@ -1063,34 +1063,34 @@ SUMMARY:
  ** 0 of 2 failed
 
 VERIFICATION:- FAILED (encountered no panics, but at least one was expected)
-Verification Time: 0.009330043s
+Verification Time: 0.009560883s
 
 Checking harness check_should_panic_success...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test26check_should_panic_success.out
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCs2SuoitUwizz_4test26check_should_panic_success.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000475382s
+Runtime Symex: 0.000457502s
 size of program expression: 76 steps
 slicing removed 43 assignments
 Generated 1 VCC(s), 1 remaining after simplification
-Runtime Postprocess Equation: 7.31e-06s
+Runtime Postprocess Equation: 7.24e-06s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 1.643e-05s
+Runtime Convert SSA: 1.64e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 3.941e-06s
+Runtime Post-process: 4.06e-06s
 Solving with CaDiCaL 3.0.0
 1 variables, 0 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 2.6551e-05s
-Runtime decision procedure: 5.5891e-05s
+Runtime Solver: 2.647e-05s
+Runtime decision procedure: 5.58e-05s
 
 RESULTS:
 Check 1: check_should_panic_success.assertion.1
@@ -1105,23 +1105,23 @@ Failed Checks: "always panics"
  File: "test.rs", line 33, in check_should_panic_success
 
 VERIFICATION:- SUCCESSFUL (encountered one or more panics as expected)
-Verification Time: 0.008203088s
+Verification Time: 0.008480029s
 
 Checking harness check_checkless_success...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test23check_checkless_success.out
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCs2SuoitUwizz_4test23check_checkless_success.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000167011s
+Runtime Symex: 0.000164331s
 size of program expression: 17 steps
 slicing removed 6 assignments
 Generated 0 VCC(s), 0 remaining after simplification
-Runtime Postprocess Equation: 5.97e-06s
+Runtime Postprocess Equation: 6.3e-06s
 
 RESULTS:
 
@@ -1129,34 +1129,34 @@ SUMMARY:
  ** 0 of 0 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.007261214s
+Verification Time: 0.007997537s
 
 Checking harness check_real_success...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test18check_real_success.out
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCs2SuoitUwizz_4test18check_real_success.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000560952s
+Runtime Symex: 0.000621483s
 size of program expression: 101 steps
 slicing removed 46 assignments
 Generated 1 VCC(s), 1 remaining after simplification
-Runtime Postprocess Equation: 9.12e-06s
+Runtime Postprocess Equation: 9.57e-06s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 6.2031e-05s
+Runtime Convert SSA: 6.4921e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 2.71e-06s
+Runtime Post-process: 3e-06s
 Solving with CaDiCaL 3.0.0
 29 variables, 42 clauses
 SAT checker: instance is UNSATISFIABLE
-Runtime Solver: 1.196e-05s
-Runtime decision procedure: 8.5321e-05s
+Runtime Solver: 1.305e-05s
+Runtime decision procedure: 8.9701e-05s
 
 RESULTS:
 Check 1: check_real_success.assertion.1
@@ -1169,34 +1169,34 @@ SUMMARY:
  ** 0 of 1 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.008058478s
+Verification Time: 0.008500459s
 
 Checking harness check_real_failure...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test18check_real_failure.out
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCs2SuoitUwizz_4test18check_real_failure.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000546832s
+Runtime Symex: 0.000637513s
 size of program expression: 99 steps
 slicing removed 45 assignments
 Generated 1 VCC(s), 1 remaining after simplification
-Runtime Postprocess Equation: 9.22e-06s
+Runtime Postprocess Equation: 9.71e-06s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 6.6171e-05s
+Runtime Convert SSA: 6.38e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 2.85e-06s
+Runtime Post-process: 3.21e-06s
 Solving with CaDiCaL 3.0.0
 29 variables, 42 clauses
 SAT checker: instance is SATISFIABLE
-Runtime Solver: 1.849e-05s
-Runtime decision procedure: 9.7121e-05s
+Runtime Solver: 2.038e-05s
+Runtime decision procedure: 9.559e-05s
 
 RESULTS:
 Check 1: check_real_failure.assertion.1
@@ -1211,34 +1211,34 @@ Failed Checks: assertion failed: x > 10
  File: "test.rs", line 16, in check_real_failure
 
 VERIFICATION:- FAILED
-Verification Time: 0.008345829s
+Verification Time: 0.00883764s
 
 Checking harness check_contradictory_assume...
 CBMC 6.11.0 (cbmc-6.11.0)
 CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
-Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test26check_contradictory_assume.out
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCs2SuoitUwizz_4test26check_contradictory_assume.out
 Generating GOTO Program
 Adding CPROVER library (x86_64)
 Removal of function pointers and virtual functions
 Generic Property Instrumentation
 Running with 16 object bits, 48 offset bits (user-specified)
 Starting Bounded Model Checking
-Runtime Symex: 0.000971395s
+Runtime Symex: 0.000925205s
 size of program expression: 163 steps
 slicing removed 76 assignments
 Generated 2 VCC(s), 2 remaining after simplification
-Runtime Postprocess Equation: 1.38e-05s
+Runtime Postprocess Equation: 1.21e-05s
 Passing problem to propositional reduction
 converting SSA
-Runtime Convert SSA: 9.242e-05s
+Runtime Convert SSA: 8.562e-05s
 Running propositional reduction
 Post-processing
-Runtime Post-process: 3.03e-06s
+Runtime Post-process: 3.02e-06s
 Solving with CaDiCaL 3.0.0
 39 variables, 67 clauses
 SAT checker: instance is UNSATISFIABLE
-Runtime Solver: 7.6201e-05s
-Runtime decision procedure: 0.000182221s
+Runtime Solver: 7.426e-05s
+Runtime decision procedure: 0.00017212s
 
 RESULTS:
 Check 1: check_contradictory_assume.assertion.1
@@ -1256,7 +1256,7 @@ SUMMARY:
  ** 0 of 2 failed
 
 VERIFICATION:- SUCCESSFUL
-Verification Time: 0.00870498s
+Verification Time: 0.009116412s
 
 Manual Harness Summary:
 Verification failed for - check_should_panic_failing_vacuous
@@ -1291,8 +1291,8 @@ warning: use of an unstable feature
 warning: 1 warning emitted
 
 Command exited with non-zero status 1
-0.57user 0.21system 0:00.75elapsed 104%CPU (0avgtext+0avgdata 141164maxresident)k
-0inputs+4272outputs (0major+240276minor)pagefaults 0swaps
+0.57user 0.24system 0:00.77elapsed 105%CPU (0avgtext+0avgdata 185832maxresident)k
+0inputs+4272outputs (0major+237370minor)pagefaults 0swaps
 
 ------------------------------------------
 
@@ -1301,14 +1301,14 @@ Command exited with non-zero status 1
 failures:
     [exec] json-handler/vacuity-check
 
-test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.75s
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.77s
 
 Some tests failed in compiletest suite=json-handler mode=exec host=(none) target=(none)
           Finished with result: exit-code
 Main processes terminated with: code=exited, status=1/FAILURE
-               Service runtime: 2.096s
-             CPU time consumed: 4.232s
-                   Memory peak: 998M (swap: 0B)
+               Service runtime: 2.554s
+             CPU time consumed: 4.293s
+                   Memory peak: 1.6G (swap: 0B)
 
 
 --- patch ---

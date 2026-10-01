@@ -1,7 +1,7 @@
-kani commit: 0e71661f12396b2df509b5397975f130854832c6
+kani commit: c1c626e42d16ed45814b578c0431dd0e2a975aef
 command: cargo test -p kani-driver schema_utils::tests::export_json_path_dash_is_literal_filename
-start (UTC): 2026-10-01T15:47:46Z
-end (UTC): 2026-10-01T15:47:47Z
+start (UTC): 2026-10-01T19:55:14Z
+end (UTC): 2026-10-01T19:55:15Z
 exit: 101
 normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
 observed red: yes
@@ -12,14 +12,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
-98 + workspace = true
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-96 ~ annotate-snippets = "0.11.5"
-97 + [lints]
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
    |
 warning: `package.homepage` is redundant with `package.repository`
   --> Cargo.toml:15:12
@@ -68,14 +68,14 @@ warning: missing `[lints]` to inherit `[workspace.lints]`
    = note: `cargo::missing_lints_inheritance` is set to `warn` by default
 help: to inherit `workspace.lints, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
-26 + workspace = true
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
    |
 help: to clarify your intent to not inherit, add:
    |
-24 ~ rustc_private = true
-25 + [lints]
+25 ~ rustc_private = true
+26 + [lints]
    |
 warning: `scanner` (manifest) generated 1 warning
 warning: missing `[lints]` to inherit `[workspace.lints]`
@@ -119,7 +119,7 @@ help: to clarify your intent to not inherit, add:
    |
 warning: `std` (manifest) generated 1 warning
    Compiling kani-driver v0.68.0 (<kani>/kani-driver)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.95s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.01s
      Running unittests src/main.rs (target/debug/build/kani-driver/624126ba5da2628e/out/kani_driver-624126ba5da2628e)
 
 running 1 test
@@ -235,7 +235,7 @@ failures:
   }
 }
 
-thread 'frontend::schema_utils::tests::export_json_path_dash_is_literal_filename' (699579) panicked at kani-driver/src/frontend/schema_utils.rs:2485:9:
+thread 'frontend::schema_utils::tests::export_json_path_dash_is_literal_filename' (1918455) panicked at kani-driver/src/frontend/schema_utils.rs:2542:9:
 a path literally named `-` must be written like any other file
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 
@@ -243,7 +243,7 @@ note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 failures:
     frontend::schema_utils::tests::export_json_path_dash_is_literal_filename
 
-test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 198 filtered out; finished in 0.00s
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 201 filtered out; finished in 0.00s
 
 error: test failed, to rerun pass `-p kani-driver --bin kani-driver`
 
