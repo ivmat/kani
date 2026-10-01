@@ -14,18 +14,65 @@ version 0.3.2. It records, in machine-checkable form, what the contract asks for
 evidence supports, and which parts are not delivered. It is not part of the Kani build and no
 Kani test reads it.
 
+## How to read the ids in this document
+
+This document uses short ids. Each id family has one home file, where you can read the full text.
+`R0` to `R14` are the requirements of the contract. They are in `acceptance-contract.toml`, in the
+`[[requirement]]` tables, in the field `statement`. The table below gives every statement in full,
+and each later mention of an id in this document repeats its statement in brackets.
+`RFC15-xx` (for example `RFC15-D2`) are the claims of the package. They are in `acceptance.toml`, in the `[[claim]]` tables.
+`RFC0015-S-...` (for example `RFC0015-S-7.2-13`) are the clauses of the RFC clause inventory in
+`standards/rfc0015.clauses.toml`. This document sometimes writes a clause id without the `RFC0015-` prefix (for example `S-7.2-13`).
+`A0` to `A4` are the assurance bands of the acceptance format, from lowest to highest. `A0` means that the claim was run or asserted
+without a control that was watched to fail. `A1` means that the check is not vacuous (a test with a control that turns it red) but does not cover every state.
+The higher bands (`A2` to `A4`) need stronger evidence, for example Kani proofs. The claims of this package are at `A0` and `A1`.
+
+| id | statement (verbatim from `acceptance-contract.toml`) | mandatory |
+|---|---|---|
+| R0 | The RFC 0015 clause ledger (standards/rfc0015.clauses.toml, conformance manifest) validates under the conformance profile, every clause of the pinned RFC text is listed, and every clause carries an applicability declared before any evidence was read and, if applicable, a claim. | yes |
+| R1 | Every export is one document carrying schema_version, a harnesses[] array sorted by (crate_name, file, line, name) independent of completion order, and per-harness fields present or null exactly as the RFC's harness-level presence matrix says, including the harness_selection block. | yes |
+| R2 | Every closed enum (outcome.kind, verdict, failure_kind, status, attributes.kind) is a Rust type serialized in the RFC's casing, so an unmodeled variant cannot be silently absorbed, and property ids are rebuilt from the parsed id in the RFC's \<function>.\<class>.\<counter> forms. | yes |
+| R3 | On a COMPLETED harness the check/cover buckets partition every property by class and sum to their totals, failed_properties[] is exactly checks.failure with n_failed and n_properties consistent, unsupported constructs are reported with full records, and summary.* is computed over COMPLETED harnesses only, never counting null as zero. | yes |
+| R4 | outcome.verdict and failure_kind follow the RFC's truth table over should_panic x FailedProperties, and a harness that #4719 fails because the solver dropped quantifiers is exported as ERROR/FAILURE, never recomputed to SUCCESS from its properties. | yes |
+| R5 | With assertion reach checks on, a harness whose assertions are all unreachable exports verdict SUCCESS with checks.total > 0 and checks.unreachable listing every check, so a consumer can apply the RFC's vacuous-pass predicate. | yes |
+| R6 | --export-json requires its own -Z export-json unstable feature, and combinations that cannot produce real results (--output-format=old, --only-codegen) are rejected before verification starts. | yes |
+| R7 | Every write goes to a temporary file in the target's own directory and is renamed onto the target, a missing parent directory is created first, and an interrupted write never leaves a partially written target. | yes |
+| R8 | The configuration block reports Kani's own resolution of solver and unwind (not a cbmc_args scan), the nine mandatory check flags and coverage_enabled as effective for the run, cbmc_args verbatim, and run provenance (kani_commit, dirty flag, tool versions) as null rather than guessed when unknown. | yes |
+| R9 | Timeout, out-of-memory and CBMC crash are recorded as that harness's outcome while the file is still written, warnings are capped as the RFC says, is_bounded is reported for every harness, and a multi-crate run writes one file covering every crate. | yes |
+| R10 | A run that has begun verification atomically replaces any earlier file with an INCOMPLETE marker, a finished run writes the complete document with its run_state, run-level fields are present exactly as the RFC's run-level presence matrix says, and compile errors or rejected filters before the marker leave existing files untouched. | yes |
+| R11 | An --export-json path that names an existing directory is rejected when arguments are parsed, before any build or verification starts. | yes |
+| R12 | Kani's reference consumer, scripts/validate_json_export.py, implements the RFC's consumer-side rules (versioning acceptance, vacuity predicates, selection and join guidance, no assumed output_dir, no inference of unrestricted proofs from an omitted disclosure) and rejects documents that break them. | yes |
+| R13 | --export-json only adds a file: rendered output and --sarif output are unchanged, --output-into-files stays independent, and a path of '-' is a literal filename, not stdout. | yes |
+| R14 | On adoption of RFC 0015 (merged 2026-09-24), tracking issues are filed upstream for the effective --object-bits provenance representation and for full tool/solver provenance and host machine metadata. | yes |
+
 ## Current status
 
 - The package describes the code at commit `0e71661f12396b2df509b5397975f130854832c6`
   (the top of the stack). It is in this branch only because the branch adds this directory on top of that commit.
 - **Requirement coverage is 12/15, and `acceptable=False`.** Always read the two together.
-  R0 to R9, R11 and R13 are satisfied. R10 (completeness) and R12 (reference consumer) are
-  **partial**. R14 (tracking issues) is a declared deviation.
+  These 12 requirements are satisfied:
+  - R0 ("The RFC 0015 clause ledger (standards/rfc0015.clauses.toml, conformance manifest) validates under the conformance profile, every clause of the pinned RFC text is listed, and every clause carries an applicability declared before any evidence was read and, if applicable, a claim.")
+  - R1 ("Every export is one document carrying schema_version, a harnesses[] array sorted by (crate_name, file, line, name) independent of completion order, and per-harness fields present or null exactly as the RFC's harness-level presence matrix says, including the harness_selection block.")
+  - R2 ("Every closed enum (outcome.kind, verdict, failure_kind, status, attributes.kind) is a Rust type serialized in the RFC's casing, so an unmodeled variant cannot be silently absorbed, and property ids are rebuilt from the parsed id in the RFC's \<function>.\<class>.\<counter> forms.")
+  - R3 ("On a COMPLETED harness the check/cover buckets partition every property by class and sum to their totals, failed_properties[] is exactly checks.failure with n_failed and n_properties consistent, unsupported constructs are reported with full records, and summary.* is computed over COMPLETED harnesses only, never counting null as zero.")
+  - R4 ("outcome.verdict and failure_kind follow the RFC's truth table over should_panic x FailedProperties, and a harness that #4719 fails because the solver dropped quantifiers is exported as ERROR/FAILURE, never recomputed to SUCCESS from its properties.")
+  - R5 ("With assertion reach checks on, a harness whose assertions are all unreachable exports verdict SUCCESS with checks.total > 0 and checks.unreachable listing every check, so a consumer can apply the RFC's vacuous-pass predicate.")
+  - R6 ("--export-json requires its own -Z export-json unstable feature, and combinations that cannot produce real results (--output-format=old, --only-codegen) are rejected before verification starts.")
+  - R7 ("Every write goes to a temporary file in the target's own directory and is renamed onto the target, a missing parent directory is created first, and an interrupted write never leaves a partially written target.")
+  - R8 ("The configuration block reports Kani's own resolution of solver and unwind (not a cbmc_args scan), the nine mandatory check flags and coverage_enabled as effective for the run, cbmc_args verbatim, and run provenance (kani_commit, dirty flag, tool versions) as null rather than guessed when unknown.")
+  - R9 ("Timeout, out-of-memory and CBMC crash are recorded as that harness's outcome while the file is still written, warnings are capped as the RFC says, is_bounded is reported for every harness, and a multi-crate run writes one file covering every crate.")
+  - R11 ("An --export-json path that names an existing directory is rejected when arguments are parsed, before any build or verification starts.")
+  - R13 ("--export-json only adds a file: rendered output and --sarif output are unchanged, --output-into-files stays independent, and a path of '-' is a literal filename, not stdout.")
+  These 2 requirements are **partial**:
+  - R10 ("A run that has begun verification atomically replaces any earlier file with an INCOMPLETE marker, a finished run writes the complete document with its run_state, run-level fields are present exactly as the RFC's run-level presence matrix says, and compile errors or rejected filters before the marker leave existing files untouched.") (completeness)
+  - R12 ("Kani's reference consumer, scripts/validate_json_export.py, implements the RFC's consumer-side rules (versioning acceptance, vacuity predicates, selection and join guidance, no assumed output_dir, no inference of unrestricted proofs from an omitted disclosure) and rejects documents that break them.") (reference consumer)
+  This requirement is a declared deviation:
+  - R14 ("On adoption of RFC 0015 (merged 2026-09-24), tracking issues are filed upstream for the effective --object-bits provenance representation and for full tool/solver provenance and host machine metadata.") (tracking issues)
 - The contract is **not ratified**. The Kani maintainers have not reviewed it. For this reason
   `check-package` fails with one error: "the bound contract is not BINDING". This is expected.
-- R10 is partial because the INCOMPLETE marker is not written by any of the three commits. R12 is partial
+- R10 ("A run that has begun verification atomically replaces any earlier file with an INCOMPLETE marker, a finished run writes the complete document with its run_state, run-level fields are present exactly as the RFC's run-level presence matrix says, and compile errors or rejected filters before the marker leave existing files untouched.") is partial because the INCOMPLETE marker is not written by any of the three commits. R12 ("Kani's reference consumer, scripts/validate_json_export.py, implements the RFC's consumer-side rules (versioning acceptance, vacuity predicates, selection and join guidance, no assumed output_dir, no inference of unrestricted proofs from an omitted disclosure) and rejects documents that break them.") is partial
   because the reference consumer does not implement every rule that the contract names.
-  The claims that are evidenced for R10 and R12 are marked `unweighted` on purpose, so that
+  The claims that are evidenced for R10 ("A run that has begun verification atomically replaces any earlier file with an INCOMPLETE marker, a finished run writes the complete document with its run_state, run-level fields are present exactly as the RFC's run-level presence matrix says, and compile errors or rejected filters before the marker leave existing files untouched.") and R12 ("Kani's reference consumer, scripts/validate_json_export.py, implements the RFC's consumer-side rules (versioning acceptance, vacuity predicates, selection and join guidance, no assumed output_dir, no inference of unrestricted proofs from an omitted disclosure) and rejects documents that break them.") are marked `unweighted` on purpose, so that
   the tool reports "partial" and not "satisfied".
 - The clause ledger (`ledger/acceptance.toml`) covers all 259 clauses of the RFC. Of the 210
   applicable clauses, 111 are evidenced and 99 are gaps. 51 of the gaps are clauses that the tests
@@ -77,8 +124,8 @@ The `vendor/` directory is ignored by git.
 
 | path | content |
 |---|---|
-| `acceptance-contract.toml` | the contract: requirements R0 to R14 for the whole RFC |
-| `acceptance.toml` | the package: 40 claims (`RFC15-xx`) under those requirements, each with its evidence |
+| `acceptance-contract.toml` | the contract: the 15 requirements for the whole RFC (listed in the first table of this file) |
+| `acceptance.toml` | the package: 40 claims (`RFC15-xx`) under those 15 requirements, each with its evidence |
 | `applicability.toml` | for each clause of the RFC: applicable, not applicable or excluded, with the reason |
 | `standards/rfc0015.clauses.toml` | the clause inventory: one row for each normative unit of the RFC |
 | `spec/0015-export-json.txt` | a byte copy of the RFC text that the contract pins (its digest is in the contract) |
@@ -151,14 +198,14 @@ The `record_hash` of a record is computed over these normalized bytes, as stored
 
 These are proposals. None of them has been applied.
 
-- **Contract R10.** The text demands the INCOMPLETE marker, which none of the three commits writes. Either keep R10 as it is
-  (the deviation then stands until the marker exists) or split it into R10a (terminal `run_state`, run-level presence of a
-  terminal document, no change to files after rejected arguments or filters; delivered) and R10b (the marker, a crash after it,
+- **Contract R10** ("A run that has begun verification atomically replaces any earlier file with an INCOMPLETE marker, a finished run writes the complete document with its run_state, run-level fields are present exactly as the RFC's run-level presence matrix says, and compile errors or rejected filters before the marker leave existing files untouched."). The text demands the INCOMPLETE marker, which none of the three commits writes. Either keep R10 ("A run that has begun verification atomically replaces any earlier file with an INCOMPLETE marker, a finished run writes the complete document with its run_state, run-level fields are present exactly as the RFC's run-level presence matrix says, and compile errors or rejected filters before the marker leave existing files untouched.") as it is
+  (the deviation then stands until the marker exists) or split it into R10a (a proposed new requirement, not in the contract: terminal `run_state`, run-level presence of a
+  terminal document, no change to files after rejected arguments or filters; delivered) and R10b (a proposed new requirement, not in the contract: the marker, a crash after it,
   the case that no harness completed; not delivered).
-- **Contract R12.** It names the selection guidance, the `output_dir` rule and the no-inference rule. The reference consumer keeps only
-  the version, vacuity, join, structure and warnings rules. Either narrow R12 to those rules (and drop claim `RFC15-D2` and the R12 deviation)
+- **Contract R12** ("Kani's reference consumer, scripts/validate_json_export.py, implements the RFC's consumer-side rules (versioning acceptance, vacuity predicates, selection and join guidance, no assumed output_dir, no inference of unrestricted proofs from an omitted disclosure) and rejects documents that break them."). It names the selection guidance, the `output_dir` rule and the no-inference rule. The reference consumer keeps only
+  the version, vacuity, join, structure and warnings rules. Either narrow R12 ("Kani's reference consumer, scripts/validate_json_export.py, implements the RFC's consumer-side rules (versioning acceptance, vacuity predicates, selection and join guidance, no assumed output_dir, no inference of unrestricted proofs from an omitted disclosure) and rejects documents that break them.") to those rules (and drop claim `RFC15-D2` and the deviation that is recorded for R12 ("Kani's reference consumer, scripts/validate_json_export.py, implements the RFC's consumer-side rules (versioning acceptance, vacuity predicates, selection and join guidance, no assumed output_dir, no inference of unrestricted proofs from an omitted disclosure) and rejects documents that break them."))
   or restore the dropped rules with tests.
-- **Contract R14.** The delivery path of the tracking issues has changed. The deviation text is out of date.
+- **Contract R14** ("On adoption of RFC 0015 (merged 2026-09-24), tracking issues are filed upstream for the effective --object-bits provenance representation and for full tool/solver provenance and host machine metadata."). The delivery path of the tracking issues has changed. The deviation text is out of date.
 - **Pinned RFC text.** PR 1 corrects the RFC: `resolved_solver` and `resolved_unwind` are what CBMC runs. The copy in `spec/`
   and the clauses `RFC0015-S-7.2-13` and `RFC0015-S-7.2-14` keep the older wording. After the corrected RFC is merged, pin the new
   text and update both clauses. Then `S-7.2-13` can be mapped to the effective-solver tests.
@@ -166,4 +213,4 @@ These are proposals. None of them has been applied.
   The consumer-guidance rows `S-3.3-2`, `-22`, `-23`, `-24` and `S-5-15`, `-16` are applicable but no test evidences them.
 - **Compound clauses.** The 51 partly evidenced clauses state more than one obligation. If the inventory splits them, the evidenced half can be counted.
 - **Format limit.** The coverage tool calls a requirement satisfied as soon as one claim meets the floor. A requirement that is delivered
-  in part can therefore read "satisfied". This package marks the partial claims of R10 and R12 as unweighted to avoid that.
+  in part can therefore read "satisfied". This package marks the partial claims of R10 ("A run that has begun verification atomically replaces any earlier file with an INCOMPLETE marker, a finished run writes the complete document with its run_state, run-level fields are present exactly as the RFC's run-level presence matrix says, and compile errors or rejected filters before the marker leave existing files untouched.") and R12 ("Kani's reference consumer, scripts/validate_json_export.py, implements the RFC's consumer-side rules (versioning acceptance, vacuity predicates, selection and join guidance, no assumed output_dir, no inference of unrestricted proofs from an omitted disclosure) and rejects documents that break them.") as unweighted to avoid that.
