@@ -31,7 +31,7 @@ repo           = "github.com/model-checking/kani (branch export-json-rfc0015, no
 
 [contract]
 id                 = "AC-2026-RFC0015"
-hash               = "contract:sha-512:4e31d1780c5a287e907e7704a938c91a559d5c8f202ce50720cf089fd29ae2267c5009de0d69761e6cf8f17f27f8a7c4d36fd104618d6ba1a8ae9a579ce72984"
+hash               = "contract:sha-512:068575b0e531ab2a4a01d47e7cd5d0f1ec3d78632dfd2d6336c0171d7cd7e134af831eb883be259807813fc07cbe889918bdaa9a557ca3077bd4b65873b367df"
 requirements_total = 15
 
 [spec]
@@ -3903,7 +3903,7 @@ captured_at_commit = "0e71661f12396b2df509b5397975f130854832c6"
   tool            = "check_core.py (acceptance-format 0.3.2, conformance meaning 0.2.0) + python3 3.14.4"
   cases           = 1
   record          = "evidence/gen/run-conformance-ledger-check.txt"
-  record_hash     = "record:sha-512:1a4ad15d909ccb1a3f4e67ffac30e0132769f700d9557608d8a0b9001e351171664966540da0ebce9bee47fef3c89be73318f7cc2f457b8237b5ba8915c61cf5"
+  record_hash     = "record:sha-512:ecf7c9032d5580546bc18c8183a3ca2a577ab3639b7b7c1c7b53aa14b79eb99a9df27ca22f495327fd05a4c1383fb0710913f0c3afb51412c761c077e4791ba1"
   captured_at_commit = "0e71661f12396b2df509b5397975f130854832c6"
 
   [[claim.evidence]]
@@ -3917,7 +3917,7 @@ captured_at_commit = "0e71661f12396b2df509b5397975f130854832c6"
   tool            = "check_core.py (acceptance-format 0.3.2, conformance meaning 0.2.0) + python3 3.14.4 (one [[claim]] block removed, reverted)"
   cases           = 1
   record          = "evidence/gen/control-rfc15-l0-ledger-missing-claim.txt"
-  record_hash     = "record:sha-512:ce85894e57a8777f31530c2a6194eab73361c4f68e50eb43f2cd45e3832356e034eda4ca8530ea8bab9582ec8258cb7583b8d911ff682cfd71712dca6d249558"
+  record_hash     = "record:sha-512:0a91731d80e8de39776ffdf3a46b577ec5d7552c26b5447b2fdb712c411209423b9d8b8bf32a622ceff56573c2922fb877d2fe4e2be77d5d52c7afb6b647f598"
   captured_at_commit = "0e71661f12396b2df509b5397975f130854832c6"
 
     [claim.evidence.control]

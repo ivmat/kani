@@ -284,7 +284,7 @@ firmness      = "firm"
 # ---------------------------------------------------------------------------------------------
 [[requirement]]
 id            = "R8"
-statement     = "The configuration block reports Kani's own resolution of solver and unwind (not a cbmc_args scan), the nine mandatory check flags and coverage_enabled as effective for the run, cbmc_args verbatim, and run provenance (kani_commit, dirty flag, tool versions) as null rather than guessed when unknown."
+statement     = "The configuration block reports the solver and unwind bound CBMC actually runs with, resolved from Kani's own flags followed by --cbmc-args, the nine mandatory check flags and coverage_enabled as effective for the run, cbmc_args verbatim, and run provenance (kani_commit, dirty flag, tool versions) as null rather than guessed when unknown."
 mandatory     = true
 waivable      = false
 domain        = "correctness"
