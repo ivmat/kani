@@ -1,0 +1,462 @@
+# acceptance-contract.toml — the CONSUMER's contract (acceptance-protocol/0, protocol.md §3) for the
+# implementation of Kani RFC 0015 ("export-json"), the WHOLE RFC, delivered across several PRs.
+#
+# The CONSUMER is the Kani project: the bar is what Kani's maintainers would accept upstream. For
+# now the RFC author represents that consumer (the same person also produces), so the showcase plays
+# both roles: the PRODUCER drafted and proposed this contract (issued_by = "producer", transition
+# `propose`); the CONSUMER reviews and RATIFIES it (transition `ratify`, a [ratification] block added
+# only when the consumer signs).
+#
+# Shape ("two manifests, one contract"): one contract for the whole RFC; one package
+# per delivered revision (PR 1 first). PR-2 areas R10/R11 are mandatory but waivable: the PR-1
+# package declares them as deviations, the PR-1 decision is accepted-with-conditions, and the PR-2
+# package discharges the resulting obligations. Whole-RFC clause coverage lives in a separate
+# conformance manifest (the clause ledger); R0 bridges it into this contract.
+#
+# Class baseline/2 with axes raised by hand (protocol.md §3.7): baseline/3 needs T2 (a sound decision
+# over a declared domain) and decision coverage, which a test-delivered JSON writer cannot honestly
+# reach. Formal verification of the JSON format itself is out of reach; evidence is unit tests,
+# end-to-end compiletest runs and recorded runs checked by a predicate script (T3), plus Kani
+# harnesses over kani-driver's pure verdict logic where feasible (bmc, T2) as a stretch.
+#
+# Phase = "crystallizing". Before the PR-1 push the consumer TIGHTENS this contract to phase "final"
+# (successor contract, transition `tighten`; floors only go up — protocol.md §3.5, P12); only a
+# decision under a final contract may gate an effect such as a push (§5.0a).
+#
+# The governing text is the merged RFC, pinned by content digest (verified 2026-09-28 against
+# upstream merge c610df629); 0.3.2 has no contract field for this pin (investigation G2), so it is
+# recorded here and in the clause ledger:
+#   rfc/src/rfcs/0015-export-json.md  normative-reference:sha-512:ca343105d0a6d67c26dfa619d66b1dad3d9aa0766a1760921671431006199b127dbef8a1184d266b47ed061025b79f0a0da1c6866e48a7c4efbe2f10c7c34769
+# A byte copy is kept at spec/0015-export-json.txt (same digest). The RFC is external and read-only.
+#
+# VALIDATE (from this directory):
+#   python3 -B vendor/acceptance-format/protocol_acceptance/tools/acceptance_protocol.py check-contract acceptance-contract.toml
+
+[document]
+protocol  = "acceptance-protocol/0"
+minor     = 0
+kind      = "contract"
+id        = "AC-2026-RFC0015"
+version   = 1
+issued_at = "2026-09-28T20:00:00Z"
+issued_by = "producer"
+status    = "issued"
+
+[parties]
+consumer = { name = "model-checking/kani (represented by ivmat)", contact = "the Kani maintainers; for now the RFC 0015 author acts for them" }
+producer = { name = "ivmat (RFC 0015 author, implementer)" }
+
+[subject]
+kind         = "rust-workspace"
+name         = "model-checking/kani — --export-json writer (RFC 0015)"
+description  = "Implement RFC 0015 in kani-driver: the export-json document shape, closed vocabularies, check/cover buckets with a vacuity signal, a dedicated -Z export-json gate, atomic writes, a faithful configuration/provenance block, and the run_state/INCOMPLETE completeness contract."
+deliverables = [
+  "the kani workspace at the delivered revision of each PR",
+  "one acceptance.toml package per delivered revision",
+  "the RFC 0015 clause ledger (conformance manifest) with its applicability record",
+  "evidence/",
+]
+constraints  = [
+  "the RFC text is external and read-only; ambiguities go upstream as questions, never local edits",
+  "no new workspace dependencies",
+  "upstream CI jobs green: regression, clippy-check, format check",
+  "every hunk needed by the change, no unrelated changes bundled (diff-necessity)",
+]
+profile      = "acceptance/verification/code/rust"
+
+
+# ---------------------------------------------------------------------------------------------
+# R0 — the RFC clause ledger accounts for the whole RFC
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R0"
+statement     = "The RFC 0015 clause ledger (standards/rfc0015.clauses.toml, conformance manifest) validates under the conformance profile, every clause of the pinned RFC text is listed, and every clause carries an applicability declared before any evidence was read and, if applicable, a claim."
+mandatory     = true
+waivable      = false
+domain        = "process"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 (whole document)"
+firmness      = "draft"
+  [requirement.evidence]
+  min_tier          = "T4"
+  weighted_required = true
+  control_required  = true
+  recipe_required   = true
+  freshness         = "delivered-revision"
+  independence      = "consumer-run"
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "mechanical"
+  min_band  = "A0"
+  families  = ["mechanical"]
+
+# ---------------------------------------------------------------------------------------------
+# R1 — the document has the RFC's shape, ordering and presence rules
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R1"
+statement     = "Every export is one document carrying schema_version, a harnesses[] array sorted by (crate_name, file, line, name) independent of completion order, and per-harness fields present or null exactly as the RFC's harness-level presence matrix says, including the harness_selection block."
+mandatory     = true
+waivable      = false
+domain        = "correctness"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 §Compatibility policy; §Interaction with other flags; §Presence matrices; §Field reference"
+firmness      = "firm"
+  [requirement.evidence]
+  min_tier          = "T3"
+  weighted_required = true
+  control_required  = true
+  recipe_required   = true
+  freshness         = "delivered-revision"
+  independence      = "consumer-run"
+  # branch coverage over kani-driver/src/frontend/schema_utils.rs (the writer module); 0.3.2 has no
+  # field for the coverage scope, so it is stated here and in the evidence record.
+  [requirement.evidence.coverage_min]
+  metric = "branch"
+  value  = 0.8
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "test-only"
+  min_band  = "A1"
+  families  = ["dynamic", "bmc"]
+
+# ---------------------------------------------------------------------------------------------
+# R2 — closed vocabularies and property-id forms
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R2"
+statement     = "Every closed enum (outcome.kind, verdict, failure_kind, status, attributes.kind) is a Rust type serialized in the RFC's casing, so an unmodeled variant cannot be silently absorbed, and property ids are rebuilt from the parsed id in the RFC's <function>.<class>.<counter> forms."
+mandatory     = true
+waivable      = false
+domain        = "compatibility"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 §Value domains and casing; §Field reference (property id form)"
+firmness      = "firm"
+  [requirement.evidence]
+  min_tier          = "T3"
+  weighted_required = true
+  control_required  = true
+  recipe_required   = true
+  freshness         = "delivered-revision"
+  independence      = "consumer-run"
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "test-only"
+  min_band  = "A1"
+  families  = ["dynamic", "bmc"]
+
+# ---------------------------------------------------------------------------------------------
+# R3 — counting invariants hold
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R3"
+statement     = "On a COMPLETED harness the check/cover buckets partition every property by class and sum to their totals, failed_properties[] is exactly checks.failure with n_failed and n_properties consistent, unsupported constructs are reported with full records, and summary.* is computed over COMPLETED harnesses only, never counting null as zero."
+mandatory     = true
+waivable      = false
+domain        = "correctness"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 §Field reference (checks/covers, failed_properties, unsupported_constructs); §Rationale (Summary table)"
+firmness      = "firm"
+  [requirement.evidence]
+  min_tier          = "T3"
+  weighted_required = true
+  control_required  = true
+  recipe_required   = true
+  freshness         = "delivered-revision"
+  independence      = "consumer-run"
+  # branch coverage over kani-driver/src/frontend/schema_utils.rs (the writer module); 0.3.2 has no
+  # field for the coverage scope, so it is stated here and in the evidence record.
+  [requirement.evidence.coverage_min]
+  metric = "branch"
+  value  = 0.8
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "test-only"
+  min_band  = "A1"
+  families  = ["dynamic", "bmc"]
+
+# ---------------------------------------------------------------------------------------------
+# R4 — the verdict follows the RFC's truth table, and #4719's override survives
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R4"
+statement     = "outcome.verdict and failure_kind follow the RFC's truth table over should_panic x FailedProperties, and a harness that #4719 fails because the solver dropped quantifiers is exported as ERROR/FAILURE, never recomputed to SUCCESS from its properties."
+mandatory     = true
+waivable      = false
+domain        = "correctness"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 §Value domains and casing (failure_kind truth table); model-checking/kani#4719"
+firmness      = "firm"
+  [requirement.evidence]
+  min_tier          = "T3"
+  weighted_required = true
+  control_required  = true
+  recipe_required   = true
+  freshness         = "delivered-revision"
+  independence      = "consumer-run"
+  # branches in kani-driver/src/frontend/schema_utils.rs and in the verdict/failure-kind functions
+  # of kani-driver/src/call_cbmc.rs (verification_outcome_from_properties, determine_failed_properties,
+  # the ignored-quantifier override in VerificationResult::from); 0.3.2 has no field for the coverage
+  # scope, so it is stated here and in the evidence record.
+  [requirement.evidence.coverage_min]
+  metric = "branch"
+  value  = 0.8
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "test-only"
+  min_band  = "A1"
+  families  = ["dynamic", "bmc"]
+
+# ---------------------------------------------------------------------------------------------
+# R5 — a vacuous pass is visible
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R5"
+statement     = "With assertion reach checks on, a harness whose assertions are all unreachable exports verdict SUCCESS with checks.total > 0 and checks.unreachable listing every check, so a consumer can apply the RFC's vacuous-pass predicate."
+mandatory     = true
+waivable      = false
+domain        = "correctness"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 §The specific gap; §Reading the results (Vacuous pass)"
+firmness      = "firm"
+  [requirement.evidence]
+  min_tier          = "T3"
+  weighted_required = true
+  control_required  = true
+  recipe_required   = true
+  freshness         = "delivered-revision"
+  independence      = "consumer-run"
+  # branch coverage over kani-driver/src/frontend/schema_utils.rs (the writer module); 0.3.2 has no
+  # field for the coverage scope, so it is stated here and in the evidence record.
+  [requirement.evidence.coverage_min]
+  metric = "branch"
+  value  = 0.8
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "test-only"
+  min_band  = "A1"
+  families  = ["dynamic", "bmc"]
+
+# ---------------------------------------------------------------------------------------------
+# R6 — dedicated gate; combinations with no results are refused
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R6"
+statement     = "--export-json requires its own -Z export-json unstable feature, and combinations that cannot produce real results (--output-format=old, --only-codegen) are rejected before verification starts."
+mandatory     = true
+waivable      = false
+domain        = "compatibility"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 §Name and gate; §User Experience; §Interaction with other flags"
+firmness      = "firm"
+  [requirement.evidence]
+  min_tier          = "T3"
+  weighted_required = true
+  control_required  = true
+  recipe_required   = true
+  freshness         = "delivered-revision"
+  independence      = "consumer-run"
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "test-only"
+  min_band  = "A1"
+  families  = ["dynamic", "bmc"]
+
+# ---------------------------------------------------------------------------------------------
+# R7 — writes are atomic
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R7"
+statement     = "Every write goes to a temporary file in the target's own directory and is renamed onto the target, a missing parent directory is created first, and an interrupted write never leaves a partially written target."
+mandatory     = true
+waivable      = false
+domain        = "availability"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 §Reading the results (Completeness); §Failure scenarios"
+firmness      = "firm"
+  [requirement.evidence]
+  min_tier          = "T3"
+  weighted_required = true
+  control_required  = true
+  recipe_required   = true
+  freshness         = "delivered-revision"
+  independence      = "consumer-run"
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "test-only"
+  min_band  = "A1"
+  families  = ["dynamic", "bmc"]
+
+# ---------------------------------------------------------------------------------------------
+# R8 — configuration and provenance are faithful
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R8"
+statement     = "The configuration block reports Kani's own resolution of solver and unwind (not a cbmc_args scan), the nine mandatory check flags and coverage_enabled as effective for the run, cbmc_args verbatim, and run provenance (kani_commit, dirty flag, tool versions) as null rather than guessed when unknown."
+mandatory     = true
+waivable      = false
+domain        = "correctness"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 §Configuration; §Field reference (kani_commit, tools.*)"
+firmness      = "firm"
+  [requirement.evidence]
+  min_tier          = "T3"
+  weighted_required = true
+  control_required  = true
+  recipe_required   = true
+  freshness         = "delivered-revision"
+  independence      = "consumer-run"
+  # branch coverage over kani-driver/src/frontend/schema_utils.rs (the writer module); 0.3.2 has no
+  # field for the coverage scope, so it is stated here and in the evidence record.
+  [requirement.evidence.coverage_min]
+  metric = "branch"
+  value  = 0.8
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "test-only"
+  min_band  = "A1"
+  families  = ["dynamic", "bmc"]
+
+# ---------------------------------------------------------------------------------------------
+# R9 — per-harness outcomes and diagnostics
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R9"
+statement     = "Timeout, out-of-memory and CBMC crash are recorded as that harness's outcome while the file is still written, warnings are capped as the RFC says, is_bounded is reported for every harness, and a multi-crate run writes one file covering every crate."
+mandatory     = true
+waivable      = false
+domain        = "availability"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 §Failure scenarios; §Field reference (warnings, is_bounded); §Interaction with other flags (multi-crate)"
+firmness      = "firm"
+  [requirement.evidence]
+  min_tier          = "T3"
+  weighted_required = true
+  control_required  = true
+  recipe_required   = true
+  freshness         = "delivered-revision"
+  independence      = "consumer-run"
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "test-only"
+  min_band  = "A1"
+  families  = ["dynamic", "bmc"]
+
+# ---------------------------------------------------------------------------------------------
+# R10 — completeness: run_state and the INCOMPLETE marker (PR 2)
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R10"
+statement     = "A run that has begun verification atomically replaces any earlier file with an INCOMPLETE marker, a finished run writes the complete document with its run_state, run-level fields are present exactly as the RFC's run-level presence matrix says, and compile errors or rejected filters before the marker leave existing files untouched."
+mandatory     = true
+waivable      = true
+domain        = "correctness"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 §Reading the results (Completeness); §Failure scenarios; §Presence matrices (run level)"
+firmness      = "draft"
+  [requirement.evidence]
+  min_tier          = "T3"
+  weighted_required = true
+  control_required  = true
+  recipe_required   = true
+  freshness         = "delivered-revision"
+  independence      = "consumer-run"
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "test-only"
+  min_band  = "A1"
+  families  = ["dynamic", "bmc"]
+
+# ---------------------------------------------------------------------------------------------
+# R11 — an existing directory at the --export-json path is rejected at argument parsing (PR 2)
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R11"
+statement     = "An --export-json path that names an existing directory is rejected when arguments are parsed, before any build or verification starts."
+mandatory     = true
+waivable      = true
+domain        = "correctness"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 §Failure scenarios"
+firmness      = "draft"
+  [requirement.evidence]
+  min_tier          = "T3"
+  weighted_required = true
+  control_required  = true
+  recipe_required   = true
+  freshness         = "delivered-revision"
+  independence      = "consumer-run"
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "test-only"
+  min_band  = "A1"
+  families  = ["dynamic", "bmc"]
+
+# ---------------------------------------------------------------------------------------------
+# R12 — consumer-side rules hold in Kani's reference consumer
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R12"
+statement     = "Kani's reference consumer, scripts/validate_json_export.py, implements the RFC's consumer-side rules (versioning acceptance, vacuity predicates, selection and join guidance, no assumed output_dir, no inference of unrestricted proofs from an omitted disclosure) and rejects documents that break them."
+mandatory     = true
+waivable      = false
+domain        = "correctness"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 §Reading the results; §Compatibility policy; §Open questions (consumer prohibitions)"
+firmness      = "draft"
+  [requirement.evidence]
+  min_tier          = "T3"
+  weighted_required = true
+  control_required  = true
+  recipe_required   = true
+  freshness         = "delivered-revision"
+  independence      = "consumer-run"
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "test-only"
+  min_band  = "A1"
+  families  = ["dynamic"]
+
+# ---------------------------------------------------------------------------------------------
+# R13 — --export-json is additive and independent of other outputs
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R13"
+statement     = "--export-json only adds a file: rendered output and --sarif output are unchanged, --output-into-files stays independent, and a path of '-' is a literal filename, not stdout."
+mandatory     = true
+waivable      = false
+domain        = "compatibility"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 §User Experience; §Interaction with other flags; §Why not extend --sarif?"
+firmness      = "draft"
+  [requirement.evidence]
+  min_tier          = "T3"
+  weighted_required = true
+  control_required  = true
+  recipe_required   = true
+  freshness         = "delivered-revision"
+  independence      = "consumer-run"
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "test-only"
+  min_band  = "A1"
+  families  = ["dynamic"]
+
+# ---------------------------------------------------------------------------------------------
+# R14 — tracking issues filed on RFC adoption (process)
+# ---------------------------------------------------------------------------------------------
+[[requirement]]
+id            = "R14"
+statement     = "On adoption of RFC 0015 (merged 2026-09-24), tracking issues are filed upstream for the effective --object-bits provenance representation and for full tool/solver provenance and host machine metadata."
+mandatory     = true
+waivable      = true
+domain        = "process"
+clause_source = "spec-document"
+external_ref  = "RFC 0015 §Open questions (--object-bits); §Out of scope / Future Improvements (provenance)"
+firmness      = "draft"
+  [requirement.evidence]
+  min_tier          = "T4"
+  weighted_required = true
+  control_required  = false
+  recipe_required   = true
+  freshness         = "any"
+  independence      = "consumer-run"
+  [requirement.evidence.profile."acceptance/verification/code/rust"]
+  min_grade = "mechanical"
+  min_band  = "A0"
+  families  = ["mechanical"]
+
+[acceptance]
+rule                  = "all-mandatory-satisfied"
+consumer_verification = "re-execute-all"
+authority             = "model-checking/kani (represented by ivmat)"
+profiles_required     = ["acceptance/verification/code/rust"]
+stale_after           = "P180D"
+phase                 = "crystallizing"
+assurance_class       = "baseline/2"

@@ -1,0 +1,26 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..4418848ab 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -731,7 +731,7 @@ fn from_harness_result(
+ 
+         HarnessExport {
+             name: harness.pretty_name.clone(),
+-            crate_name: harness.crate_name.clone(),
++            crate_name: String::new(),
+             file: relativize_path(&harness.original_file),
+             line: harness.original_start_line,
+             contract: harness.contract.clone(),
+diff --git a/tests/json-handler/multi-crate-export/test.sh b/tests/json-handler/multi-crate-export/test.sh
+index 9a5ff7ac8..3faf2ca91 100755
+--- a/tests/json-handler/multi-crate-export/test.sh
++++ b/tests/json-handler/multi-crate-export/test.sh
+@@ -82,7 +82,7 @@ if [ ! -f "$OUTPUT_FILE" ]; then
+     exit 1
+ fi
+ 
+-python3 "$VALIDATOR" "$OUTPUT_FILE" 2>&1 | tail -1
++python3 "$VALIDATOR" "$OUTPUT_FILE" 2>&1
+ 
+ WORK_DIR="$WORK_DIR" python3 << 'EOF_PY'
+ import json

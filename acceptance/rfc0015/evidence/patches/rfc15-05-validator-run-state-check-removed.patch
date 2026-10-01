@@ -1,0 +1,12 @@
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 64679ffae..45961f72b 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -436,7 +436,6 @@ def check_terminal_rules(data, errors):
+     for index, harness in enumerate(harnesses):
+         check_harness_rules(harness, f"harnesses[{index}]", errors)
+     check_summary(data, errors)
+-    check_run_state(data, errors)
+ 
+ 
+ def validate_marker(data, schema):

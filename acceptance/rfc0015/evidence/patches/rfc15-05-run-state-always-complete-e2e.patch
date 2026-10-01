@@ -1,0 +1,38 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..6a901598d 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -624,10 +624,8 @@ fn from_harness_results(
+             && ctx.harness_selection.matched_count == 0
+         {
+             RunState::NoHarnessesSelected
+-        } else if results.len() == ctx.harness_selection.matched_count {
+-            RunState::Complete
+         } else {
+-            RunState::Partial
++            RunState::Complete
+         };
+ 
+         ExportedRun {
+diff --git a/tests/json-handler/fail-fast/test.sh b/tests/json-handler/fail-fast/test.sh
+index 51dba9d11..60ec55118 100755
+--- a/tests/json-handler/fail-fast/test.sh
++++ b/tests/json-handler/fail-fast/test.sh
+@@ -31,7 +31,7 @@ if [ ! -f "$OUTPUT_FILE" ]; then
+     exit 1
+ fi
+ 
+-python3 "$VALIDATOR" "$OUTPUT_FILE" 2>&1 | tail -1
++python3 "$VALIDATOR" "$OUTPUT_FILE" 2>&1
+ 
+ set +e
+ kani -Z export-json test.rs --fail-fast --harness z_passes --harness a_fails \
+@@ -49,7 +49,7 @@ if [ ! -f "$COMPLETE_OUTPUT_FILE" ]; then
+     exit 1
+ fi
+ 
+-python3 "$VALIDATOR" "$COMPLETE_OUTPUT_FILE" 2>&1 | tail -1
++python3 "$VALIDATOR" "$COMPLETE_OUTPUT_FILE" 2>&1
+ 
+ python3 << EOF
+ import json

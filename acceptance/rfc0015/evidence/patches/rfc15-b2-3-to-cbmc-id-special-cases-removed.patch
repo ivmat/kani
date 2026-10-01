@@ -1,0 +1,23 @@
+diff --git a/kani-driver/src/cbmc_output_parser.rs b/kani-driver/src/cbmc_output_parser.rs
+index c655d4072..707263228 100644
+--- a/kani-driver/src/cbmc_output_parser.rs
++++ b/kani-driver/src/cbmc_output_parser.rs
+@@ -222,18 +222,6 @@ impl PropertyId {
+     /// produces it). Unlike [`Property::property_name`], a display rendering that always uses the
+     /// three-part shape, this keeps the shorter `missing_definition` and `recursion` forms.
+     pub fn to_cbmc_id(&self) -> String {
+-        if self.class == "recursion" && self.id == 1 {
+-            return match &self.fn_name {
+-                Some(name) => format!("{name}.recursion"),
+-                None => ".recursion".to_string(),
+-            };
+-        }
+-        if self.class == "missing_definition" {
+-            return match &self.fn_name {
+-                Some(name) => format!("{name}.{}", self.id),
+-                None => format!("{}.{}", self.class, self.id),
+-            };
+-        }
+         match &self.fn_name {
+             Some(name) => format!("{name}.{}.{}", self.class, self.id),
+             None => format!("{}.{}", self.class, self.id),

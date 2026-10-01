@@ -1,0 +1,12 @@
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 64679ffae..8db78a63b 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -435,7 +435,6 @@ def check_terminal_rules(data, errors):
+         errors.append("a harness timed out but harness_timeout_s is null")
+     for index, harness in enumerate(harnesses):
+         check_harness_rules(harness, f"harnesses[{index}]", errors)
+-    check_summary(data, errors)
+     check_run_state(data, errors)
+ 
+ 

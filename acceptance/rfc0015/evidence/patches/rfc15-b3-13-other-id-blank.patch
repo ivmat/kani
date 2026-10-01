@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..311d35390 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -551,7 +551,7 @@ fn bucket_by_status(
+                 | CheckStatus::Satisfied
+                 | CheckStatus::Success
+                 | CheckStatus::Uncovered
+-                | CheckStatus::Unsatisfiable => other.push(OtherPropertyExport { id, status }),
++                | CheckStatus::Unsatisfiable => other.push(OtherPropertyExport { id: String::new(), status }),
+             }
+         }
+     }

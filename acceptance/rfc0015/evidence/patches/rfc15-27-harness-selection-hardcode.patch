@@ -1,0 +1,18 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..ddbb0d7bf 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -640,7 +640,12 @@ fn from_harness_results(
+                 cbmc: ctx.cbmc_version,
+             },
+             enabled_unstable_features,
+-            harness_selection: ctx.harness_selection,
++            harness_selection: HarnessSelectionExport {
++                requested_filters: Vec::new(),
++                exact: false,
++                unmatched_filters: Vec::new(),
++                matched_count: 0,
++            },
+             harness_timeout_s: ctx.harness_timeout_s,
+             configuration: ctx.configuration,
+             outcome: RunOutcome::Completed,

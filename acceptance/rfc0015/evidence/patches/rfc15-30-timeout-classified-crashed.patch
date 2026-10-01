@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..50717459e 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -360,7 +360,7 @@ enum RunOutcome {
+ impl From<&ExitStatus> for Outcome {
+     fn from(status: &ExitStatus) -> Self {
+         match status {
+-            ExitStatus::Timeout => Outcome::Timeout,
++            ExitStatus::Timeout => Outcome::Crashed { code: None, message: None },
+             ExitStatus::OutOfMemory => Outcome::OutOfMemory,
+             ExitStatus::Other(code) => Outcome::Crashed { code: Some(*code), message: None },
+         }

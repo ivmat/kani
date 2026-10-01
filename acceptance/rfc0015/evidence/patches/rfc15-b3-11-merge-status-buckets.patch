@@ -1,0 +1,15 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..94cbafcb9 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -543,8 +543,8 @@ fn bucket_by_status(
+         } else {
+             match status {
+                 CheckStatus::Unreachable => unreachable.push(id),
+-                CheckStatus::Undetermined => undetermined.push(id),
+-                CheckStatus::Error => error.push(id),
++                CheckStatus::Undetermined => unknown.push(id),
++                CheckStatus::Error => unknown.push(id),
+                 CheckStatus::Unknown => unknown.push(id),
+                 CheckStatus::Covered
+                 | CheckStatus::Failure

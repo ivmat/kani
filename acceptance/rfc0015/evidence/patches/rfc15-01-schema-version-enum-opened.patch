@@ -1,0 +1,13 @@
+diff --git a/tests/json-handler/schema-validation/kani_json_schema.json b/tests/json-handler/schema-validation/kani_json_schema.json
+index f4ccf17fa..012a2794b 100644
+--- a/tests/json-handler/schema-validation/kani_json_schema.json
++++ b/tests/json-handler/schema-validation/kani_json_schema.json
+@@ -16,7 +16,7 @@
+       "status": "ref:status"
+     }
+   },
+-  "schema_version": "enum:0.1.0",
++  "schema_version": "string",
+   "kani_commit": "string?",
+   "kani_commit_dirty": "boolean?",
+   "tools": {

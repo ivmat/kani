@@ -1,0 +1,12 @@
+diff --git a/kani-driver/src/args/mod.rs b/kani-driver/src/args/mod.rs
+index 2df519d8a..c316c3194 100644
+--- a/kani-driver/src/args/mod.rs
++++ b/kani-driver/src/args/mod.rs
+@@ -983,7 +983,6 @@ fn validate(&self) -> Result<(), Error> {
+             ));
+         }
+         reject_existing_dir("--sarif", self.sarif.as_deref())?;
+-        reject_existing_dir("--export-json", self.export_json.as_deref())?;
+ 
+         Ok(())
+     }

@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index 29aabd4ce..419445e59 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -438,7 +438,7 @@ fn from(
+             }
+         } else {
+             // We never got results from CBMC - something went wrong (e.g. crash) so it's failure
+-            let exit_status = if output.process_status == 137 {
++            let exit_status = if true {
+                 ExitStatus::OutOfMemory
+             } else {
+                 ExitStatus::Other(output.process_status)

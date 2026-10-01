@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..7cf59d306 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -26,7 +26,7 @@
+ use time::OffsetDateTime;
+ use time::format_description;
+ 
+-const SCHEMA_VERSION: &str = "0.1.0";
++const SCHEMA_VERSION: &str = "0.1.1";
+ 
+ const KANI_GIT_SHA: Option<&str> = option_env!("KANI_GIT_SHA");
+ /// `None` exactly when `KANI_GIT_SHA` is `None`.

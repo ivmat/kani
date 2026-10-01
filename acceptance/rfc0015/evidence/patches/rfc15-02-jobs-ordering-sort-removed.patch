@@ -1,0 +1,33 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..598469699 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -608,14 +608,7 @@ fn from_harness_results(
+                 HarnessExport::from_harness_result(hr, resolved_unwind, resolved_solver)
+             })
+             .collect();
+-        harnesses.sort_by(|a, b| {
+-            (&a.crate_name, &a.file, a.line, &a.name).cmp(&(
+-                &b.crate_name,
+-                &b.file,
+-                b.line,
+-                &b.name,
+-            ))
+-        });
++        harnesses.sort_by(|_a, _b| std::cmp::Ordering::Equal);
+         let mut enabled_unstable_features = ctx.enabled_unstable_features;
+         enabled_unstable_features.sort();
+ 
+diff --git a/tests/json-handler/jobs-ordering-stable/test.sh b/tests/json-handler/jobs-ordering-stable/test.sh
+index c70569fcf..226465249 100755
+--- a/tests/json-handler/jobs-ordering-stable/test.sh
++++ b/tests/json-handler/jobs-ordering-stable/test.sh
+@@ -24,7 +24,7 @@ for f in "${ARTIFACTS[@]}"; do
+         echo "ERROR: JSON file $f was not created"
+         exit 1
+     fi
+-    python3 "$VALIDATOR" "$f" 2>&1 | tail -1
++    python3 "$VALIDATOR" "$f" 2>&1
+ done
+ 
+ python3 << 'EOF'

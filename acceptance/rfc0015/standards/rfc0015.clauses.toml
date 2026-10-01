@@ -1,0 +1,2172 @@
+[standard]
+id         = "rfc0015-export-json"
+title      = "Kani RFC 0015 -- Structured Verification Results (export-json)"
+edition    = "merged 2026-09-24 (upstream c610df629)"
+provenance = "external"
+slice      = false
+slice_note = "Whole RFC: every heading (S-1..S-7.5 per the spec_inventory.py heading run) is in scope, including informative/rationale sections, the open-questions and out-of-scope sections (each item still gets a row so applicability can mark it not-applicable/excluded), and normative-but-deferred pre-stabilization obligations (flagged in a trailing comment on those rows). Granularity is one clause per normative UNIT (a table row, a bulleted item, a named predicate/rule), not per sentence; sentences belonging to one such unit are merged into that unit's single clause."
+numbering  = "RFC0015-<heading-item>-<n>: <heading-item> is the S-<n>[.<m>] id from spec_inventory.py make applied to spec/0015-export-json.txt (one id per level-2/level-3 Markdown heading, in document order, never from a number already in the heading text); <n> is this row's 1-based position among the units this inventory records under that heading, in the heading's own reading order."
+
+[[clause]]
+id    = "RFC0015-S-1-1"
+ref   = "§Summary, opening paragraph"
+title = "The RFC specifies the machine-readable file written by --export-json <path> (already shipped, unstable, in #4472), describing one verification run as evidence about the run -- not enough to reproduce it byte-for-byte (e.g. cbmc_args is recorded verbatim but is not a replayable argv)."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-1-2"
+ref   = "§Summary, 'this RFC is the complete normative reference' sentence"
+title = "This RFC is the complete normative reference; informative-only explanation, implementation notes and rationale live in the accompanying PR's Extended reference and add no normative requirement of their own."
+force = "definition"
+side  = "both"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-1-3"
+ref   = "§Summary, preamble bullet -- Feature Name"
+title = "The RFC's preamble records Feature Name: Structured Verification Results (export-json)."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-1-4"
+ref   = "§Summary, preamble Proof-of-concept bullet"
+title = "The preamble's Proof-of-concept bullet states the PoC is implemented, with an explicit qualification: the Example section's JSON is the proposed schema, illustrative, not a verbatim dump of the PoC's own output."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+# ties to RFC0015-S-3.2-1 (the Example section's own illustrative-only framing)
+
+[[clause]]
+id    = "RFC0015-S-1-5"
+ref   = "§Summary, preamble bullet -- Feature Request Issue"
+title = "The RFC's preamble records Feature Request Issue: #942."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-1-6"
+ref   = "§Summary, preamble bullet -- RFC PR"
+title = "The RFC's preamble records RFC PR: #4727."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-1-7"
+ref   = "§Summary, preamble bullet -- Status"
+title = "The RFC's preamble records Status: Under Review."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-1-8"
+ref   = "§Summary, preamble bullet -- Version"
+title = "The RFC's preamble records Version: 0."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-2-1"
+ref   = "§User Impact, whole section (motivation)"
+title = "Motivation: issue #942 requests machine-readable output because existing consumers (e.g. benchcomp's kani_perf parser) regex-scrape rendered text, which silently breaks on format changes; a structured export serves CI dashboards, vacuous-proof detection, cost/outcome collection and retiring Kani's own scraping."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-2.1-1"
+ref   = "§The specific gap: a proof can pass while proving nothing, whole subsection (motivation + scope pointer)"
+title = "Motivating example: a contradictory kani::assume can make a harness's assertions unreachable while it still reports SUCCESS/exit 0, which exit-code-only consumers cannot distinguish from a meaningful proof; this RFC's scope (relative to the shipped unreachable-count data) is to define property identities, vacuity predicates and completeness, accepting the trade-off that a fixed schema limits future change."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-2.2-1"
+ref   = "§Relationship to the shipped implementation (#4472), whole subsection (historical baseline + migration assumption)"
+title = "Historical baseline: the shipped #4472 writer (gated by -Z unstable-options) joins count summaries to detail arrays on harness_id == pretty_name with Rust Debug-cased statuses; this RFC assumes #4472 migrates to the shape defined here (whether it is instead superseded some other way is open), and RFC number 0015 was free because #4472 merged without an RFC of its own."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+# the migration assumption ties to open question RFC0015-S-5-1
+
+[[clause]]
+id    = "RFC0015-S-3-1"
+ref   = "§User Experience, cargo kani example / dedicated-gate pointer"
+title = "The example CLI invocation (cargo kani -Z export-json --export-json <path>) uses the dedicated gate this RFC proposes, distinct from the shipped flag's -Z unstable-options gate."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+# the gate's normative definition is RFC0015-S-3.1-7
+
+[[clause]]
+id    = "RFC0015-S-3-2"
+ref   = "§User Experience, 'the flag is additive' sentence"
+title = "--export-json is additive: existing rendered output is unchanged, the JSON file is written in addition to it, and omitting the flag changes nothing."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-3-3"
+ref   = "§User Experience, 'one combination is rejected' paragraph"
+title = "The argument parser rejects --export-json combined with --output-format=old with an explicit error before verification starts, because that combination would otherwise mock a well-formed but meaningless export."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-09
+
+[[clause]]
+id    = "RFC0015-S-3.1-1"
+ref   = "§Interaction with other flags, --only-codegen bullet"
+title = "--export-json combined with --only-codegen is rejected, as --sarif already is, because no verification results exist to export."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-10
+
+[[clause]]
+id    = "RFC0015-S-3.1-2"
+ref   = "§Interaction with other flags, --jobs N bullet"
+title = "--export-json is compatible with --jobs N: harnesses[] is sorted by (crate_name, file, line, name) independent of completion order, with the determinism guarantee covering structure/ordering only (timestamps, wall time and verification time remain volatile)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-02
+
+[[clause]]
+id    = "RFC0015-S-3.1-3"
+ref   = "§Interaction with other flags, --output-into-files bullet"
+title = "--output-into-files and --export-json are independent: rendered text and the JSON file are written to separate destinations."
+force = "definition"
+side  = "both"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-3.1-4"
+ref   = "§Interaction with other flags, multi-crate cargo kani bullet"
+title = "A multi-crate cargo kani invocation writes one export file per invocation covering every harness in the run, distinguished by crate_name; a later crate's results do not overwrite an earlier crate's."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-17
+
+[[clause]]
+id    = "RFC0015-S-3.1-5"
+ref   = "§Interaction with other flags, path '-' bullet"
+title = "A path argument of '-' is treated as a literal filename, not as a request to stream to stdout (stdout streaming is deferred: it has no atomic-rename target)."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-3.1-6"
+ref   = "§Interaction with other flags, existing-directory-as-path bullet"
+title = "An existing directory at the --export-json path is rejected at argument parsing, the way --sarif already rejects it, rather than failing later at write time."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-11
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-3.1-7"
+ref   = "§Interaction with other flags, 'Name and gate' paragraph, naming-rationale clause"
+title = "--results-json was considered as a clearer artifact name; --export-json is kept provisional to match the shipped PoC and issue #942."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-3.1-8"
+ref   = "§Interaction with other flags, 'Name and gate' paragraph, dedicated-gate clause"
+title = "This RFC proposes a dedicated -Z export-json unstable gate (rather than reusing -Z unstable-options) so the artifact can stabilize or be dropped independently; migration requires registering ExportJson in kani_metadata::UnstableFeature, changing argument validation, and updating tests and documentation."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-08
+
+[[clause]]
+id    = "RFC0015-S-3.2-1"
+ref   = "§Example, whole subsection"
+title = "The worked example (Rust harness, CLI invocation, JSON output) illustrates the proposed schema -- not a measured run or a verbatim PoC dump -- including the vacuous-pass scenario (outcome.verdict SUCCESS, exit code 0, checks.unreachable naming both unexercised properties)."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+# illustrates the normative vacuous-pass predicate defined at RFC0015-S-3.3-5
+
+[[clause]]
+id    = "RFC0015-S-3.3-1"
+ref   = "§Reading the results, Selection paragraph, name identity"
+title = "harnesses[].name is the fully qualified pretty_name (module path included; bare name only at crate root)."
+force = "definition"
+side  = "decoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-3.3-2"
+ref   = "§Reading the results, Selection paragraph, generated-harness prohibition"
+title = "A generated (autoharness) harness's exported name must never be used as a --harness selector value."
+force = "shall-not"
+side  = "decoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-3.3-3"
+ref   = "§Reading the results, Bounded results paragraph"
+title = "harnesses[].is_bounded is true exactly when autoharness generated the harness and bounded at least one argument (because --autoharness-bounded-arguments was passed and the argument's type lacked an unbounded Arbitrary strategy) -- a SUCCESS then proves only inputs within that bound; a manual harness or a generated harness needing no bounded argument reports false, independent of is_ctor_based."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-19
+
+[[clause]]
+id    = "RFC0015-S-3.3-4"
+ref   = "§Reading the results, vacuity-predicates precondition"
+title = "Both the vacuous-pass and vacuity-suspect predicates read outcome.verdict and checks.*, and are inapplicable when configuration.checks.assertion_reach_checks is false (a contradictory assumption can then leave assertions counted in checks.success, so that run cannot report vacuity through checks.unreachable)."
+force = "definition"
+side  = "decoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-3.3-5"
+ref   = "§Reading the results, Vacuous pass (normative) predicate"
+title = "The vacuous-pass predicate -- verdict == SUCCESS && checks.total > 0 && checks.unreachable.len() == checks.total -- is the schema's normative definition of a harness that examined nothing while reporting success (checks.total>0 excludes a checkless harness; the SUCCESS guard excludes failing harnesses; success==0 alone would be unsound because a passing should_panic harness has a FAILURE panic check)."
+force = "shall"
+side  = "decoder"
+# seed: RFC15-23
+
+[[clause]]
+id    = "RFC0015-S-3.3-6"
+ref   = "§Reading the results, Vacuity-suspect (advisory) predicate"
+title = "The vacuity-suspect predicate -- verdict == SUCCESS && !checks.unreachable.is_empty() -- is an advisory, optional check a consumer may apply to catch partial vacuity the normative predicate misses (at the cost of also flagging deliberately-unreachable assertions); it reads only checks.unreachable, so an unreachable cover (in covers.unreachable) does not satisfy it."
+force = "may"
+side  = "decoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-3.3-7"
+ref   = "§Reading the results, cover-only vacuity recommendation"
+title = "For cover-only vacuity, a consumer may additionally apply (covers.total > 0 && covers.unreachable.len() == covers.total) per harness; the schema itself does not compute or export this predicate."
+force = "may"
+side  = "decoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-3.3-8"
+ref   = "§Reading the results, Completeness: atomic write rule"
+title = "Every write produces the full JSON document in a temporary file in the target's own directory, then atomically renames it onto the target path (same-filesystem POSIX rename); a process kill mid-write must never leave a partially written target, only the previous target intact (and possibly an orphaned temp file)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-07
+
+[[clause]]
+id    = "RFC0015-S-3.3-9"
+ref   = "§Reading the results, Completeness: INCOMPLETE marker rule"
+title = "An atomic INCOMPLETE marker replaces any earlier file at the export path once verification begins, after harness building and selection; the marker contains the known pre-verification fields and omits outcome, wall_time_s, summary and harnesses[]."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-06
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-3.3-10"
+ref   = "§Reading the results, check-order echo"
+title = "A consumer checks schema_version first, then run_state."
+force = "shall"
+side  = "decoder"
+# seed: RFC15-01
+# RFC0015-S-4.3-7 (Semver-zero) supplies the schema_version-first assertion but does not itself state the subsequent run_state check; this clause states the full check-order instruction (was informally cross-referenced as 'S-4.3-6' in r0 -- corrected).
+
+[[clause]]
+id    = "RFC0015-S-3.3-11"
+ref   = "§Reading the results, run_state trust-guarantee rule"
+title = "run_state COMPLETE guarantees every selected harness has an entry, regardless of its own outcome -- the only value that is complete verification evidence."
+force = "definition"
+side  = "both"
+# seed: RFC15-05
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-3.3-12"
+ref   = "§Reading the results, compilation-errors-precede-marker rule"
+title = "A compilation error or a rejected filter set occurs before the INCOMPLETE marker is written and leaves any existing file at the path untouched; stale results are invalidated only from the marker onward."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-34
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-3.3-13"
+ref   = "§Reading the results, marker-design fail-open/fail-closed disclosure"
+title = "Disclosed property of the marker design: an existence-only consumer fails open on a verdict-less marker, whereas a hypothetical delete-up-front design would instead fail closed on ENOENT."
+force = "informative"
+side  = "decoder"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-3.3-14"
+ref   = "§Reading the results, concurrent-writers rule"
+title = "Concurrent writers to one export path are unsupported: the last rename to complete wins."
+force = "definition"
+side  = "encoder"
+# seed: RFC15-36
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-3.3-15"
+ref   = "§Reading the results, NO_HARNESSES_SELECTED / unmatched-filters rule"
+title = "run_state NO_HARNESSES_SELECTED means an unfiltered project/workspace had no selectable proof harness or eligible autoharness function: requested_filters == [], unmatched_filters == [], matched_count == 0."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-21
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-3.3-16"
+ref   = "§Reading the results, run_state naming history"
+title = "Proposed run_state replaces the PoC's run_complete field (a naming/history note; the marker-versus-deletion design choice remains open -- see the Marker or delete-up-front open question)."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-3.3-17"
+ref   = "§Reading the results, PARTIAL/NO_HARNESSES_SELECTED trust-guarantee (split from S-3.3-11)"
+title = "run_state PARTIAL and NO_HARNESSES_SELECTED are each trustworthy, finished exports (of missing results, or of an empty selection, respectively) -- but neither is complete verification evidence."
+force = "definition"
+side  = "both"
+# seed: RFC15-05
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-3.3-18"
+ref   = "§Reading the results, INCOMPLETE/missing-file unfinished-export rule (split from S-3.3-11)"
+title = "run_state INCOMPLETE, or a missing export file altogether, both mean export did not finish (a write failure or abnormal termination), never complete verification evidence."
+force = "definition"
+side  = "both"
+# seed: RFC15-05
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-3.3-19"
+ref   = "§Reading the results, pre-export rejection of an invalid filter set (split from S-3.3-15)"
+title = "A wholly unmatched filter set, or any unmatched --exact filter, errors non-zero before export (#4743), instead of producing NO_HARNESSES_SELECTED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-21
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-3.3-20"
+ref   = "§Reading the results, conditions for nonempty unmatched_filters (split from S-3.3-15)"
+title = "harness_selection.unmatched_filters can be nonempty only without --exact, in run_state COMPLETE/PARTIAL, when at least one other filter matched."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-27
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-3.3-21"
+ref   = "§Reading the results, Selection paragraph, join key (split from S-3.3-1)"
+title = "A consumer joins on (crate_name, name): name alone is unique only within a crate."
+force = "shall"
+side  = "decoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-3.3-22"
+ref   = "§Reading the results, Selection paragraph, rerun/filter behavior (split from S-3.3-1)"
+title = "A specific harness reruns via -p <package> --harness --exact <name>; plain --harness matches substrings rather than an exact name."
+force = "definition"
+side  = "decoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-3.3-23"
+ref   = "§Reading the results, Selection paragraph, crate-to-package mapping (split from S-3.3-1)"
+title = "The underscored rustc crate_name needs mapping to the Cargo package name when the two differ."
+force = "definition"
+side  = "decoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-3.3-24"
+ref   = "§Reading the results, Selection paragraph, contract-proof selection rule (split from S-3.3-2)"
+title = "A contract-proof harness is selectable by its own function path, not by its contract target's path."
+force = "definition"
+side  = "decoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-3.3-25"
+ref   = "§Reading the results, is_bounded non-inference prohibition (split from S-3.3-3)"
+title = "A consumer must not infer unrestricted inputs from is_bounded == false alone."
+force = "shall-not"
+side  = "decoder"
+# seed: RFC15-19
+
+[[clause]]
+id    = "RFC0015-S-4.1-1"
+ref   = "§Why not extend --sarif?, rationale (SARIF comparison)"
+title = "SARIF could technically carry this data (omitting covers/successes is Kani's own writer choice for --sarif); a separate artifact avoids coupling stable SARIF to unstable schema churn, keeps proof/cover/vacuity detail for CI while scanners keep --sarif's existing empty-results-on-success shape, and sidesteps that SARIF has no native vacuity representation (only generic property bags); both writers project the same upstream VerificationResult/Vec<Property> data rather than sharing one results object."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-4.1-2"
+ref   = "§Why not extend --sarif?, '--sarif stays unchanged' rule"
+title = "This RFC does not change --sarif's own output."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-4.1-3"
+ref   = "§Why not extend --sarif?, cross-artifact consistency practice"
+title = "Shared path/solver/unwind/failure interpretation logic and cross-artifact tests may be used to keep --sarif and --export-json consistent; this is a development practice, not a guarantee shared inputs alone provide."
+force = "may"
+side  = "both"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-4.2-1"
+ref   = "§Summary (summary.*), summary.total row"
+title = "summary.total equals harnesses.len()."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-16
+
+[[clause]]
+id    = "RFC0015-S-4.2-2"
+ref   = "§Summary (summary.*), summary.successful row"
+title = "summary.successful counts harnesses with outcome.kind == COMPLETED && outcome.verdict == SUCCESS."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-16
+
+[[clause]]
+id    = "RFC0015-S-4.2-3"
+ref   = "§Summary (summary.*), summary.failed row"
+title = "summary.failed counts harnesses with outcome.kind == COMPLETED && outcome.verdict == FAILURE."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-16
+
+[[clause]]
+id    = "RFC0015-S-4.2-4"
+ref   = "§Summary (summary.*), summary.checks_total row"
+title = "summary.checks_total sums harnesses[].checks.total over COMPLETED harnesses only."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-16
+
+[[clause]]
+id    = "RFC0015-S-4.2-5"
+ref   = "§Summary (summary.*), summary.checks_success row"
+title = "summary.checks_success sums harnesses[].checks.success over COMPLETED harnesses only."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-16
+
+[[clause]]
+id    = "RFC0015-S-4.2-6"
+ref   = "§Summary (summary.*), summary.covers_total row"
+title = "summary.covers_total sums harnesses[].covers.total over COMPLETED harnesses only."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-16
+
+[[clause]]
+id    = "RFC0015-S-4.2-7"
+ref   = "§Summary (summary.*), summary.covers_satisfied row"
+title = "summary.covers_satisfied sums len(harnesses[].covers.satisfied) over COMPLETED harnesses only."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-16
+
+[[clause]]
+id    = "RFC0015-S-4.2-8"
+ref   = "§Summary (summary.*), non-COMPLETED-harness effect on summary"
+title = "A non-COMPLETED harness counts in neither summary.successful nor summary.failed (so successful + failed <= total, the gap exactly the non-COMPLETED count), contributes nothing to the check/cover sum fields, and is never counted as zero when null."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-16
+
+[[clause]]
+id    = "RFC0015-S-4.2-9"
+ref   = "§Summary (summary.*), COMPLETE/PARTIAL total-vs-matched_count identity"
+title = "run_state COMPLETE implies summary.total == harness_selection.matched_count and PARTIAL implies total < matched_count; a missing entry (the PARTIAL gap) is never a crash/timeout placeholder and does not itself establish whether that harness ran (#4744)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-05
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-4.2-10"
+ref   = "§Summary (summary.*), NO_HARNESSES_SELECTED identity"
+title = "run_state NO_HARNESSES_SELECTED implies matched_count == 0 == total and requested_filters == []."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-05
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-4.2-11"
+ref   = "§Summary (summary.*), INCOMPLETE-has-no-summary rule"
+title = "run_state INCOMPLETE has no summary field, and the total/matched_count identities above do not apply to it."
+force = "definition"
+side  = "encoder"
+# seed: RFC15-05
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-4.3-1"
+ref   = "§Compatibility policy, Minor-bump bullet"
+title = "A MINOR schema_version bump adds fields, or adds a newly recognized name to the already-explicitly-open solver-name domains (attributes.solver, resolved_solver) -- it does not convert a previously-closed solver enum into an open one; a consumer must accept an unfamiliar solver-name string as valid regardless, while every other enum stays closed."
+force = "shall"
+side  = "both"
+# seed: RFC15-04
+
+[[clause]]
+id    = "RFC0015-S-4.3-2"
+ref   = "§Compatibility policy, Major-bump bullet"
+title = "A MAJOR schema_version bump is required to rename/remove a field, change a field's meaning or type, or add a variant to a closed enum (outcome.kind, verdict, failure_kind, run_state, status, attributes.kind) or move a status out of an other[] bucket into a newly named one; a consumer's enum-matching code is still encouraged to keep a default arm."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-4.3-3"
+ref   = "§Compatibility policy, Ignore-unknown-fields bullet"
+title = "A consumer must ignore an unrecognized field within an accepted major version, rather than rejecting the document for it."
+force = "shall"
+side  = "decoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-4.3-4"
+ref   = "§Compatibility policy, Refuse-unknown-majors bullet"
+title = "A consumer must refuse a schema_version whose major component it does not recognize, since existing fields may have changed meaning."
+force = "shall"
+side  = "decoder"
+# seed: RFC15-01
+
+[[clause]]
+id    = "RFC0015-S-4.3-5"
+ref   = "§Compatibility policy, Warnings bullet"
+title = "Only the presence and shape of the warnings machinery are part of the compatibility contract; message contents, wording and size (not just the array's length -- also, e.g., a message's own character length) are explicitly outside it."
+force = "definition"
+side  = "both"
+# seed: RFC15-25
+
+[[clause]]
+id    = "RFC0015-S-4.3-6"
+ref   = "§Compatibility policy, 'consumer needs can add fields' sentence"
+title = "The minor/major split is meant to let a consumer's own field needs be added in a minor version without a schema redesign or a competing artifact."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-4.3-7"
+ref   = "§Compatibility policy, Semver-zero rule"
+title = "While the flag stays -Z gated, 0.x minor/major distinctions express intent only (a breaking change may land in a 0.x minor bump): a consumer must assert an exact accepted 0.x minor (e.g. == \\\\\\\"0.1.0\\\\\\\", or a small verified allow-list) and refuse any other 0.x value as an unknown major, checking schema_version before interpreting the rest of the document; backward compatibility as a promise starts only at 1.0."
+force = "shall"
+side  = "decoder"
+# seed: RFC15-01
+
+[[clause]]
+id    = "RFC0015-S-4.3-8"
+ref   = "§Compatibility policy, pre-stabilization: resolve open questions"
+title = "Before the flag leaves -Z, every open question in this RFC must be resolved, in particular the processed-versus-raw view question."
+force = "shall"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (pre-stabilization)
+
+[[clause]]
+id    = "RFC0015-S-4.3-9"
+ref   = "§Compatibility policy, pre-stabilization: release-cycle feedback obligation"
+title = "Before the flag leaves -Z, at least one release cycle of feedback from a real verdict-level consumer (in-tree or out-of-tree) must be obtained; benchcomp's kani_perf parser does not count as that consumer and its migration is not a prerequisite (it needs solver/symex time, VCC counts and program-step figures excluded here, moved only by a future structured-CBMC-statistics follow-up)."
+force = "shall"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (pre-stabilization)
+
+[[clause]]
+id    = "RFC0015-S-4.3-10"
+ref   = "§Compatibility policy, pre-stabilization: JSON Schema decision obligation"
+title = "Before the flag leaves -Z, whether to ship a JSON Schema document (via schemars) must be settled."
+force = "shall"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (pre-stabilization)
+# ties to open question RFC0015-S-5-3
+
+[[clause]]
+id    = "RFC0015-S-4.4-1"
+ref   = "§Why a new artifact rather than extending an existing one?, whole subsection"
+title = "Existing artifacts each fall short of this contract (kani list --format json is pre-verification metadata, coverage output is per-region data, --output-into-files is split rendered text, .kani-metadata.json is the compiler-to-driver channel, and the per-harness text files that do carry outcomes still lack a structured run-and-verdict contract)."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-4.5-1"
+ref   = "§Why is CBMC statistics data excluded?, rationale (CBMC statistics excluded)"
+title = "CBMC statistics (symex time, VCC counts, solver time) are excluded because obtaining them today requires parsing CBMC's free text; moving that scraping into Kani would retain the same fragility benchcomp already has."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-4.5-2"
+ref   = "§Why is CBMC statistics data excluded?, warnings text opacity rule"
+title = "A consumer must not pattern-match warnings[].message text; it is opaque display/log text, not a versioned interface (#4719 interprets ignored-quantifier warnings internally but does not version that text)."
+force = "shall-not"
+side  = "decoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-4.5-3"
+ref   = "§Why is CBMC statistics data excluded?, warnings caps rule -- per-message character cap"
+title = "Each warnings[] message has a fixed, implementation-defined character-boundary cap, reported via truncated: bool and original_chars: integer|null (the pre-truncation count, null exactly when not truncated)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-25
+
+[[clause]]
+id    = "RFC0015-S-4.5-4"
+ref   = "§Why is CBMC statistics data excluded?, warnings[] source identification"
+title = "harnesses[].warnings[] entries are populated from WARNING-typed --json-ui protocol messages specifically -- not other message severities and not another output channel."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-4.5-5"
+ref   = "§Why is CBMC statistics data excluded?, warnings caps rule -- array count cap (split from S-4.5-3)"
+title = "warnings[] itself has a separate fixed count cap; warnings_truncated counts entries omitted by that cap (zero if none)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-25
+
+[[clause]]
+id    = "RFC0015-S-4.6-1"
+ref   = "§What if we do nothing?, whole subsection"
+title = "Without this RFC, consumers (including Kani's own tooling) keep scraping rendered text, which fails silently on format changes (a grep matching nothing looks like a run with nothing to report) and still misses vacuity on exit-code-only consumers; doing nothing also lets the shipped document (already metadata.version \\\\\\\"1.0\\\\\\\") become a de-facto, unspecified contract."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-5-1"
+ref   = "§Open questions, 'Supersede shipped v1?' open question"
+title = "Open question: whether to migrate #4472's unstable writer as assumed (without a deprecation cycle) or instead redraw this RFC around the shipped shape."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (open question)
+
+[[clause]]
+id    = "RFC0015-S-5-2"
+ref   = "§Open questions, 'Processed or raw?' open question"
+title = "Open question: whether to export processed properties/computed verdicts only, or also expose raw results (or leave raw results to CBMC's --json-ui)."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (open question)
+
+[[clause]]
+id    = "RFC0015-S-5-3"
+ref   = "§Open questions, 'JSON Schema document?' open question"
+title = "Open question: whether to ship a JSON Schema document, which would add schemars as a new workspace dependency."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (open question)
+
+[[clause]]
+id    = "RFC0015-S-5-4"
+ref   = "§Open questions, 'Marker or delete-up-front?' open question"
+title = "Open question: whether the INCOMPLETE-marker approach or a delete-up-front approach is the right completeness design; both choices become irreversible once consumers depend on them."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (open question)
+
+[[clause]]
+id    = "RFC0015-S-5-5"
+ref   = "§Open questions, 'Autoharness classification?' open question"
+title = "Open question: whether to export the chosen/skipped autoharness classification already available in the compiler-to-driver AutoHarnessMetadata."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (open question)
+
+[[clause]]
+id    = "RFC0015-S-5-6"
+ref   = "§Open questions, 'Coverage results?' open question"
+title = "Open question: whether to include coverage results in this schema or leave them to kani-cov."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (open question)
+
+[[clause]]
+id    = "RFC0015-S-5-7"
+ref   = "§Open questions, 'Dropped/transformed shipped fields?' open question"
+title = "Open question: whether to restore various shipped-but-dropped fields (build_mode, mangled_name, end_line, goto_file, per-check descriptions/locations, CBMC OS information, or CBMC statistics)."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (open question)
+
+[[clause]]
+id    = "RFC0015-S-5-8"
+ref   = "§Open questions, 'Effective --object-bits?' open question"
+title = "Open question: whether to restore the shipped resolved --object-bits encoding provenance, under configuration or per-harness, resolved before or at stabilization."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (open question)
+
+[[clause]]
+id    = "RFC0015-S-5-9"
+ref   = "§Open questions, 'Path provenance?' open question"
+title = "Open question: whether harnesses[].file (currently invocation-relative) should instead be workspace-relative, and whether project.workspace_root should be restored, including how --target-dir interacts with output_dir."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (open question)
+
+[[clause]]
+id    = "RFC0015-S-5-10"
+ref   = "§Open questions, 'is_ctor_based?' open question"
+title = "Open question: how to represent that constructor generation/mined-invariant filtering (is_ctor_based) restricts a proof's success to admitted values, independently of is_bounded."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (open question)
+
+[[clause]]
+id    = "RFC0015-S-5-11"
+ref   = "§Open questions, 'is_ctor_based?' pre-stabilization disclosure obligation"
+title = "Before stabilization, any export whose proof is restricted by constructor generation/mined-invariant filtering must state that restriction."
+force = "shall"
+side  = "encoder"
+# seed: none
+# applicability-hint: excluded (pre-stabilization)
+
+[[clause]]
+id    = "RFC0015-S-5-12"
+ref   = "§Open questions, 'Final name?' open question"
+title = "Open question: whether to settle on --export-json or --results-json as the flag's final name before it leaves -Z."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (open question)
+
+[[clause]]
+id    = "RFC0015-S-5-13"
+ref   = "§Open questions, trailing paragraph: pre-stabilization configuration-policy obligation"
+title = "Before stabilization, the configuration-block policy must be applied to every effective Kani option, including loop-contract synthesis and the vtable restriction override (cbmc_args itself does not record these Kani-level options, only direct CBMC arguments)."
+force = "shall"
+side  = "encoder"
+# seed: none
+# applicability-hint: excluded (pre-stabilization)
+
+[[clause]]
+id    = "RFC0015-S-5-14"
+ref   = "§Open questions, 'Effective --object-bits?' adoption obligation"
+title = "On adoption of THIS RFC (merged 2026-09-24), a tracking issue for the --object-bits provenance representation must be filed or updated -- independently of when the representation question itself is settled."
+force = "shall"
+side  = "both"
+# seed: none
+# applicability-hint: applicable (process: tracking issue on adoption)
+
+[[clause]]
+id    = "RFC0015-S-5-15"
+ref   = "§Open questions, 'Path provenance?' output_dir default prohibition"
+title = "A consumer must not assume a default location for output_dir: --target-dir changes it, and output_dir itself may stay dropped from the schema regardless of how the open path-provenance question is resolved."
+force = "shall-not"
+side  = "decoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-5-16"
+ref   = "§Open questions, is_ctor_based omission non-inference prohibition (split from S-5-11)"
+title = "A consumer must never read the omission of a constructor-generation/mined-invariant-filtering disclosure as implying an unrestricted proof -- this prohibition is not itself deferred to stabilization."
+force = "shall-not"
+side  = "decoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-5-17"
+ref   = "§Open questions, 'Effective --object-bits?' representation-timing obligation"
+title = "The --object-bits provenance representation question must be resolved before or at stabilization."
+force = "shall"
+side  = "encoder"
+# seed: none
+# applicability-hint: excluded (pre-stabilization)
+
+[[clause]]
+id    = "RFC0015-S-5-18"
+ref   = "§Open questions, 'Final name?' naming deadline"
+title = "The flag's final name (--export-json versus --results-json) must be settled before leaving -Z."
+force = "shall"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (pre-stabilization)
+
+[[clause]]
+id    = "RFC0015-S-6-1"
+ref   = "§Out of scope / Future Improvements, 'none of these additions is proposed now' framing sentence"
+title = "None of the items in this section is proposed as part of this RFC; they are disclosed future-work candidates only."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (out of scope)
+
+[[clause]]
+id    = "RFC0015-S-6-2"
+ref   = "§Out of scope / Future Improvements, full tool/solver provenance + host machine metadata item"
+title = "Out of scope: full tool/solver provenance and host machine metadata (cut from v1 as #4731; tracking issues to be filed on adoption)."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (out of scope)
+
+[[clause]]
+id    = "RFC0015-S-6-3"
+ref   = "§Out of scope / Future Improvements, per-check timing/resources item"
+title = "Out of scope: per-check timing/resources (used by GNATprove), unavailable from CBMC's structured output today."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (out of scope)
+
+[[clause]]
+id    = "RFC0015-S-6-4"
+ref   = "§Out of scope / Future Improvements, reproducible counterexamples item"
+title = "Out of scope: exposing --concrete-playback's concrete value vector as reproducible counterexamples without source edits."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (out of scope)
+
+[[clause]]
+id    = "RFC0015-S-6-5"
+ref   = "§Out of scope / Future Improvements, finer failure classification item"
+title = "Out of scope: distinguishing unwinding failures from undefined-function failures to guide retries or fixes."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (out of scope)
+
+[[clause]]
+id    = "RFC0015-S-6-6"
+ref   = "§Out of scope / Future Improvements, harness triviality signal item"
+title = "Out of scope: a harness-triviality signal aggregating RFC 0003's vacuity concern."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (out of scope)
+
+[[clause]]
+id    = "RFC0015-S-6-7"
+ref   = "§Out of scope / Future Improvements, aggregate coverage item"
+title = "Out of scope: aggregate coverage reporting, deferred to kani-cov and RFC 0011."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (out of scope)
+
+[[clause]]
+id    = "RFC0015-S-6-8"
+ref   = "§Out of scope / Future Improvements, contract trust chain item"
+title = "Out of scope: reporting stub_verified's run-time contract-proof status; Kani enforces the contract proof's existence at compile time today, letting a consumer check its run-time result without this RFC reporting it directly."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (out of scope)
+
+[[clause]]
+id    = "RFC0015-S-6-9"
+ref   = "§Out of scope / Future Improvements, per-harness peak memory item"
+title = "Out of scope: per-harness peak memory; a process-wide getrusage(RUSAGE_CHILDREN) figure was rejected as inaccurate, and accurate per-child figures would need wait4() or a cgroup's memory.peak."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (out of scope)
+
+[[clause]]
+id    = "RFC0015-S-6-10"
+ref   = "§Out of scope / Future Improvements, full provenance/host metadata adoption obligation"
+title = "On adoption of THIS RFC (merged 2026-09-24), a tracking issue for full tool/solver provenance and host machine metadata (cut from v1, #4731) must be filed or updated."
+force = "shall"
+side  = "both"
+# seed: none
+# applicability-hint: applicable (process: tracking issue on adoption)
+
+[[clause]]
+id    = "RFC0015-S-6-11"
+ref   = "§Out of scope / Future Improvements, contract trust chain -- passing-proof prerequisite (split from S-6-8)"
+title = "stub_verified needs a passing contract proof (an existing Kani contract-system dependency, cited here as background for why Kani enforces its existence at compile time)."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: excluded (out of scope)
+
+[[clause]]
+id    = "RFC0015-S-7-1"
+ref   = "§Normative schema reference, section-framing sentence"
+title = "This section (Normative schema reference) contains the RFC's proposed field contract and design rules."
+force = "informative"
+side  = "both"
+# seed: none
+# applicability-hint: not-applicable (informative)
+
+[[clause]]
+id    = "RFC0015-S-7.1-1"
+ref   = "§Field reference, schema_version field row"
+title = "schema_version is a string (semver), always present (never null): this document's own version, per the Compatibility policy."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-01
+
+[[clause]]
+id    = "RFC0015-S-7.1-2"
+ref   = "§Field reference, kani_commit field row"
+title = "kani_commit is a nullable string: the git commit Kani was built from; null outside a git checkout."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-29
+
+[[clause]]
+id    = "RFC0015-S-7.1-3"
+ref   = "§Field reference, kani_commit_dirty field row"
+title = "kani_commit_dirty is a nullable bool, null exactly when kani_commit is null; otherwise it records whether the build tree had uncommitted changes."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-29
+
+[[clause]]
+id    = "RFC0015-S-7.1-4"
+ref   = "§Field reference, tools.kani field row"
+title = "tools.kani is a string, always present (never null): the Kani release producing the document (CARGO_PKG_VERSION at build time)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-29
+
+[[clause]]
+id    = "RFC0015-S-7.1-5"
+ref   = "§Field reference, tools.rustc field row"
+title = "tools.rustc is a nullable string: the rustc toolchain kani-compiler was built against; null if that probe failed."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-29
+
+[[clause]]
+id    = "RFC0015-S-7.1-6"
+ref   = "§Field reference, tools.cbmc field row"
+title = "tools.cbmc is a nullable string: CBMC's own --version output; null if it could not be probed."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-29
+
+[[clause]]
+id    = "RFC0015-S-7.1-7"
+ref   = "§Field reference, enabled_unstable_features field row"
+title = "enabled_unstable_features is an array of strings, never null (may be empty): the sorted -Z flags active for the run."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-29
+
+[[clause]]
+id    = "RFC0015-S-7.1-8"
+ref   = "§Field reference, harness_selection.requested_filters field row"
+title = "harness_selection.requested_filters is an array of strings, never null (may be empty): the raw --harness values, empty meaning no filter was passed."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-27
+
+[[clause]]
+id    = "RFC0015-S-7.1-9"
+ref   = "§Field reference, harness_selection.exact field row"
+title = "harness_selection.exact is a bool, always present (never null): whether --exact was passed."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-27
+
+[[clause]]
+id    = "RFC0015-S-7.1-10"
+ref   = "§Field reference, harness_selection.unmatched_filters field row"
+title = "harness_selection.unmatched_filters is an array of strings, never null (may be empty): filters that matched nothing while another filter did match, applicable only without --exact."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-27
+
+[[clause]]
+id    = "RFC0015-S-7.1-11"
+ref   = "§Field reference, harness_selection.matched_count field row"
+title = "harness_selection.matched_count is an integer, always present (never null): the pre-verification match count, to be compared against summary.total and run_state."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-27
+
+[[clause]]
+id    = "RFC0015-S-7.1-12"
+ref   = "§Field reference, harness_timeout_s field row"
+title = "harness_timeout_s is a nullable number: the --harness-timeout value in seconds, null when unset."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-13"
+ref   = "§Field reference, configuration.checks.* field row"
+title = "The nine configuration.checks.* fields are each mandatory (never-null) bools whose names record the run's EFFECTIVE check settings, not merely which flags were literally passed."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-24
+
+[[clause]]
+id    = "RFC0015-S-7.1-14"
+ref   = "§Field reference, configuration.coverage_enabled field row"
+title = "configuration.coverage_enabled is a bool, mandatory (never null), mirroring --coverage (default false); when true it generates the excluded code_coverage properties (see the class-based bucket partition rule for their exclusion from checks/covers/n_properties)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-24
+
+[[clause]]
+id    = "RFC0015-S-7.1-15"
+ref   = "§Field reference, configuration.cbmc_args field row"
+title = "configuration.cbmc_args is an array of strings, never null (may be empty); see the Configuration policy for exactly what and how it records."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-22
+
+[[clause]]
+id    = "RFC0015-S-7.1-16"
+ref   = "§Field reference, outcome.kind (run level) field row"
+title = "The run-level outcome.kind is always COMPLETED in a terminal document and is absent from the INCOMPLETE marker; there is no run-level CRASHED value."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-26
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.1-17"
+ref   = "§Field reference, run_state field row"
+title = "run_state is always present and is one of INCOMPLETE, COMPLETE, PARTIAL or NO_HARNESSES_SELECTED; a consumer's trust in the rest of the document is based on this field."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-05
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.1-18"
+ref   = "§Field reference, target field row"
+title = "target is a string, always present (never null): the Rust target triple Kani itself was built for."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-19"
+ref   = "§Field reference, started_at field row"
+title = "started_at is a string, always present (never null): UTC, in YYYY-MM-DDTHH:MM:SSZ (second resolution)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-26
+
+[[clause]]
+id    = "RFC0015-S-7.1-20"
+ref   = "§Field reference, wall_time_s field row"
+title = "wall_time_s is a number, always present (never null) in a TERMINAL document (absent from the INCOMPLETE marker, per the run-level presence matrix); it is seconds, and is volatile between runs by design."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-26
+
+[[clause]]
+id    = "RFC0015-S-7.1-21"
+ref   = "§Field reference, harnesses[] field row"
+title = "harnesses[] is an array of harness objects, never null (may be empty, only under NO_HARNESSES_SELECTED), sorted by (crate_name, file, line, name)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-02
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.1-22"
+ref   = "§Field reference, harnesses[].name field row"
+title = "harnesses[].name is a string, always present (never null): the harness's fully qualified pretty_name."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-23"
+ref   = "§Field reference, harnesses[].crate_name field row"
+title = "harnesses[].crate_name is a string, always present (never null): distinguishes same-named harnesses across crates in one workspace."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-17
+
+[[clause]]
+id    = "RFC0015-S-7.1-24"
+ref   = "§Field reference, harnesses[].file field row"
+title = "harnesses[].file is a string, always present (never null): the declaring file's path relative to the invocation directory."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-25"
+ref   = "§Field reference, harnesses[].line field row"
+title = "harnesses[].line is always present (never null), an integer, and is the harness function's 1-based start line; the end line is not exported."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-26"
+ref   = "§Field reference, harnesses[].contract field row"
+title = "harnesses[].contract is a nullable object: null exactly when the harness carries no CBMC-level assigns contract."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-27"
+ref   = "§Field reference, harnesses[].contract.contracted_function_name field row"
+title = "harnesses[].contract.contracted_function_name is a string, always present (never null) when contract itself is present: the contract's target function."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-28"
+ref   = "§Field reference, harnesses[].contract.recursion_tracker field row"
+title = "harnesses[].contract.recursion_tracker is a nullable string, non-null only for a #[kani::recursive] function."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-29"
+ref   = "§Field reference, harnesses[].is_automatically_generated field row"
+title = "harnesses[].is_automatically_generated is a bool, always present (never null): true for an autoharness-generated harness, which is then not selectable via --harness/--exact."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-30"
+ref   = "§Field reference, harnesses[].has_loop_contracts field row"
+title = "harnesses[].has_loop_contracts is a bool, always present (never null): whether the harness uses loop contracts."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-31"
+ref   = "§Field reference, harnesses[].is_bounded field row"
+title = "harnesses[].is_bounded is a bool, mandatory (never null); see the Bounded results rules for its exact truth condition."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-19
+
+[[clause]]
+id    = "RFC0015-S-7.1-32"
+ref   = "§Field reference, harnesses[].attributes.kind field row"
+title = "harnesses[].attributes.kind is always present (never null) and is one of Proof, Test, or the object form {\\\\\\\"ProofForContract\\\\\\\": {\\\\\\\"target_fn\\\\\\\": string}}."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-33"
+ref   = "§Field reference, harnesses[].attributes.should_panic field row"
+title = "harnesses[].attributes.should_panic is a bool, always present (never null): whether #[kani::should_panic] is set."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-15
+
+[[clause]]
+id    = "RFC0015-S-7.1-34"
+ref   = "§Field reference, harnesses[].attributes.solver field row"
+title = "harnesses[].attributes.solver is nullable (a string, or the object form {\"Binary\": string}): the requested solver attribute, null when unset (default resolution applies); compare against resolved_solver."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-04
+
+[[clause]]
+id    = "RFC0015-S-7.1-35"
+ref   = "§Field reference, harnesses[].attributes.unwind_value field row"
+title = "harnesses[].attributes.unwind_value is a nullable integer: the #[kani::unwind(N)] value, if one was set."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-36"
+ref   = "§Field reference, harnesses[].attributes.stubs[] field row"
+title = "harnesses[].attributes.stubs[] is an array of {original, replacement} string pairs, never null (may be empty): the requested stubs."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-37"
+ref   = "§Field reference, harnesses[].attributes.verified_stubs[] field row"
+title = "harnesses[].attributes.verified_stubs[] is an array of strings, never null (may be empty): functions stubbed by their own verified contract."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-38"
+ref   = "§Field reference, harnesses[].outcome.kind field row"
+title = "harnesses[].outcome.kind is always present and is one of COMPLETED, TIMEOUT, OUT_OF_MEMORY, or CRASHED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-30
+
+[[clause]]
+id    = "RFC0015-S-7.1-39"
+ref   = "§Field reference, harnesses[].outcome.verdict field row"
+title = "harnesses[].outcome.verdict is present only when outcome.kind is COMPLETED (never null there, absent otherwise) and is SUCCESS or FAILURE."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.1-40"
+ref   = "§Field reference, harnesses[].outcome.code field row"
+title = "harnesses[].outcome.code is a nullable integer, present only when outcome.kind is CRASHED (the process exit code, when known)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-30
+
+[[clause]]
+id    = "RFC0015-S-7.1-41"
+ref   = "§Field reference, harnesses[].outcome.message field row"
+title = "harnesses[].outcome.message is a nullable string, present only when outcome.kind is CRASHED: free-text whose wording is non-contractual."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-30
+
+[[clause]]
+id    = "RFC0015-S-7.1-42"
+ref   = "§Field reference, harnesses[].resolved_solver field row"
+title = "harnesses[].resolved_solver is a nullable string: the solver CBMC actually runs with, null when CBMC chooses for itself under bare --smt2."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-13
+
+[[clause]]
+id    = "RFC0015-S-7.1-43"
+ref   = "§Field reference, harnesses[].resolved_unwind field row"
+title = "harnesses[].resolved_unwind is a nullable integer: the effective --unwind bound, null when none applies."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-14
+
+[[clause]]
+id    = "RFC0015-S-7.1-44"
+ref   = "§Field reference, harnesses[].generated_concrete_test field row"
+title = "harnesses[].generated_concrete_test is a bool, always present (never null): whether --concrete-playback produced a test for this harness."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-45"
+ref   = "§Field reference, harnesses[].resources.verification_time_s field row"
+title = "harnesses[].resources.verification_time_s is a number, always present; on timeout/OOM/crash it is the elapsed time until that outcome, not a verification duration."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.1-46"
+ref   = "§Field reference, harnesses[].n_properties field row"
+title = "harnesses[].n_properties is a nullable integer, null except on COMPLETED: equals checks.total + covers.total there, excluding code_coverage properties."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-28
+
+[[clause]]
+id    = "RFC0015-S-7.1-47"
+ref   = "§Field reference, harnesses[].n_failed field row"
+title = "harnesses[].n_failed is a nullable integer, null except on COMPLETED: equals failed_properties.len() there."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-28
+
+[[clause]]
+id    = "RFC0015-S-7.1-48"
+ref   = "§Field reference, harnesses[].failure_kind field row"
+title = "harnesses[].failure_kind is present only when outcome.kind is COMPLETED (never null there, absent otherwise) and is one of NONE, PANICS_ONLY, OTHER, or ERROR."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-15
+
+[[clause]]
+id    = "RFC0015-S-7.1-49"
+ref   = "§Field reference, harnesses[].failed_properties[] field row"
+title = "harnesses[].failed_properties[] is an array of property objects, never null (may be empty, and is empty on a non-COMPLETED harness)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-28
+
+[[clause]]
+id    = "RFC0015-S-7.1-50"
+ref   = "§Field reference, harnesses[].unsupported_constructs[] field row"
+title = "harnesses[].unsupported_constructs[] is an array of property objects (never null, may be empty), in the same element shape as failed_properties[]: Rust/MIR constructs Kani could not model; a reached unsupported construct also appears in failed_properties[]."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-32
+
+[[clause]]
+id    = "RFC0015-S-7.1-51"
+ref   = "§Field reference, harnesses[].warnings[] field row"
+title = "harnesses[].warnings[] is an array of {message: string, truncated: bool, original_chars: integer|null} objects, never null (may be empty); its structural fields are schema-versioned, its message contents are not."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-25
+
+[[clause]]
+id    = "RFC0015-S-7.1-52"
+ref   = "§Field reference, harnesses[].warnings_truncated field row"
+title = "harnesses[].warnings_truncated is an integer, always present (never null): counts warnings dropped by the array's count cap."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-25
+
+[[clause]]
+id    = "RFC0015-S-7.1-53"
+ref   = "§Field reference, harnesses[].checks / .covers field row"
+title = "The harnesses[].checks and harnesses[].covers objects themselves are never omitted, whatever the harness outcome."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.1-54"
+ref   = "§Field reference, summary.* field row"
+title = "The seven summary.* integer fields are each always present (never null) in a TERMINAL document; summary itself is absent from the INCOMPLETE marker, per the run-level presence matrix."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-16
+
+[[clause]]
+id    = "RFC0015-S-7.1-55"
+ref   = "§Field reference, property-record shape, id row"
+title = "A property record's id is a string following the CBMC-style <function>.<class>.<counter> general form (or the shorter <function>.<counter>/<class>.<counter> forms, or <function>.recursion with no counter for recursion unwinding), reconstructed from the parsed CBMC id (never from Kani's own display rendering); the ordinal counter is not promised stable across source changes."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-18
+
+[[clause]]
+id    = "RFC0015-S-7.1-56"
+ref   = "§Field reference, property-record shape, description row"
+title = "A property record's description is a string, always present (never null): free-form text."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-57"
+ref   = "§Field reference, property-record shape, class row"
+title = "A property record's class is a string, always present (never null), e.g. \"assertion\" or \"unsupported_construct\"."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-58"
+ref   = "§Field reference, property-record shape, file row"
+title = "A property record's file is a nullable string (never omitted): null when CBMC did not record a source location, otherwise that source file."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-59"
+ref   = "§Field reference, property-record shape, line row"
+title = "A property record's line is nullable and is a string (not an integer), carried through verbatim from CBMC's own field, in contrast to harnesses[].line which is an integer."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-60"
+ref   = "§Field reference, property-record shape, trace_available row"
+title = "A property record's trace_available is a bool, always present (never null), recording whether a counterexample trace exists for that property."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-61"
+ref   = "§Field reference, property-record shape, status row"
+title = "A property record's status is always present (never null) and is a closed CheckStatus value."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-62"
+ref   = "§Field reference, other[] element shape, id row"
+title = "A checks.other[]/covers.other[] entry's id is a string, using the same id format as a full property record."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-63"
+ref   = "§Field reference, other[] element shape, status row"
+title = "A checks.other[]/covers.other[] entry's status is the actual, unbucketed CheckStatus value; other[] carries only id and status, full property records being reserved for failed_properties[]/unsupported_constructs[]."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-64"
+ref   = "§Field reference, bucket shape, total row"
+title = "checks.total/covers.total is a nullable integer, null exactly when the owning harness's outcome.kind is not COMPLETED, and otherwise counts every property that bucket accounts for."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.1-65"
+ref   = "§Field reference, bucket shape, success row"
+title = "checks.success is a nullable integer under the same non-COMPLETED condition as total: a count (not an identity list) when present."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-03
+
+[[clause]]
+id    = "RFC0015-S-7.1-66"
+ref   = "§Field reference, bucket shape, satisfied row"
+title = "covers.satisfied is never null (empty rather than absent on a non-COMPLETED harness) and is an identity list of ids."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-03
+
+[[clause]]
+id    = "RFC0015-S-7.1-67"
+ref   = "§Field reference, bucket shape, failure(checks)/unsatisfiable(covers) row"
+title = "checks.failure and covers.unsatisfiable are each never null (may be empty) identity lists of ids."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-28
+
+[[clause]]
+id    = "RFC0015-S-7.1-68"
+ref   = "§Field reference, bucket shape, unreachable/undetermined/error/unknown row"
+title = "checks.unreachable, .undetermined, .error, .unknown and the same four fields on covers are each never null (may be empty) identity lists of ids."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-23
+
+[[clause]]
+id    = "RFC0015-S-7.1-69"
+ref   = "§Field reference, bucket shape, other[] row"
+title = "checks.other[]/covers.other[] is never null (may be empty) and holds {id, status} entries per the other[] element shape."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-70"
+ref   = "§Field reference, non-COMPLETED bucket nullness rule"
+title = "On a non-COMPLETED harness, no property list exists: bucket totals and checks.success are null, every identity list is [], and bucket arithmetic says nothing about that harness."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.1-71"
+ref   = "§Field reference, bucket arithmetic identities -- checks.total equation"
+title = "On a COMPLETED harness: checks.total == success + len(failure) + len(unreachable) + len(undetermined) + len(error) + len(unknown) + len(other)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-03
+
+[[clause]]
+id    = "RFC0015-S-7.1-72"
+ref   = "§Field reference, class-based bucket partition rule"
+title = "Every property is partitioned into checks vs. covers by property_id.class, independently of status: class \\\\\\\"cover\\\\\\\" goes to covers, class \\\\\\\"code_coverage\\\\\\\" is excluded from both buckets and from n_properties, every other class goes to checks, and a status that crosses domains stays in that class's own other[] bucket."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-03
+
+[[clause]]
+id    = "RFC0015-S-7.1-73"
+ref   = "§Field reference, check/cover identity-export asymmetry rule"
+title = "The identities of successful checks are never exported (only their count, checks.success); satisfied cover identities, by contrast, are exported by name in covers.satisfied."
+force = "shall-not"
+side  = "encoder"
+# seed: RFC15-03
+
+[[clause]]
+id    = "RFC0015-S-7.1-74"
+ref   = "§Field reference, failed_properties[] identity rule"
+title = "failed_properties[] is exactly checks.failure with full property records (non-cover, non-code_coverage properties with FAILURE status, excluding checks.error and all covers), so n_failed == len(checks.failure)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-28
+
+[[clause]]
+id    = "RFC0015-S-7.1-75"
+ref   = "§Field reference, introductory null convention"
+title = "null means not measured or not applicable, never guessed, throughout this document -- it is distinct from 0, false and [], which are all measured/known values."
+force = "definition"
+side  = "both"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-76"
+ref   = "§Field reference, introductory '—' (no Null?) convention"
+title = "A Field-reference row marked with no Null? entry ('—') is never absent or null in a TERMINAL document; this default is still subject to that row's own explicit per-outcome or per-form (marker vs. terminal) conditions stated elsewhere in this inventory."
+force = "definition"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.1-77"
+ref   = "§Field reference, bucket arithmetic identities -- covers.total equation (split from S-7.1-71)"
+title = "On a COMPLETED harness, covers.total is the sum of the lengths of all seven of its own lists (satisfied, unsatisfiable, unreachable, undetermined, error, unknown, and other), explicitly including other."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-03
+
+[[clause]]
+id    = "RFC0015-S-7.1-78"
+ref   = "§Field reference, bucket arithmetic identities -- n_properties equation (split from S-7.1-71)"
+title = "On a COMPLETED harness, n_properties == checks.total + covers.total."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-28
+
+[[clause]]
+id    = "RFC0015-S-7.2-1"
+ref   = "§Configuration, assertion_reach_checks table row"
+title = "configuration.checks.assertion_reach_checks defaults true (disabled by --no-assertion-reach-checks); when true it inserts reach checks before ordinary assertions, and when false it prevents vacuity detection through checks.unreachable."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.2-2"
+ref   = "§Configuration, ignore_global_asm table row"
+title = "configuration.checks.ignore_global_asm is set by --ignore-global-asm; when true it suppresses the global_asm! error, so success can be vacuous for behavior reachable only through it."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.2-3"
+ref   = "§Configuration, extra_pointer_checks table row"
+title = "configuration.checks.extra_pointer_checks is set by --extra-pointer-checks; when true it adds invalid-pointer relational-operation and pointer-arithmetic-overflow obligations, making totals not comparable across differing settings."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.2-4"
+ref   = "§Configuration, memory_safety table row"
+title = "configuration.checks.memory_safety defaults true, disabled either by --no-memory-safety-checks alone or by --no-default-checks (which disables the WHOLE GROUP of default-true checks together, memory_safety included); when false, out-of-bounds accesses and invalid-pointer dereferences go unchecked."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.2-5"
+ref   = "§Configuration, overflow table row"
+title = "configuration.checks.overflow defaults true (disabled by --no-overflow-checks); when false it omits CBMC's NaN and division-by-zero checks specifically, not Rust/MIR arithmetic-overflow or integer division-by-zero assertions (those follow -C overflow-checks=on, subject separately to prove_safety_only)."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.2-6"
+ref   = "§Configuration, unwinding table row"
+title = "configuration.checks.unwinding defaults true (disabled by --no-unwinding-checks); when false it omits the assertions that loop/recursion bounds cover every execution, so behavior beyond the bound can be missed."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.2-7"
+ref   = "§Configuration, undefined_function table row"
+title = "configuration.checks.undefined_function defaults true (disabled by --no-undefined-function-checks); when false it skips assert-false-assume-false bodies, leaving calls with CBMC's default nondeterministic returns and no modeled side effects."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.2-8"
+ref   = "§Configuration, assert_contracts table row"
+title = "configuration.checks.assert_contracts defaults true unless --no-assert-contracts is passed (requires -Z function-contracts); when false, ordinary calls use ContractMode::Original (original body, no contract assertions/assumptions, so success does not establish contract obligations), but an explicit proof_for_contract or stub_verified mode takes precedence and keeps its own instrumentation."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.2-9"
+ref   = "§Configuration, prove_safety_only table row"
+title = "configuration.checks.prove_safety_only defaults false and requires -Z unstable-options; when true it converts codegen_assert_assume's PropertyClass::Assertion checks (including user assertions/panics) into assumptions, so success becomes conditional on them, while direct codegen_assert checks (including CheckHook Assertion properties) remain checks -- the conversion depends on code path, not solely on property class."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.2-10"
+ref   = "§Configuration, configuration-block membership policy"
+title = "A flag belongs in the configuration block when it changes which properties are generated or what a status means (two runs differing only in it are not directly comparable, or it can make a passing result prove less than it appears to); the nine checks flags and coverage_enabled are the currently-identified fields meeting that test, and a future flag is added under the same rule (a minor schema change) assessed in the PR that adds it."
+force = "definition"
+side  = "both"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.2-11"
+ref   = "§Configuration, cbmc_args recording rule"
+title = "configuration.cbmc_args is the catch-all for direct CBMC options the configuration-block policy cannot name individually (since a --cbmc-args value can change results in ways Kani cannot inspect, two runs with different cbmc_args are not assumed comparable); it is recorded verbatim except for UTF-8 conversion (to_string_lossy; a non-UTF-8 argument renders as U+FFFD rather than round-tripping byte-for-byte), sufficient as a comparability signal but not an exact replayable argv."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-22
+
+[[clause]]
+id    = "RFC0015-S-7.2-12"
+ref   = "§Configuration, randomize-layout-seed exclusion"
+title = "--randomize-layout's seed value is excluded from this schema for now (reserved for a future subject/provenance block), even though --randomize-layout changes the program's type layout."
+force = "definition"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.2-13"
+ref   = "§Configuration, solver-precedence rule"
+title = "resolved_solver follows the precedence: last solver-selecting --cbmc-args override > CLI --solver > harness attribute > default (CBMC arguments applied after Kani's own flags); bare --smt2 lets CBMC choose and yields resolved_solver: null."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-13
+
+[[clause]]
+id    = "RFC0015-S-7.2-14"
+ref   = "§Configuration, unwind-precedence rule"
+title = "resolved_unwind follows the precedence: CLI --unwind > harness #[kani::unwind] > --default-unwind."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-14
+
+[[clause]]
+id    = "RFC0015-S-7.2-15"
+ref   = "§Configuration, requested-attributes provenance rule"
+title = "harnesses[].attributes.* (the requested attributes, collectively) come verbatim from .kani-metadata.json, without normalization or substitution with any resolved value."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.2-16"
+ref   = "§Configuration, future-flag PR-assessment obligation"
+title = "Every future flag must be assessed under the configuration-block membership policy in the PR that adds it -- including a flag ultimately judged NOT to belong in configuration."
+force = "shall"
+side  = "both"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.3-1"
+ref   = "§Failure scenarios, Unwritable path bullet"
+title = "An unwritable export path produces an error and a non-zero exit, never rewriting the independently computed verification verdict; a marker-write failure occurs before verification, while the terminal export write follows harness verdicts but precedes SARIF output and the final rendered summary (so failure aborts those later steps); whether an export-write failure should also suppress SARIF is left open."
+force = "shall"
+side  = "encoder"
+# seed: none
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.3-2"
+ref   = "§Failure scenarios, Undetermined tool version bullet"
+title = "An undetermined tool version is recorded as null, never guessed; Kani's own version (tools.kani) is always known and never recorded as null."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-29
+
+[[clause]]
+id    = "RFC0015-S-7.3-3"
+ref   = "§Failure scenarios, Harness timeout/OOM/CBMC crash bullet"
+title = "A harness timeout, out-of-memory condition, or CBMC crash is recorded as that harness's own outcome and the export file is still written; complete accounting of harness entries is verdict-independent (even if every harness times out); a missing harness entry means run_state PARTIAL (never a crash/timeout placeholder), and a marker-only file means run_state INCOMPLETE."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-30, RFC15-38
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.3-4"
+ref   = "§Failure scenarios, Kani crash bullet"
+title = "A Kani crash (compiler ICE, driver panic, SIGKILL) after the marker produces no terminal document (the single final verify_project write is bypassed): the INCOMPLETE marker remains in place, or whatever file existed remains if the crash preceded the marker; there is no run-level CRASHED value, though a per-harness CRASHED outcome remains possible inside an otherwise-completed document."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-35
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.3-5"
+ref   = "§Failure scenarios, Existing file bullet"
+title = "An existing file at the export path is atomically replaced by the INCOMPLETE marker once verification begins, after building."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-36
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.3-6"
+ref   = "§Failure scenarios, Missing parent bullet"
+title = "A missing parent directory of the export path is created with create_dir_all before writing, as the SARIF writer already does (the shipped code instead fails at write time on an existing-directory target; this proposal rejects the existing-directory case at argument parsing instead -- see Interaction with other flags)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-12
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.4-1"
+ref   = "§Presence matrices, run-level matrix, always-present-in-both-forms row"
+title = "schema_version, kani_commit, kani_commit_dirty, tools.*, enabled_unstable_features, harness_selection.*, harness_timeout_s, configuration.*, target and started_at are present in both the INCOMPLETE marker and a terminal document."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-26
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.4-2"
+ref   = "§Presence matrices, run-level matrix, run_state row -- marker form"
+title = "run_state is present in the INCOMPLETE marker and there always equals the literal value \\\"INCOMPLETE\\\"."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-26
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.4-3"
+ref   = "§Presence matrices, run-level matrix, outcome/wall_time_s row -- marker form"
+title = "outcome and wall_time_s are absent from the INCOMPLETE marker."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-26
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.4-4"
+ref   = "§Presence matrices, run-level matrix, summary/harnesses[] row -- marker form"
+title = "summary and harnesses[] are absent from the INCOMPLETE marker."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-26
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.4-5"
+ref   = "§Presence matrices, harness-level matrix, always-present row"
+title = "name, crate_name, file, line, contract, is_automatically_generated, has_loop_contracts, is_bounded, attributes.*, resolved_solver, resolved_unwind and generated_concrete_test are present regardless of whether outcome.kind is COMPLETED, TIMEOUT/OUT_OF_MEMORY or CRASHED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.4-6"
+ref   = "§Presence matrices, harness-level matrix, resources.verification_time_s row -- COMPLETED"
+title = "resources.verification_time_s is present on COMPLETED and there means a verification duration."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.4-7"
+ref   = "§Presence matrices, harness-level matrix, outcome.verdict row -- present case"
+title = "outcome.verdict is present when outcome.kind is COMPLETED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.4-8"
+ref   = "§Presence matrices, harness-level matrix, outcome.code/message row -- absent case"
+title = "outcome.code and outcome.message are absent when outcome.kind is COMPLETED, TIMEOUT, or OUT_OF_MEMORY."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-30
+
+[[clause]]
+id    = "RFC0015-S-7.4-9"
+ref   = "§Presence matrices, harness-level matrix, failure_kind row -- present case"
+title = "failure_kind is present when outcome.kind is COMPLETED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.4-10"
+ref   = "§Presence matrices, harness-level matrix, checks/covers-objects row"
+title = "The checks and covers objects themselves are present for every outcome kind."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.4-11"
+ref   = "§Presence matrices, harness-level matrix, bucket-totals row -- COMPLETED"
+title = "checks.total, checks.success and covers.total are integers when outcome.kind is COMPLETED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.4-12"
+ref   = "§Presence matrices, harness-level matrix, identity-list-fields row -- COMPLETED"
+title = "Every identity-list field (checks.failure, checks.unreachable, etc., covers.satisfied, etc.) is an array of ids, possibly with real entries, when outcome.kind is COMPLETED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.4-13"
+ref   = "§Presence matrices, harness-level matrix, n_properties/n_failed row -- COMPLETED"
+title = "n_properties and n_failed are integers when outcome.kind is COMPLETED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-28
+
+[[clause]]
+id    = "RFC0015-S-7.4-14"
+ref   = "§Presence matrices, harness-level matrix, failed_properties/unsupported_constructs row -- COMPLETED"
+title = "failed_properties[] and unsupported_constructs[] are arrays, possibly with real entries, when outcome.kind is COMPLETED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.4-15"
+ref   = "§Presence matrices, harness-level matrix, warnings row"
+title = "warnings[] and warnings_truncated are present for every outcome kind, preserving whatever the driver retained with the same caps applied regardless of outcome (warnings[] needs no accompanying property array, and an empty warnings[] means none were retained, not proof CBMC emitted none)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-25
+
+[[clause]]
+id    = "RFC0015-S-7.4-16"
+ref   = "§Presence matrices, run-level matrix, run_state row -- terminal form (split from S-7.4-2)"
+title = "run_state is present in a terminal document and there is one of \\\"COMPLETE\\\"/\\\"PARTIAL\\\"/\\\"NO_HARNESSES_SELECTED\\\"."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-26
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.4-17"
+ref   = "§Presence matrices, run-level matrix, outcome/wall_time_s row -- terminal form (split from S-7.4-3)"
+title = "outcome and wall_time_s are present in every terminal document."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-26
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.4-18"
+ref   = "§Presence matrices, run-level matrix, summary/harnesses[] row -- terminal form (split from S-7.4-4)"
+title = "summary and harnesses[] are present in every terminal document, with harnesses[] empty only under NO_HARNESSES_SELECTED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-26
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.4-19"
+ref   = "§Presence matrices, harness-level matrix, resources.verification_time_s row -- TIMEOUT/OUT_OF_MEMORY (split from S-7.4-6)"
+title = "resources.verification_time_s is present on TIMEOUT/OUT_OF_MEMORY and there means elapsed time until that outcome occurred, not a verification duration."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.4-20"
+ref   = "§Presence matrices, harness-level matrix, resources.verification_time_s row -- CRASHED (split from S-7.4-6)"
+title = "resources.verification_time_s is present on CRASHED and there means elapsed time until the crash, not a verification duration."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.4-21"
+ref   = "§Presence matrices, harness-level matrix, outcome.verdict row -- absent case (split from S-7.4-7)"
+title = "outcome.verdict is absent when outcome.kind is TIMEOUT, OUT_OF_MEMORY, or CRASHED."
+force = "shall-not"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.4-22"
+ref   = "§Presence matrices, harness-level matrix, outcome.code/message row -- present case (split from S-7.4-8)"
+title = "outcome.code and outcome.message are each required -- present, though the RFC's own Field-reference table marks both nullable -- whenever outcome.kind is CRASHED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-30
+
+[[clause]]
+id    = "RFC0015-S-7.4-23"
+ref   = "§Presence matrices, harness-level matrix, failure_kind row -- absent case (split from S-7.4-9)"
+title = "failure_kind is absent when outcome.kind is TIMEOUT, OUT_OF_MEMORY, or CRASHED."
+force = "shall-not"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.4-24"
+ref   = "§Presence matrices, harness-level matrix, bucket-totals row -- non-COMPLETED (split from S-7.4-11)"
+title = "checks.total, checks.success and covers.total are null when outcome.kind is TIMEOUT, OUT_OF_MEMORY, or CRASHED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.4-25"
+ref   = "§Presence matrices, harness-level matrix, identity-list-fields row -- non-COMPLETED (split from S-7.4-12)"
+title = "Every identity-list field is forced to exactly [] when outcome.kind is TIMEOUT, OUT_OF_MEMORY, or CRASHED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.4-26"
+ref   = "§Presence matrices, harness-level matrix, n_properties/n_failed row -- non-COMPLETED (split from S-7.4-13)"
+title = "n_properties and n_failed are null when outcome.kind is TIMEOUT, OUT_OF_MEMORY, or CRASHED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-28
+
+[[clause]]
+id    = "RFC0015-S-7.4-27"
+ref   = "§Presence matrices, harness-level matrix, failed_properties/unsupported_constructs row -- non-COMPLETED (split from S-7.4-14)"
+title = "failed_properties[] and unsupported_constructs[] are forced to exactly [] when outcome.kind is TIMEOUT, OUT_OF_MEMORY, or CRASHED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-20
+
+[[clause]]
+id    = "RFC0015-S-7.5-1"
+ref   = "§Value domains and casing, value-domain table, outcome.kind (run level) row"
+title = "The run-level outcome.kind domain is closed to the single value COMPLETED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-30
+
+[[clause]]
+id    = "RFC0015-S-7.5-2"
+ref   = "§Value domains and casing, value-domain table, run_state row"
+title = "The run_state domain is closed to INCOMPLETE, COMPLETE, PARTIAL, NO_HARNESSES_SELECTED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-05
+# applicability-hint: applicable, PR 2
+
+[[clause]]
+id    = "RFC0015-S-7.5-3"
+ref   = "§Value domains and casing, value-domain table, harnesses[].outcome.kind row"
+title = "The harnesses[].outcome.kind domain is closed to COMPLETED, TIMEOUT, OUT_OF_MEMORY, CRASHED."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-30
+
+[[clause]]
+id    = "RFC0015-S-7.5-4"
+ref   = "§Value domains and casing, value-domain table, harnesses[].outcome.verdict row"
+title = "The harnesses[].outcome.verdict domain is closed to SUCCESS, FAILURE (the field is omitted at run level)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-15
+
+[[clause]]
+id    = "RFC0015-S-7.5-5"
+ref   = "§Value domains and casing, value-domain table, harnesses[].failure_kind row"
+title = "The harnesses[].failure_kind domain is closed to NONE, PANICS_ONLY, OTHER, ERROR."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-15
+
+[[clause]]
+id    = "RFC0015-S-7.5-6"
+ref   = "§Value domains and casing, value-domain table, ...[].status row"
+title = "The status domain (in failed_properties, unsupported_constructs, checks.other and covers.other alike) is closed to SUCCESS, FAILURE, SATISFIED, UNSATISFIABLE, UNREACHABLE, UNDETERMINED, ERROR, UNKNOWN, COVERED, UNCOVERED."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.5-7"
+ref   = "§Value domains and casing, value-domain table, harnesses[].attributes.kind row"
+title = "The harnesses[].attributes.kind domain is closed (HarnessKind, 3 variants: Proof, Test, ProofForContract)."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.5-8"
+ref   = "§Value domains and casing, value-domain table, harnesses[].attributes.solver row"
+title = "harnesses[].attributes.solver's producer domain is Cadical/Bitwuzla/Cvc5/Kissat/Minisat/Z3 (the six named spellings) or the object form {\\\"Binary\\\": \\\"<path>\\\"}; it is explicitly open to further named spellings without a major bump."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-04
+
+[[clause]]
+id    = "RFC0015-S-7.5-9"
+ref   = "§Value domains and casing, value-domain table, harnesses[].resolved_solver row"
+title = "harnesses[].resolved_solver's domain is explicitly open: the lowercase spellings of the six known solver names, OR an arbitrary binary-path STRING (never the {\\\"Binary\\\": ...} object form, which belongs only to the requested attributes.solver)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-13
+
+[[clause]]
+id    = "RFC0015-S-7.5-10"
+ref   = "§Value domains and casing, OUT_OF_MEMORY inference rule"
+title = "Harness OUT_OF_MEMORY is inferred from a CBMC-child process status of 137 (including SIGKILL mapped to 128+9) when no property array exists; it is not measured memory usage."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-30
+
+[[clause]]
+id    = "RFC0015-S-7.5-11"
+ref   = "§Value domains and casing, should_panic truth table row 1 (false/NONE→SUCCESS)"
+title = "When attributes.should_panic is false and the computed failure_kind is NONE, outcome.verdict is SUCCESS."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-15
+
+[[clause]]
+id    = "RFC0015-S-7.5-12"
+ref   = "§Value domains and casing, Casing rule"
+title = "A value keeps the serialization of the Rust type it comes from (this schema does not fork a type solely to re-case it): every SCHEMA FIELD NAME (object key naming a document field) is snake_case -- this does not extend to an externally-tagged enum's own tag/variant keys (e.g. \\\"ProofForContract\\\", \\\"Binary\\\"), which retain PascalCase as part of the embedded attribute enum's object-variant shape; outcome/verdict/failure_kind/run_state/status VALUES are SCREAMING_SNAKE_CASE (including new multi-word values)."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-04
+
+[[clause]]
+id    = "RFC0015-S-7.5-13"
+ref   = "§Value domains and casing, should_panic-before-failure_kind consumer instruction"
+title = "A consumer must read attributes.should_panic before interpreting the computed failure_kind classification: the same failure_kind value means something different depending on should_panic."
+force = "shall"
+side  = "decoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.5-14"
+ref   = "§Value domains and casing, should_panic truth table row 2 (false/{PANICS_ONLY,OTHER,ERROR}→FAILURE)"
+title = "When attributes.should_panic is false and the computed failure_kind is PANICS_ONLY, OTHER, or ERROR, outcome.verdict is FAILURE."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-15
+
+[[clause]]
+id    = "RFC0015-S-7.5-15"
+ref   = "§Value domains and casing, should_panic truth table row 3 (true/PANICS_ONLY→SUCCESS)"
+title = "When attributes.should_panic is true and the computed failure_kind is PANICS_ONLY, outcome.verdict is SUCCESS."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-15
+
+[[clause]]
+id    = "RFC0015-S-7.5-16"
+ref   = "§Value domains and casing, should_panic truth table row 4 (true/{NONE,OTHER,ERROR}→FAILURE)"
+title = "When attributes.should_panic is true and the computed failure_kind is NONE, OTHER, or ERROR, outcome.verdict is FAILURE."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-15
+
+[[clause]]
+id    = "RFC0015-S-7.5-17"
+ref   = "§Value domains and casing, failure_kind classification-trigger rule"
+title = "failure_kind's own value is computed as: NONE for a missing expected panic, OTHER for an unexpected non-panic failure, and ERROR for a property error."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-15
+
+[[clause]]
+id    = "RFC0015-S-7.5-18"
+ref   = "§Value domains and casing, #4719 ignored-quantifier override rule"
+title = "#4719's computed ERROR/FAILURE override for ignored quantifiers is preserved even without an ERROR-status property, rather than recomputed solely from properties."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-15
+
+[[clause]]
+id    = "RFC0015-S-7.5-19"
+ref   = "§Value domains and casing, TIMEOUT restriction rule (split from S-7.5-10)"
+title = "TIMEOUT arises only under --harness-timeout."
+force = "shall"
+side  = "encoder"
+# seed: RFC15-30
+
+[[clause]]
+id    = "RFC0015-S-7.5-20"
+ref   = "§Value domains and casing, solver-name consumer-acceptance rule (split from S-7.5-8)"
+title = "A consumer must accept an unfamiliar solver-name string via a string/fallback, not solely the current closed CbmcSolver enum."
+force = "shall"
+side  = "decoder"
+# seed: RFC15-04
+
+[[clause]]
+id    = "RFC0015-S-7.5-21"
+ref   = "§Value domains and casing, solver Binary(String) serialization-reuse note (split from S-7.5-8)"
+title = "CbmcSolver's Binary(String) variant accepts paths, not unknown unit variants."
+force = "definition"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.5-22"
+ref   = "§Value domains and casing, other[] bucket-placement rule (split from S-7.5-6)"
+title = "The 'lacking a named bucket' placement rule applies only to checks.other[]/covers.other[] (e.g. SATISFIED lacks its own bucket among checks): it does not mean a full property record's status (e.g. FAILURE, which has its own named bucket, checks.failure) is somehow an other[]-only value; an unmodeled status needs a new parser variant and a major bump."
+force = "shall"
+side  = "encoder"
+# seed: none
+
+[[clause]]
+id    = "RFC0015-S-7.5-23"
+ref   = "§Value domains and casing, solver Binary(String) serialization-reuse permission (split from S-7.5-21)"
+title = "A producer may reuse Binary(String)'s serialization for an open solver name."
+force = "may"
+side  = "encoder"
+# seed: none
+
+# =============================================================================================
+# Summary: 259 clauses.
+#   by force: shall=187, informative=42, definition=18, shall-not=8, may=4;
+#   by side: encoder=180, decoder=21, both=58.
+# =============================================================================================

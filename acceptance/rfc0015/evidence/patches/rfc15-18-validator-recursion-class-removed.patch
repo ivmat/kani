@@ -1,0 +1,13 @@
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 64679ffae..4c2158758 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -266,8 +266,6 @@ def id_class(property_id):
+     An id whose second-to-last segment is not in class format is a function name: the
+     class is then `missing_definition`, as the Rust parser decides.
+     """
+-    if property_id.endswith(".recursion"):
+-        return "recursion"
+     parts = property_id.rsplit(".", 2)
+     if len(parts) < 2 or not (parts[-1].isascii() and parts[-1].isdigit()):
+         return None

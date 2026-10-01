@@ -1,0 +1,12 @@
+diff --git a/kani-driver/src/cbmc_output_parser.rs b/kani-driver/src/cbmc_output_parser.rs
+index 08106fe38..7c27c99a0 100644
+--- a/kani-driver/src/cbmc_output_parser.rs
++++ b/kani-driver/src/cbmc_output_parser.rs
+@@ -370,7 +370,6 @@ fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+ }
+ 
+ #[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+-#[serde(rename_all = "UPPERCASE")]
+ pub enum CheckStatus {
+     Failure,
+     Covered,   // for `code_coverage` properties only

@@ -1,0 +1,13 @@
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 64679ffae..fdec06193 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -563,7 +563,7 @@ def validate_field_path(json_file, field_path, schema=None):
+ 
+ def join_key(harness):
+     """Harness names are unique only within a crate (RFC "Selection")."""
+-    return (harness["crate_name"], harness["name"])
++    return (harness["name"],)
+ 
+ 
+ def _all_unreachable(bucket):

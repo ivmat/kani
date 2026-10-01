@@ -1,0 +1,21 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index 0ff0ac180..838abea52 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -972,7 +972,15 @@ fn from_harness_result(
+                 None,
+                 None,
+                 None,
+-                Vec::new(),
++                vec![PropertyExport {
++                    id: "stub.assertion.1".to_string(),
++                    description: "stub".to_string(),
++                    class: "assertion".to_string(),
++                    file: None,
++                    line: None,
++                    trace_available: false,
++                    status: CheckStatus::Failure,
++                }],
+                 Vec::new(),
+                 ChecksExport::empty_not_completed(),
+                 CoversExport::empty_not_completed(),

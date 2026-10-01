@@ -1,0 +1,1509 @@
+# evidence/recipes.toml -- the evidence GENERATOR's registry (see ../gen_evidence.py, README.md
+# "Evidence generation"). Every record this package relies on is produced by running exactly one
+# of the `[[run]]`/`[[control]]` recipes below against the kani worktree, never hand-written.
+#
+# `[[run]]`: a command that must PASS (`expect` matches its combined stdout+stderr, `exit` is its
+# expected exit code). `[[control]]`: a real unified diff (`patch`, under evidence/patches/) that
+# `gen_evidence.py` applies, runs `command` against, requires to go RED (`expect_red` matches the
+# output), then reverts byte-exactly.
+#
+# `kani = true` recipes invoke the real kani/cbmc toolchain and MUST run one at a time through
+# `gen_evidence.py`'s systemd-run wrapper (memory-capped, swap off, sequential). `kani = false` recipes are plain
+# `cargo`/`python3`/`bash` — no solver involved.
+#
+# Every `[[claim.evidence]]` entry in acceptance.toml carries its own `recipe = "<id>"` field
+# naming the run/control below that produced it (gen_evidence.py rewrites that ONE entry's
+# record/record_hash/captured_at_commit; see README.md "Evidence generation").
+#
+# This file carries no absolute, machine-local paths (README.md "Portable paths"): `<cbmc>` below
+# is a placeholder gen_evidence.py substitutes at run time from `--cbmc-dir`/`RFC0015_CBMC_DIR`;
+# `$HOME`/`$PWD`/`$PATH` are left for the shell that runs each recipe to expand. The kani worktree
+# itself is not named here at all — it comes only from `--kani-worktree`/`RFC0015_KANI_WORKTREE`.
+
+[defaults]
+# Prepended to PATH for every command this generator runs (both kani=true and kani=false
+# recipes): the pinned cbmc/kani toolchain, the worktree's own scripts/, then cargo, then
+# whatever the shell already has.
+path_prefix = "<cbmc>/usr/bin:$HOME/.kani/kani-0.67.0/bin:$PWD/scripts:$HOME/.cargo/bin:$PATH"
+rust_test_threads = "4"
+# Memory-capped, swap-off, one at a time.
+systemd_memory_max = "24G"
+systemd_memory_swap_max = "0"
+
+# =================================================================================================
+# RUNS
+# =================================================================================================
+
+[[run]]
+id      = "kani-driver-unit-suite"
+command = "cargo test -p kani-driver"
+kani    = false
+# Intentionally does not hard-code the total test count (it grows as tests are added): only the
+# shape "N passed; 0 failed" is required.
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+[[run]]
+id      = "json-handler-exec-suite"
+command = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun"
+kani    = true
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+[[run]]
+id      = "validator-fixtures"
+# The reference consumer's own fixture checker (the script the schema-validation e2e suite ends with), run on its
+# own: pure python3, no kani/cbmc, no cargo build. It checks every fixture and twin, every malformed-document case
+# (diagnostic text included), every extension, the reading predicates, id_class and join_key.
+command = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py && echo 'check_fixtures: every valid fixture and twin accepted, every malformed one rejected, every extension accepted, every predicate checked'"
+kani    = false
+expect  = 'check_fixtures: every valid fixture and twin accepted, every malformed one rejected, every extension accepted, every predicate checked'
+exit    = 0
+
+[[run]]
+id      = "clippy"
+command = "cargo clippy -p kani-driver --tests -- -D warnings"
+kani    = false
+expect  = 'Finished `dev` profile'
+exit    = 0
+
+[[run]]
+id      = "fmt-check"
+command = "./scripts/kani-fmt.sh --check"
+kani    = false
+# rustfmt --check prints nothing on success; exit code is the real signal here.
+expect  = '.*'
+exit    = 0
+
+[[run]]
+id      = "kani-driver-branch-coverage"
+kani    = false
+# Branch coverage of the --export-json writer in kani-driver/src/frontend/schema_utils.rs, from the unit-test
+# suite (no kani/cbmc run involved). `cargo llvm-cov --branch` needs `llvm-tools-preview` for the pinned nightly
+# toolchain. The python step reads cargo-llvm-cov's own `--json` export and prints ONE stable line that
+# `coverage_value_regex` parses -- no hand-computed number. Branch regions are unioned over generic
+# instantiations (an arm is covered when ANY instantiation took it, as llvm-cov's own file summary does);
+# regions at or after the file's own `#[cfg(test)]` line are test code and are excluded (their count is printed,
+# not hidden); a region whose counts are 0/0 in every instantiation is compiler-folded or sits in code the unit
+# tests never enter (KaniSession::write_export_json itself) and is excluded exactly as llvm-cov's summary
+# excludes it.
+command = '''
+set -euo pipefail
+cargo llvm-cov --branch -p kani-driver --json --output-path target/rfc0015-schema-utils-branch-coverage.json
+python3 - "target/rfc0015-schema-utils-branch-coverage.json" <<'PYEOF'
+import json, sys
+doc = json.load(open(sys.argv[1]))
+files = doc["data"][0]["files"]
+matches = [f for f in files if f["filename"].endswith("kani-driver/src/frontend/schema_utils.rs")]
+if len(matches) != 1:
+    raise SystemExit(f"expected exactly one file entry for schema_utils.rs, got {len(matches)}: {[m['filename'] for m in matches]}")
+path = matches[0]["filename"]
+test_start = next(i for i, l in enumerate(open(path), 1) if l.strip() == "#[cfg(test)]")
+regions = {}
+for b in matches[0]["branches"]:
+    regions.setdefault(tuple(b[:4]), []).append((b[4], b[5]))
+covered = total = test_regions = 0
+for (line, *_), arms in sorted(regions.items()):
+    true_n, false_n = (sum(a[i] for a in arms) for i in (0, 1))
+    if true_n == 0 and false_n == 0:
+        continue
+    if line >= test_start:
+        test_regions += 1
+        continue
+    total += 2
+    covered += (true_n > 0) + (false_n > 0)
+value = covered / total if total else 0.0
+print(f"RFC0015_BRANCH_COVERAGE file=kani-driver/src/frontend/schema_utils.rs covered={covered} total={total} value={value:.6f} test_code_regions_excluded={test_regions} test_starts_at_line={test_start}")
+PYEOF
+'''
+expect  = 'RFC0015_BRANCH_COVERAGE file=kani-driver/src/frontend/schema_utils\.rs covered=\d+ total=\d+ value=\d+\.\d+'
+exit    = 0
+coverage_value_regex = 'RFC0015_BRANCH_COVERAGE .*\bvalue=([0-9]+\.[0-9]+)'
+  [run.coverage]
+  metric = "branch"
+  of     = "kani-driver/src/frontend/schema_utils.rs: the --export-json writer and its helpers (non-test code only: regions at or after the file's own #[cfg(test)] line are excluded; branch regions unioned over generic instantiations; 0/0 regions excluded as llvm-cov's summary excludes them)"
+
+[[run]]
+id      = "call-cbmc-verdict-branch-coverage"
+kani    = false
+# R4 scope: the verdict/failure-kind functions of kani-driver/src/call_cbmc.rs -- verification_outcome_from_properties
+# (590-609), determine_failed_properties (612-632) and VerificationResult::from (441-492), where RFC15-15's
+# logic lives. Measured by LINE RANGE over cargo-llvm-cov's per-branch TEXT report: its explicit per-branch
+# `[True: N, False: N]` / `[Folded - Ignored]` annotations are the ground truth the file-level summaries are built
+# from (a raw JSON entry with (0,0) is ambiguous between folded and never-executed). The python step asserts that
+# each range still starts at its function, so a moved function fails the recipe instead of silently measuring
+# other code.
+command = '''
+set -euo pipefail
+cargo llvm-cov --branch -p kani-driver --text --output-path target/rfc0015-call-cbmc-verdict-branch-coverage.txt
+python3 - "target/rfc0015-call-cbmc-verdict-branch-coverage.txt" <<'PYEOF'
+import re, sys
+text = open(sys.argv[1]).read()
+parts = re.split(r'^(.*kani-driver/src/\S+\.rs):$', text, flags=re.MULTILINE)
+sections = {parts[i]: parts[i + 1] for i in range(1, len(parts), 2)}
+matches = [k for k in sections if k.endswith("kani-driver/src/call_cbmc.rs")]
+if len(matches) != 1:
+    raise SystemExit(f"expected exactly one file section for call_cbmc.rs, got {len(matches)}: {matches}")
+section = sections[matches[0]]
+source = open(matches[0]).read().split("\n")
+ranges = [(441, 492, "    fn from("), (590, 609, "fn verification_outcome_from_properties("), (612, 632, "fn determine_failed_properties(")]
+for lo, hi, start in ranges:
+    if not source[lo - 1].startswith(start):
+        raise SystemExit(f"line {lo} of call_cbmc.rs is {source[lo - 1]!r}, expected it to start with {start!r}")
+covered = 0
+total = 0
+for m in re.finditer(r'Branch \((\d+):(\d+)\): \[(.*?)\]', section):
+    line = int(m.group(1))
+    status = m.group(3)
+    if not any(lo <= line <= hi for lo, hi, _ in ranges):
+        continue
+    if status.strip() == "Folded - Ignored":
+        continue
+    tm = re.match(r'True:\s*(\d+),\s*False:\s*(\d+)', status)
+    if not tm:
+        raise SystemExit(f"unrecognized branch status at line {line}: {status!r}")
+    t, f = int(tm.group(1)), int(tm.group(2))
+    total += 2
+    covered += (1 if t > 0 else 0) + (1 if f > 0 else 0)
+value = covered / total if total else 0.0
+print(f"RFC0015_CALL_CBMC_VERDICT_BRANCH_COVERAGE covered={covered} total={total} value={value:.6f}")
+PYEOF
+'''
+expect  = 'RFC0015_CALL_CBMC_VERDICT_BRANCH_COVERAGE covered=\d+ total=\d+ value=\d+\.\d+'
+exit    = 0
+coverage_value_regex = 'RFC0015_CALL_CBMC_VERDICT_BRANCH_COVERAGE .*\bvalue=([0-9]+\.[0-9]+)'
+  [run.coverage]
+  metric = "branch"
+  of     = "kani-driver/src/call_cbmc.rs: branches inside verification_outcome_from_properties (590-609), determine_failed_properties (612-632) and VerificationResult::from (441-492) ONLY, by source line range over cargo-llvm-cov's per-branch text report (see this recipe's own comment)"
+
+# End-to-end suites (kani/cbmc, one at a time through the capped service). Each runs ONE suite of tests/json-handler
+# (or the script-based-pre case named) against the dev build.
+
+[[run]]
+id      = "vacuity-check-e2e"
+kani    = true
+# RFC15-23 (R5): the vacuity-check fixture -- vacuous_pass()/vacuity_suspect() over six harnesses, with and without reach checks.
+command = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun vacuity-check"
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+[[run]]
+id      = "multi-crate-export-e2e"
+kani    = true
+# RFC15-17 (R9): a real 2-crate `cargo kani --workspace -Z export-json` run -- one file, four harnesses keyed by (crate_name, name).
+command = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun multi-crate-export"
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+[[run]]
+id      = "structured-warnings-e2e"
+kani    = true
+# RFC15-25/-30/-20: a fake cbmc (the real one for the completed cases) -- warning caps and exact record text on every outcome,
+# CRASHED/TIMEOUT/OUT_OF_MEMORY field shapes and elapsed times, the ignored-quantifier ERROR classification.
+command = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun structured-warnings"
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+[[run]]
+id      = "autoharness-export-e2e"
+kani    = true
+# RFC15-19 (R9): a real `kani autoharness --export-json --bounded-arguments` run (no --harness filter) -- is_automatically_generated and
+# is_bounded per harness kind.
+command = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun autoharness-export"
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+[[run]]
+id      = "gate-rejections-e2e"
+kani    = true
+# RFC15-08/-09/-10/-11 (R6/R11): rejected arguments (no -Z export-json, --output-format=old, --only-codegen, an existing directory) fail
+# before compilation and leave an existing file or directory untouched.
+command = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun gate-rejections"
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+[[run]]
+id      = "additive-output-e2e"
+kani    = true
+# RFC15-A1 (R13): stdout, --sarif and --output-into-files are unchanged by --export-json; `-` is a literal filename.
+command = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun additive-output"
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+[[run]]
+id      = "live-configuration-e2e"
+kani    = true
+# RFC15-13/-14/-22/-24 (R8): non-default configuration and resolved_* values from real runs (solver and unwind precedence,
+# bare --smt2, --coverage, check flags).
+command = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun live-configuration"
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+[[run]]
+id      = "no-harnesses-selected-e2e"
+kani    = true
+# RFC15-05/-26 (R10): a project with no proof harness exports run_state NO_HARNESSES_SELECTED with an empty harnesses[].
+command = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun no-harnesses-selected"
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+[[run]]
+id      = "fail-fast-e2e"
+kani    = true
+# RFC15-05/-27: --fail-fast keeps the completed harnesses; run_state PARTIAL vs COMPLETE against matched_count.
+command = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun fail-fast"
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+[[run]]
+id      = "jobs-ordering-e2e"
+kani    = true
+# RFC15-02 (R1): harnesses[] sorted by (crate_name, file, line, name) and identical under --jobs 4 and --jobs 1.
+command = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun jobs-ordering-stable"
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+[[run]]
+id      = "workspace-filter-diagnostic-e2e"
+kani    = true
+# RFC15-21/-34 (R10): `--exact` with a filter matching in two crates plus a typo filter is rejected, with and without --export-json;
+# an existing target is untouched.
+command = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun workspace-filter-diagnostic"
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+[[run]]
+id      = "schema-validation-e2e"
+kani    = true
+# RFC15-29/-26/-20: a real export validated field by field against the schema template; the tools.rustc/tools.cbmc shapes; then the
+# reference consumer's fixture checker.
+command = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun schema-validation"
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+[[run]]
+id      = "harness-filter-no-match-e2e"
+kani    = true
+# RFC15-21 (R10): script-based-pre/harness_filter_no_match -- a --harness filter matching nothing fails before codegen and export (also
+# under --quiet), names every filter, and leaves an existing export untouched.
+command = "cargo build-dev && cargo run -p compiletest -- --suite script-based-pre --mode exec --force-rerun harness_filter_no_match"
+expect  = 'test result: ok\. [1-9]\d* passed; 0 failed; 0 ignored'
+exit    = 0
+
+# =================================================================================================
+# CONTROLS -- every control applies a real unified diff to the kani worktree, runs `command`, and
+# requires `expect_red` in the output; the worktree is reverted byte-exactly afterwards. A control's
+# `claim` names the claim it was written for; an evidence entry of another claim may cite it too
+# (its own `[claim.evidence.control] of_claim` says which claim it tests there).
+# =================================================================================================
+
+# ----- R1 -- shape, ordering, presence
+
+[[control]]
+id          = "rfc15-01-schema-version-constant-changed"
+claim       = "RFC15-01"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-01-schema-version-constant-changed.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_all_successful"
+kani        = false
+expect_red  = 'right: "0\.1\.0"'
+
+[[control]]
+id          = "rfc15-01-schema-version-enum-opened"
+claim       = "RFC15-01"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-01-schema-version-enum-opened.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'unsupported schema version: the validator accepted a malformed export'
+
+[[control]]
+id          = "rfc15-02-sort-key-swap"
+claim       = "RFC15-02"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-02-sort-key-swap.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_harnesses_sorted_by_crate_file_line_name"
+kani        = false
+expect_red  = 'assertion `left == right` failed'
+
+[[control]]
+id          = "rfc15-02-jobs-ordering-sort-removed"
+claim       = "RFC15-02"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-02-jobs-ordering-sort-removed.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun jobs-ordering-stable"
+kani        = true
+expect_red  = 'harnesses must be sorted by \(crate_name, file, line, name\)'
+
+[[control]]
+id          = "rfc15-02-validator-order-check-removed"
+claim       = "RFC15-02"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-02-validator-order-check-removed.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'harnesses out of order: the validator accepted a malformed export'
+
+[[control]]
+id          = "rfc15-20-verification-time-hardcode"
+claim       = "RFC15-20"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-20-verification-time-hardcode.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_all_successful"
+kani        = false
+expect_red  = 'assertion `left == right` failed'
+
+[[control]]
+id          = "rfc15-20-n-properties-n-failed-hardcode-zero"
+claim       = "RFC15-20"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-20-n-properties-n-failed-hardcode-zero.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_with_exit_status_outcomes"
+kani        = false
+expect_red  = 'n_properties should be present and null'
+
+[[control]]
+id          = "rfc15-20-failure-kind-always-present"
+claim       = "RFC15-20"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-20-failure-kind-always-present.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_with_exit_status_outcomes"
+kani        = false
+expect_red  = 'failure_kind should be absent'
+
+[[control]]
+id          = "rfc15-20-checks-covers-total-hardcode-zero"
+claim       = "RFC15-20"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-20-checks-covers-total-hardcode-zero.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_with_exit_status_outcomes"
+kani        = false
+expect_red  = 'checks.total should be present and null'
+
+[[control]]
+id          = "rfc15-20-is-bounded-hardcode-false"
+claim       = "RFC15-20"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-20-is-bounded-hardcode-false.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_is_bounded_true_iff_autoharness_bounded_argument"
+kani        = false
+expect_red  = 'assertion `left == right` failed'
+
+[[control]]
+id          = "rfc15-20-crash-message-skip-serializing"
+claim       = "RFC15-20"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-20-crash-message-skip-serializing.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_with_exit_status_outcomes"
+kani        = false
+expect_red  = 'assertion failed: crashed_v\["harnesses"\]\[0\]\["outcome"\]\.get\("message"\)\.is_some\(\)'
+
+[[control]]
+id          = "rfc15-20-verification-time-hardcode-zero-off-completed"
+claim       = "RFC15-20"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-20-verification-time-hardcode-zero-off-completed.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun structured-warnings"
+kani        = true
+expect_red  = 'verification_time_s 0\.0 not in \['
+
+[[control]]
+id          = "rfc15-20-oom-classification-unreachable"
+claim       = "RFC15-20"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-20-oom-classification-unreachable.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun structured-warnings"
+kani        = true
+expect_red  = 'oom\.json: expected outcome\.kind OUT_OF_MEMORY, got CRASHED'
+
+[[control]]
+id          = "rfc15-20-crashed-classification-misrouted"
+claim       = "RFC15-20"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-20-crashed-classification-misrouted.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun structured-warnings"
+kani        = true
+expect_red  = 'crashed\.json: expected outcome\.kind CRASHED, got OUT_OF_MEMORY'
+
+[[control]]
+id          = "rfc15-27-harness-selection-hardcode"
+claim       = "RFC15-27"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-27-harness-selection-hardcode.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_harness_selection_and_configuration"
+kani        = false
+expect_red  = 'assertion `left == right` failed'
+
+[[control]]
+id          = "rfc15-27-unmatched-filters-always-empty"
+claim       = "RFC15-27"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-27-unmatched-filters-always-empty.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::compute_unmatched_filters_flags_the_nonmatching_one"
+kani        = false
+expect_red  = 'assertion `left == right` failed'
+
+[[control]]
+id          = "rfc15-27-matched-count-off-by-one"
+claim       = "RFC15-27"
+clause      = ["R1"]
+patch       = "evidence/patches/rfc15-27-matched-count-off-by-one.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun fail-fast"
+kani        = true
+expect_red  = 'harness_selection\.matched_count should be 2'
+
+# ----- R2 -- vocabularies, id forms
+
+[[control]]
+id          = "rfc15-b2-1-attributes-passthrough-hardcode"
+claim       = "RFC15-04"
+clause      = ["R2"]
+patch       = "evidence/patches/rfc15-b2-1-attributes-passthrough-hardcode.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_attributes_"
+kani        = false
+expect_red  = 'left: String\("Proof"\)\s*\n\s*right: "Test"'
+
+[[control]]
+id          = "rfc15-b2-1-harnesskind-recase"
+claim       = "RFC15-04"
+clause      = ["R2"]
+patch       = "evidence/patches/rfc15-b2-1-harnesskind-recase.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_attributes_kind_domain_closed"
+kani        = false
+expect_red  = 'left: String\("proof"\)\s*\n\s*right: "Proof"'
+
+[[control]]
+id          = "rfc15-b2-2-resolved-solver-hardcode"
+claim       = "RFC15-04"
+clause      = ["R2"]
+patch       = "evidence/patches/rfc15-b2-2-resolved-solver-hardcode.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_solver_domain_accepts_unfamiliar_names"
+kani        = false
+expect_red  = 'left: String\("cadical"\)\s*\n\s*right: "totally-unfamiliar-solver-v9"'
+
+[[control]]
+id          = "rfc15-b2-4-checkstatus-recase"
+claim       = "RFC15-04"
+clause      = ["R2"]
+patch       = "evidence/patches/rfc15-b2-4-checkstatus-recase.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_error_property_excluded_from_failed_properties_but_sets_failure_kind"
+kani        = false
+expect_red  = 'left: String\("Error"\)\s*\n\s*right: "ERROR"'
+
+[[control]]
+id          = "rfc15-b2-4-failedproperties-recase"
+claim       = "RFC15-04"
+clause      = ["R2"]
+patch       = "evidence/patches/rfc15-b2-4-failedproperties-recase.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_with_other_failure_kind"
+kani        = false
+expect_red  = 'left: String\("Other"\)\s*\n\s*right: "OTHER"'
+
+[[control]]
+id          = "rfc15-b2-5-runoutcome-rename"
+claim       = "RFC15-04"
+clause      = ["R2"]
+patch       = "evidence/patches/rfc15-b2-5-runoutcome-rename.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_run_level_outcome_has_no_crashed_variant"
+kani        = false
+expect_red  = '"kind": String\("DONE"\)'
+
+[[control]]
+id          = "rfc15-04-failure-kind-enum-opened"
+claim       = "RFC15-04"
+clause      = ["R2"]
+patch       = "evidence/patches/rfc15-04-failure-kind-enum-opened.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'unknown failure_kind: the validator accepted a malformed export'
+
+[[control]]
+id          = "rfc15-b2-3-to-cbmc-id-special-cases-removed"
+claim       = "RFC15-18"
+clause      = ["R2"]
+patch       = "evidence/patches/rfc15-b2-3-to-cbmc-id-special-cases-removed.patch"
+command     = "cargo test -p kani-driver cbmc_output_parser::tests::to_cbmc_id_"
+kani        = false
+expect_red  = 'test result: FAILED\. 1 passed; 2 failed'
+
+[[control]]
+id          = "rfc15-18-validator-recursion-class-removed"
+claim       = "RFC15-18"
+clause      = ["R2"]
+patch       = "evidence/patches/rfc15-18-validator-recursion-class-removed.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = "id_class\\('alloc::foo\\.recursion'\\) should be 'recursion'"
+
+# ----- R3 -- counting invariants
+
+[[control]]
+id          = "rfc15-b3-9-good-status-to-other"
+claim       = "RFC15-03"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-9-good-status-to-other.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_all_successful"
+kani        = false
+expect_red  = 'left: Number\(0\)\s*\n\s*right: 1'
+
+[[control]]
+id          = "rfc15-b3-10-bad-status-to-other"
+claim       = "RFC15-03"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-10-bad-status-to-other.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_with_failed_property"
+kani        = false
+expect_red  = 'left: \[\]\s*\n\s*right: \[String\("harness.assertion.1"\)\]'
+
+[[control]]
+id          = "rfc15-b3-11-merge-status-buckets"
+claim       = "RFC15-03"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-11-merge-status-buckets.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_checks_invariant_holds"
+kani        = false
+expect_red  = 'assertion `left == right` failed\s*\n\s*left: 0\s*\n\s*right: 1'
+
+[[control]]
+id          = "rfc15-b3-12-satisfied-status-hardcode-success"
+claim       = "RFC15-03"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-12-satisfied-status-hardcode-success.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_checks_satisfied_status_falls_to_other"
+kani        = false
+expect_red  = 'left: Number\(1\)\s*\n\s*right: 0'
+
+[[control]]
+id          = "rfc15-b3-13-other-id-blank"
+claim       = "RFC15-03"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-13-other-id-blank.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_covers_unexpected_status_goes_to_other"
+kani        = false
+expect_red  = 'left: String\(""\)\s*\n\s*right: "harness.cover.1"'
+
+[[control]]
+id          = "rfc15-b3-16-checks-covers-not-serialized"
+claim       = "RFC15-03"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-16-checks-covers-not-serialized.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_with_exit_status_outcomes"
+kani        = false
+expect_red  = 'checks should still be an object'
+
+[[control]]
+id          = "rfc15-03-validator-bucket-total-check-removed"
+claim       = "RFC15-03"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-03-validator-bucket-total-check-removed.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'covers.total not the sum of its parts: diagnostic does not mention'
+
+[[control]]
+id          = "rfc15-b3-2-summary-failed-counts-non-completed"
+claim       = "RFC15-16"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-2-summary-failed-counts-non-completed.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_summary_fields_computed_over_completed_only"
+kani        = false
+expect_red  = 'a non-COMPLETED harness must count in neither successful nor failed'
+
+[[control]]
+id          = "rfc15-b3-3-covers-satisfied-unconditional-sum"
+claim       = "RFC15-16"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-3-covers-satisfied-unconditional-sum.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_summary_fields_computed_over_completed_only"
+kani        = false
+expect_red  = 'the contrived satisfied entry off-COMPLETED'
+
+[[control]]
+id          = "rfc15-b3-15-summary-not-serialized"
+claim       = "RFC15-16"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-15-summary-not-serialized.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_all_successful"
+kani        = false
+expect_red  = 'assertion failed: v\["summary"\]\.is_object\(\)'
+
+[[control]]
+id          = "rfc15-16-validator-summary-check-removed"
+claim       = "RFC15-16"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-16-validator-summary-check-removed.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'summary.successful off by one: the validator accepted a malformed export'
+
+[[control]]
+id          = "rfc15-b3-1-failed-properties-no-class-filter"
+claim       = "RFC15-28"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-1-failed-properties-no-class-filter.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_failed_properties_matches_checks_failure_exactly"
+kani        = false
+expect_red  = 'left: \["harness.assertion.1", "harness.cover.2", "harness.code_coverage.3", "harness.assertion.4"\]'
+
+[[control]]
+id          = "rfc15-b3-4-description-hardcode"
+claim       = "RFC15-28"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-4-description-hardcode.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_with_failed_property"
+kani        = false
+expect_red  = 'left: String\(""\)\s*\n\s*right: "assertion check"'
+
+[[control]]
+id          = "rfc15-b3-5-class-hardcode"
+claim       = "RFC15-28"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-5-class-hardcode.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_unsupported_construct_listed_separately"
+kani        = false
+expect_red  = 'left: String\("assertion"\)\s*\n\s*right: "unsupported_construct"'
+
+[[control]]
+id          = "rfc15-b3-6-file-hardcode"
+claim       = "RFC15-28"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-6-file-hardcode.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_with_failed_property"
+kani        = false
+expect_red  = 'left: String\("bogus.rs"\)\s*\n\s*right: "src/lib.rs"'
+
+[[control]]
+id          = "rfc15-b3-7-line-hardcode"
+claim       = "RFC15-28"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-7-line-hardcode.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_failed_property_full_record_fields"
+kani        = false
+expect_red  = 'left: String\("0"\)\s*\n\s*right: "12"'
+
+[[control]]
+id          = "rfc15-b3-8-trace-available-hardcode-false"
+claim       = "RFC15-28"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-8-trace-available-hardcode-false.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_failed_property_full_record_fields"
+kani        = false
+expect_red  = 'left: Bool\(false\)\s*\n\s*right: true'
+
+[[control]]
+id          = "rfc15-b3-14-stub-failed-properties-on-err-branch"
+claim       = "RFC15-28"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-b3-14-stub-failed-properties-on-err-branch.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_with_exit_status_outcomes"
+kani        = false
+expect_red  = '"id": String\("stub\.assertion\.1"\)'
+
+[[control]]
+id          = "rfc15-28-validator-failed-properties-check-removed"
+claim       = "RFC15-28"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-28-validator-failed-properties-check-removed.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'failed_properties id not in checks.failure: the validator accepted a malformed export'
+
+[[control]]
+id          = "rfc15-32-unsupported-constructs-dropped"
+claim       = "RFC15-32"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-32-unsupported-constructs-dropped.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_unsupported_construct_listed_separately"
+kani        = false
+expect_red  = 'left: 0\s*\n\s*right: 1'
+
+[[control]]
+id          = "rfc15-32-validator-unsupported-status-check-removed"
+claim       = "RFC15-32"
+clause      = ["R3"]
+patch       = "evidence/patches/rfc15-32-validator-unsupported-status-check-removed.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'unsupported status against its bucket: the validator accepted a malformed export'
+
+# ----- R4 -- verdict truth table and #4719
+
+[[control]]
+id          = "rfc15-b4-1-truth-table-panics-only-flip-removed"
+claim       = "RFC15-15"
+clause      = ["R4"]
+patch       = "evidence/patches/rfc15-b4-1-truth-table-panics-only-flip-removed.patch"
+command     = "cargo test -p kani-driver call_cbmc::tests::verification_outcome_from_properties_truth_table"
+kani        = false
+expect_red  = 'assertion failed: matches!\(verification_outcome_from_properties\(&panics_only, true\),\s*\n\s*\(VerificationStatus::Success, FailedProperties::PanicsOnly\)\)'
+
+[[control]]
+id          = "rfc15-b4-2-classification-class-check-removed"
+claim       = "RFC15-15"
+clause      = ["R4"]
+patch       = "evidence/patches/rfc15-b4-2-classification-class-check-removed.patch"
+command     = "cargo test -p kani-driver call_cbmc::tests::determine_failed_properties_classifies_by_status_and_class"
+kani        = false
+expect_red  = 'assertion failed: matches!\(determine_failed_properties\(&\[property\("assertion", 1,\s*\n\s*CheckStatus::Failure\), property\("overflow", 2, CheckStatus::Failure\),\]\),\s*\n\s*FailedProperties::Other\)'
+
+[[control]]
+id          = "rfc15-b4-3-error-priority-check-removed"
+claim       = "RFC15-15"
+clause      = ["R4"]
+patch       = "evidence/patches/rfc15-b4-3-error-priority-check-removed.patch"
+command     = "cargo test -p kani-driver call_cbmc::tests::determine_failed_properties_classifies_by_status_and_class"
+kani        = false
+expect_red  = 'assertion failed: matches!\(determine_failed_properties\(&\[property\("assertion", 1,\s*\n\s*CheckStatus::Failure\), property\("cover", 2, CheckStatus::Error\),\]\),\s*\n\s*FailedProperties::Error\)'
+
+[[control]]
+id          = "rfc15-b4-4-4719-override-removed"
+claim       = "RFC15-15"
+clause      = ["R4"]
+patch       = "evidence/patches/rfc15-b4-4-4719-override-removed.patch"
+command     = "cargo test -p kani-driver call_cbmc::tests::verification_result_from_ignored_quantifiers_overrides_without_error_status_property"
+kani        = false
+expect_red  = 'assertion failed: matches!\(vr\.status, VerificationStatus::Failure\)'
+
+[[control]]
+id          = "rfc15-r4-scope-1-ignored-quantifiers-always-override"
+claim       = "RFC15-15"
+clause      = ["R4"]
+patch       = "evidence/patches/rfc15-r4-scope-1-ignored-quantifiers-always-override.patch"
+command     = "cargo test -p kani-driver call_cbmc::tests::verification_result_from_without_ignored_quantifiers_does_not_override"
+kani        = false
+expect_red  = 'assertion failed: matches!\(vr\.status, VerificationStatus::Success\)'
+
+[[control]]
+id          = "rfc15-r4-scope-2-oom-check-forced-false"
+claim       = "RFC15-15"
+clause      = ["R4"]
+patch       = "evidence/patches/rfc15-r4-scope-2-oom-check-forced-false.patch"
+command     = "cargo test -p kani-driver call_cbmc::tests::verification_result_from_no_results_reports_out_of_memory_for_process_status_137"
+kani        = false
+expect_red  = 'assertion failed: matches!\(vr\.results, Err\(ExitStatus::OutOfMemory\)\)'
+
+[[control]]
+id          = "rfc15-r4-scope-3-oom-check-forced-true"
+claim       = "RFC15-15"
+clause      = ["R4"]
+patch       = "evidence/patches/rfc15-r4-scope-3-oom-check-forced-true.patch"
+command     = "cargo test -p kani-driver call_cbmc::tests::verification_result_from_no_results_reports_other_for_non_137_process_status"
+kani        = false
+expect_red  = 'assertion failed: matches!\(vr\.results, Err\(ExitStatus::Other\(6\)\)\)'
+
+[[control]]
+id          = "rfc15-b4-5-failure-kind-skip-serializing-removed"
+claim       = "RFC15-15"
+clause      = ["R4"]
+patch       = "evidence/patches/rfc15-b4-5-failure-kind-skip-serializing-removed.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_with_exit_status_outcomes"
+kani        = false
+expect_red  = 'failure_kind should be absent: \{'
+
+[[control]]
+id          = "rfc15-15-validator-verdict-rule-removed"
+claim       = "RFC15-15"
+clause      = ["R4"]
+patch       = "evidence/patches/rfc15-15-validator-verdict-rule-removed.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'verdict contradicting failure_kind: diagnostic does not mention'
+
+# ----- R5 -- vacuous-pass signal
+
+[[control]]
+id          = "rfc15-b5-1-vacuous-pass-total-ge-zero"
+claim       = "RFC15-23"
+clause      = ["R5"]
+patch       = "evidence/patches/rfc15-b5-1-vacuous-pass-total-ge-zero.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun vacuity-check"
+kani        = true
+expect_red  = 'ERROR: vacuous_pass\(check_real_success\) should be False'
+
+[[control]]
+id          = "rfc15-b5-2-unreachable-id-loses-identity"
+claim       = "RFC15-23"
+clause      = ["R5"]
+patch       = "evidence/patches/rfc15-b5-2-unreachable-id-loses-identity.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_checks_unreachable_under_contradictory_assume"
+kani        = false
+expect_red  = 'left: \["assertion", "assertion"\]'
+
+# ----- R6 -- gate and rejected combinations
+
+[[control]]
+id          = "rfc15-b6-1-export-json-gate-changed-to-unstable-options"
+claim       = "RFC15-08"
+clause      = ["R6"]
+patch       = "evidence/patches/rfc15-b6-1-export-json-gate-changed-to-unstable-options.patch"
+command     = "cargo test -p kani-driver args::tests::check_export_json_unstable_options_alone_is_not_sufficient"
+kani        = false
+expect_red  = 'called `Result::unwrap_err\(\)` on an `Ok` value'
+
+[[control]]
+id          = "rfc15-b6-2-output-format-old-conflict-removed"
+claim       = "RFC15-09"
+clause      = ["R6"]
+patch       = "evidence/patches/rfc15-b6-2-output-format-old-conflict-removed.patch"
+command     = "cargo test -p kani-driver args::tests::check_export_json_conflicts"
+kani        = false
+expect_red  = 'called `Result::unwrap_err\(\)` on an `Ok` value'
+
+[[control]]
+id          = "rfc15-b6-3-only-codegen-conflict-removed"
+claim       = "RFC15-10"
+clause      = ["R6"]
+patch       = "evidence/patches/rfc15-b6-3-only-codegen-conflict-removed.patch"
+command     = "cargo test -p kani-driver args::tests::check_export_json_conflicts"
+kani        = false
+expect_red  = 'called `Result::unwrap_err\(\)` on an `Ok` value'
+
+[[control]]
+id          = "rfc15-08-gate-changed-e2e"
+claim       = "RFC15-08"
+clause      = ["R6"]
+patch       = "evidence/patches/rfc15-b6-1-export-json-gate-changed-to-unstable-options.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun gate-rejections"
+kani        = true
+expect_red  = 'FAIL \[no gate at all\]'
+
+[[control]]
+id          = "rfc15-09-output-format-old-conflict-removed-e2e"
+claim       = "RFC15-09"
+clause      = ["R6"]
+patch       = "evidence/patches/rfc15-b6-2-output-format-old-conflict-removed.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun gate-rejections"
+kani        = true
+expect_red  = 'FAIL \[--output-format=old\]'
+
+[[control]]
+id          = "rfc15-10-only-codegen-conflict-removed-e2e"
+claim       = "RFC15-10"
+clause      = ["R6"]
+patch       = "evidence/patches/rfc15-b6-3-only-codegen-conflict-removed.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun gate-rejections"
+kani        = true
+expect_red  = 'FAIL \[--only-codegen\]'
+
+# ----- R7 -- atomic write, parent directory
+
+[[control]]
+id          = "rfc15-07-existing-target-unlinked-first"
+claim       = "RFC15-07"
+clause      = ["R7"]
+patch       = "evidence/patches/rfc15-07-existing-target-unlinked-first.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::write_json_atomically_preserves_sentinel_file_when_serialization_fails"
+kani        = false
+expect_red  = 'No such file or directory'
+
+[[control]]
+id          = "rfc15-07-persist-failure-swallowed"
+claim       = "RFC15-07"
+clause      = ["R7"]
+patch       = "evidence/patches/rfc15-07-persist-failure-swallowed.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::write_json_atomically_preserves_existing_target_when_persist_fails"
+kani        = false
+expect_red  = 'persisting onto an existing directory must fail'
+
+[[control]]
+id          = "rfc15-07-serialize-error-swallowed"
+claim       = "RFC15-07"
+clause      = ["R7"]
+patch       = "evidence/patches/rfc15-07-serialize-error-swallowed.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::write_json_atomically_preserves_sentinel_file_when_serialization_fails"
+kani        = false
+expect_red  = 'called `Result::unwrap_err\(\)` on an `Ok` value'
+
+[[control]]
+id          = "rfc15-12-create-dir-all-skipped"
+claim       = "RFC15-12"
+clause      = ["R7"]
+patch       = "evidence/patches/rfc15-12-create-dir-all-skipped.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::write_json_atomically_succeeds_when_no_stale_file_present"
+kani        = false
+expect_red  = 'Failed to create --export-json temporary file'
+
+[[control]]
+id          = "rfc15-12-bare-filename-parent-misresolved"
+claim       = "RFC15-12"
+clause      = ["R7"]
+patch       = "evidence/patches/rfc15-12-bare-filename-parent-misresolved.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_parent_dir_resolves_bare_and_rootless_paths_to_cwd"
+kani        = false
+expect_red  = 'assertion `left == right` failed'
+
+# ----- R8 -- configuration and provenance
+
+[[control]]
+id          = "rfc15-13-smt-priority-reversed"
+claim       = "RFC15-13"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-13-smt-priority-reversed.patch"
+command     = "cargo test -p kani-driver frontend::schema_utils::tests::effective_solver_tests::named_smt_priority_is_order_independent"
+kani        = false
+expect_red  = 'assertion `left == right` failed'
+
+[[control]]
+id          = "rfc15-13-external-smt-path-ignored"
+claim       = "RFC15-13"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-13-external-smt-path-ignored.patch"
+command     = "cargo test -p kani-driver frontend::schema_utils::tests::effective_solver_tests::external_smt_executable_is_exported_instead_of_the_named_solver"
+kani        = false
+expect_red  = 'assertion `left == right` failed'
+
+[[control]]
+id          = "rfc15-13-last-occurrence-wins"
+claim       = "RFC15-13"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-13-last-occurrence-wins.patch"
+command     = "cargo test -p kani-driver frontend::schema_utils::tests::effective_solver_tests::repeated_sat_solver_first_occurrence_wins"
+kani        = false
+expect_red  = 'assertion `left == right` failed'
+
+[[control]]
+id          = "rfc15-13-cbmc-args-not-consulted"
+claim       = "RFC15-13"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-13-cbmc-args-not-consulted.patch"
+command     = "cargo test -p kani-driver frontend::schema_utils::tests::effective_solver_tests::named_smt_override_wins_over_sat_base"
+kani        = false
+expect_red  = 'left: Some\("cadical"\)\s*\n\s*right: Some\("z3"\)'
+
+[[control]]
+id          = "rfc15-13-cbmc-args-not-consulted-e2e"
+claim       = "RFC15-13"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-13-cbmc-args-not-consulted.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun live-configuration"
+kani        = true
+expect_red  = 'cbmc_args_smt_override: a --cbmc-args SMT-family flag'
+
+[[control]]
+id          = "rfc15-b8-3-unwind-precedence-reversed"
+claim       = "RFC15-14"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-b8-3-unwind-precedence-reversed.patch"
+command     = "cargo test -p kani-driver call_cbmc::tests::check_resolve_unwind_value"
+kani        = false
+expect_red  = 'left: Some\(2\)\s*\n\s*right: Some\(1\)'
+
+[[control]]
+id          = "rfc15-14-raw-unwind-last-wins"
+claim       = "RFC15-14"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-14-raw-unwind-last-wins.patch"
+command     = "cargo test -p kani-driver frontend::schema_utils::tests::resolve_effective_unwind_tests::first_of_two_raw_cbmc_args_unwind_wins"
+kani        = false
+expect_red  = 'assertion `left == right` failed'
+
+[[control]]
+id          = "rfc15-14-native-bound-ignored"
+claim       = "RFC15-14"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-14-native-bound-ignored.patch"
+command     = "cargo test -p kani-driver frontend::schema_utils::tests::resolve_effective_unwind_tests::native_bound_beats_raw_cbmc_args_unwind"
+kani        = false
+expect_red  = 'left: Some\(99\)\s*\n\s*right: Some\(3\)'
+
+[[control]]
+id          = "rfc15-14-native-bound-ignored-e2e"
+claim       = "RFC15-14"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-14-native-bound-ignored.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun live-configuration"
+kani        = true
+expect_red  = 'baseline: resolved_unwind should be 5'
+
+[[control]]
+id          = "rfc15-b8-4-cbmc-args-sorted"
+claim       = "RFC15-22"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-b8-4-cbmc-args-sorted.patch"
+command     = "cargo test -p kani-driver frontend::schema_utils::tests::configuration_mapping_tests::configuration_from_wires_cbmc_args_verbatim"
+kani        = false
+expect_red  = 'left: \["--object-bits", "--zzz-flag", "16"\]\s*\n\s*right: \["--zzz-flag", "--object-bits", "16"\]'
+
+[[control]]
+id          = "rfc15-b8-5-assert-contracts-hardcoded-true"
+claim       = "RFC15-24"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-b8-5-assert-contracts-hardcoded-true.patch"
+command     = "cargo test -p kani-driver frontend::schema_utils::tests::configuration_mapping_tests::configuration_from_serializes_assert_contracts_disabled"
+kani        = false
+expect_red  = 'left: Bool\(true\)\s*\n\s*right: false'
+
+[[control]]
+id          = "rfc15-b8-6-prove-safety-only-hardcoded-false"
+claim       = "RFC15-24"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-b8-6-prove-safety-only-hardcoded-false.patch"
+command     = "cargo test -p kani-driver frontend::schema_utils::tests::configuration_mapping_tests::configuration_from_serializes_prove_safety_only_enabled"
+kani        = false
+expect_red  = 'left: Bool\(false\)\s*\n\s*right: true'
+
+[[control]]
+id          = "rfc15-b8-7-coverage-enabled-hardcoded-false"
+claim       = "RFC15-24"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-b8-7-coverage-enabled-hardcoded-false.patch"
+command     = "cargo test -p kani-driver frontend::schema_utils::tests::configuration_mapping_tests::configuration_from_serializes_coverage_enabled"
+kani        = false
+expect_red  = 'left: Bool\(false\)\s*\n\s*right: true'
+
+[[control]]
+id          = "rfc15-24-memory-safety-hardcoded-true"
+claim       = "RFC15-24"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-24-memory-safety-hardcoded-true.patch"
+command     = "cargo test -p kani-driver frontend::schema_utils::tests::configuration_mapping_tests::configuration_from_serializes_each_check_toggle"
+kani        = false
+expect_red  = '--no-memory-safety-checks should flip checks\.memory_safety false'
+
+[[control]]
+id          = "rfc15-24-overflow-hardcoded-true-e2e"
+claim       = "RFC15-24"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-24-overflow-hardcoded-true-e2e.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun live-configuration"
+kani        = true
+expect_red  = 'check_flags: checks\.overflow should be false'
+
+[[control]]
+id          = "rfc15-29-rustc-guessed-when-unknown"
+claim       = "RFC15-29"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-29-rustc-guessed-when-unknown.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_tools_rustc_null_when_unavailable"
+kani        = false
+expect_red  = 'assertion failed: v\["tools"\]\["rustc"\]\.is_null\(\)'
+
+[[control]]
+id          = "rfc15-29-rustc-release-is-display-sentence"
+claim       = "RFC15-29"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-29-rustc-release-is-display-sentence.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::exported_rustc_is_the_build_time_toolchain_release"
+kani        = false
+expect_red  = 'unexpected tools\.rustc value'
+
+[[control]]
+id          = "rfc15-29-dirty-flag-guessed-when-unknown"
+claim       = "RFC15-29"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-29-dirty-flag-guessed-when-unknown.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_kani_commit_null_when_unavailable"
+kani        = false
+expect_red  = 'assertion failed: v\["kani_commit_dirty"\]\.is_null\(\)'
+
+[[control]]
+id          = "rfc15-29-cbmc-version-first-token-e2e"
+claim       = "RFC15-29"
+clause      = ["R8"]
+patch       = "evidence/patches/rfc15-29-cbmc-version-first-token-e2e.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun schema-validation"
+kani        = true
+expect_red  = "tools\\.cbmc is not CBMC's --version output"
+
+# ----- R9 -- per-harness outcomes, warnings, is_bounded, multi-crate
+
+[[control]]
+id          = "rfc15-b9-1-crate-name-hardcoded"
+claim       = "RFC15-17"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-b9-1-crate-name-hardcoded.patch"
+command     = "cargo test -p kani-driver frontend::schema_utils::tests::export_all_successful"
+kani        = false
+expect_red  = 'left: String\("same-crate-name-for-every-harness"\)\s*\n\s*right: "krate"'
+
+[[control]]
+id          = "rfc15-17-crate-name-blank-e2e"
+claim       = "RFC15-17"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-17-crate-name-blank-e2e.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun multi-crate-export"
+kani        = true
+expect_red  = "harnesses: \\(crate_name, name\\) \\('', 'check_shared'\\) occurs 2 times"
+
+[[control]]
+id          = "rfc15-19-is-bounded-hardcode-false-e2e"
+claim       = "RFC15-19"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-20-is-bounded-hardcode-false.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun autoharness-export"
+kani        = true
+expect_red  = 'packet_len: is_bounded should be True'
+
+[[control]]
+id          = "rfc15-19-compiler-is-bounded-dropped-e2e"
+claim       = "RFC15-19"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-19-compiler-is-bounded-dropped-e2e.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun autoharness-export"
+kani        = true
+expect_red  = 'packet_len: is_bounded should be True'
+
+[[control]]
+id          = "rfc15-b9-3-warning-cap-boundary-off-by-one"
+claim       = "RFC15-25"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-b9-3-warning-cap-boundary-off-by-one.patch"
+command     = "cargo test -p kani-driver call_cbmc::tests::warning_message_truncation_boundary"
+kani        = false
+expect_red  = 'len_delta=0'
+
+[[control]]
+id          = "rfc15-b9-4-original-chars-always-none"
+claim       = "RFC15-25"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-b9-4-original-chars-always-none.patch"
+command     = "cargo test -p kani-driver call_cbmc::tests::warning_message_truncation_boundary"
+kani        = false
+expect_red  = 'left: None\s*\n\s*right: Some\(4097\)'
+
+[[control]]
+id          = "rfc15-b9-5-warnings-count-cap-off-by-one"
+claim       = "RFC15-25"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-b9-5-warnings-count-cap-off-by-one.patch"
+command     = "cargo test -p kani-driver call_cbmc::tests::captured_warnings_cap_boundary"
+kani        = false
+expect_red  = 'left: 21\s*\n\s*right: 20'
+
+[[control]]
+id          = "rfc15-25-warnings-count-cap-off-by-one-e2e"
+claim       = "RFC15-25"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-b9-5-warnings-count-cap-off-by-one.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun structured-warnings"
+kani        = true
+expect_red  = 'warnings\[\] differs from the expected records'
+
+[[control]]
+id          = "rfc15-25-warning-capture-dropped"
+claim       = "RFC15-25"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-25-warning-capture-dropped.patch"
+command     = "cargo test -p kani-driver call_cbmc::tests::warning_capturing_filter_only_captures_warning_typed_messages"
+kani        = false
+expect_red  = 'assertion `left == right` failed'
+
+[[control]]
+id          = "rfc15-25-capture-not-gated-on-export-json"
+claim       = "RFC15-25"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-25-capture-not-gated-on-export-json.patch"
+command     = "cargo test -p kani-driver call_cbmc::tests::warning_capturing_filter_ignores_warnings_when_export_json_disabled"
+kani        = false
+expect_red  = 'assertion failed: warnings\.is_empty\(\)'
+
+[[control]]
+id          = "rfc15-b9-6-validator-warnings-message-compared"
+claim       = "RFC15-25"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-b9-6-validator-warnings-message-compared.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'warnings_shape_equivalent should be True for a different message'
+
+[[control]]
+id          = "rfc15-30-timeout-classified-crashed"
+claim       = "RFC15-30"
+clause      = ["R9"]
+patch       = "evidence/patches/rfc15-30-timeout-classified-crashed.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_with_exit_status_outcomes"
+kani        = false
+expect_red  = 'left: String\("CRASHED"\)\s*\n\s*right: "TIMEOUT"'
+
+# ----- R10 -- completeness (terminal run_state, selection, untouched files)
+
+[[control]]
+id          = "rfc15-05-run-state-always-complete"
+claim       = "RFC15-05"
+clause      = ["R10"]
+patch       = "evidence/patches/rfc15-05-run-state-always-complete.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_run_state_partial_when_fewer_results_than_matched"
+kani        = false
+expect_red  = 'left: String\("COMPLETE"\)\s*\n\s*right: "PARTIAL"'
+
+[[control]]
+id          = "rfc15-05-run-state-always-complete-e2e"
+claim       = "RFC15-05"
+clause      = ["R10"]
+patch       = "evidence/patches/rfc15-05-run-state-always-complete-e2e.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun fail-fast"
+kani        = true
+expect_red  = 'run_state COMPLETE but summary\.total \(2\) != matched_count \(3\)'
+
+[[control]]
+id          = "rfc15-05-no-harnesses-selected-misclassified"
+claim       = "RFC15-05"
+clause      = ["R10"]
+patch       = "evidence/patches/rfc15-05-no-harnesses-selected-misclassified.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_run_level_outcome_has_no_crashed_variant"
+kani        = false
+expect_red  = 'left: String\("COMPLETE"\)\s*\n\s*right: "NO_HARNESSES_SELECTED"'
+
+[[control]]
+id          = "rfc15-05-validator-run-state-check-removed"
+claim       = "RFC15-05"
+clause      = ["R10"]
+patch       = "evidence/patches/rfc15-05-validator-run-state-check-removed.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'COMPLETE with fewer entries than matches: the validator accepted a malformed export'
+
+[[control]]
+id          = "rfc15-21-exact-check-off"
+claim       = "RFC15-21"
+clause      = ["R10"]
+patch       = "evidence/patches/rfc15-21-exact-check-off.patch"
+command     = "cargo test -p kani-driver metadata::tests::check_exact_filters_matched_rejects_filter_unmatched_across_crates"
+kani        = false
+expect_red  = 'called `Result::unwrap_err\(\)` on an `Ok` value'
+
+[[control]]
+id          = "rfc15-21-exact-check-off-e2e"
+claim       = "RFC15-21"
+clause      = ["R10"]
+patch       = "evidence/patches/rfc15-21-exact-check-off.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun workspace-filter-diagnostic"
+kani        = true
+expect_red  = 'an --exact filter with one unmatched name \(typo\) exited 0'
+
+[[control]]
+id          = "rfc15-21-zero-match-error-off-e2e"
+claim       = "RFC15-21"
+clause      = ["R10"]
+patch       = "evidence/patches/rfc15-21-zero-match-error-off-e2e.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite script-based-pre --mode exec --force-rerun harness_filter_no_match"
+kani        = true
+expect_red  = 'FAIL: zero-match run under --quiet exited 0'
+
+[[control]]
+id          = "rfc15-26-wall-time-not-serialized"
+claim       = "RFC15-26"
+clause      = ["R10"]
+patch       = "evidence/patches/rfc15-26-wall-time-not-serialized.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_all_successful"
+kani        = false
+expect_red  = 'assertion failed: v\["wall_time_s"\]\.is_number\(\)'
+
+[[control]]
+id          = "rfc15-26-harness-timeout-not-serialized-e2e"
+claim       = "RFC15-26"
+clause      = ["R10"]
+patch       = "evidence/patches/rfc15-26-harness-timeout-not-serialized-e2e.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun schema-validation"
+kani        = true
+expect_red  = 'Missing required field: harness_timeout_s'
+
+[[control]]
+id          = "rfc15-34-existing-file-removed-before-filter-check-e2e"
+claim       = "RFC15-34"
+clause      = ["R10"]
+patch       = "evidence/patches/rfc15-34-existing-file-removed-before-filter-check-e2e.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun workspace-filter-diagnostic"
+kani        = true
+expect_red  = 'a rejected filter set must leave a pre-existing --export-json target untouched'
+
+# ----- R11 -- existing directory rejected at argument parsing
+
+[[control]]
+id          = "rfc15-11-export-json-dir-check-removed"
+claim       = "RFC15-11"
+clause      = ["R11"]
+patch       = "evidence/patches/rfc15-11-export-json-dir-check-removed.patch"
+command     = "cargo test -p kani-driver args::tests::check_output_file_flags_reject_existing_directory"
+kani        = false
+expect_red  = 'called `Result::unwrap_err\(\)` on an `Ok` value'
+
+[[control]]
+id          = "rfc15-11-export-json-dir-check-removed-e2e"
+claim       = "RFC15-11"
+clause      = ["R11"]
+patch       = "evidence/patches/rfc15-11-export-json-dir-check-removed.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun gate-rejections"
+kani        = true
+expect_red  = 'FAIL \[existing directory\]'
+
+# ----- R12 -- the reference consumer
+
+[[control]]
+id          = "rfc15-d1-unknown-fields-rejected"
+claim       = "RFC15-D1"
+clause      = ["R12"]
+patch       = "evidence/patches/rfc15-d1-unknown-fields-rejected.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'unknown top-level field: the validator rejected an unknown field'
+
+[[control]]
+id          = "rfc15-d1-vacuous-pass-loosened"
+claim       = "RFC15-D1"
+clause      = ["R12"]
+patch       = "evidence/patches/rfc15-d1-vacuous-pass-loosened.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'vacuous_pass: one of three checks unreachable: expected False, got True'
+
+[[control]]
+id          = "rfc15-d1-vacuity-suspect-full-only"
+claim       = "RFC15-D1"
+clause      = ["R12"]
+patch       = "evidence/patches/rfc15-d1-vacuity-suspect-full-only.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'vacuity_suspect: one unreachable check: expected True, got False'
+
+[[control]]
+id          = "rfc15-d1-cover-only-vacuous-wrong-field"
+claim       = "RFC15-D1"
+clause      = ["R12"]
+patch       = "evidence/patches/rfc15-d1-cover-only-vacuous-wrong-field.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'cover_only_vacuous: every cover unreachable: expected True, got False'
+
+[[control]]
+id          = "rfc15-d1-join-key-name-only"
+claim       = "RFC15-D1"
+clause      = ["R12"]
+patch       = "evidence/patches/rfc15-d1-join-key-name-only.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'join_key does not tell same-named harnesses of two crates apart'
+
+[[control]]
+id          = "rfc15-d1-dict-guard-removed"
+claim       = "RFC15-D1"
+clause      = ["R12"]
+patch       = "evidence/patches/rfc15-d1-dict-guard-removed.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'root that is not an object: diagnostic does not mention'
+
+[[control]]
+id          = "rfc15-d1-marker-carries-terminal-fields"
+claim       = "RFC15-D1"
+clause      = ["R12"]
+patch       = "evidence/patches/rfc15-d1-marker-carries-terminal-fields.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'marker carrying outcome: the validator accepted a malformed export'
+
+[[control]]
+id          = "rfc15-d1-exact-unmatched-rule-removed"
+claim       = "RFC15-D1"
+clause      = ["R12"]
+patch       = "evidence/patches/rfc15-d1-exact-unmatched-rule-removed.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'unmatched filter under --exact: the validator accepted a malformed export'
+
+[[control]]
+id          = "rfc15-d1-presence-by-outcome-removed"
+claim       = "RFC15-D1"
+clause      = ["R12"]
+patch       = "evidence/patches/rfc15-d1-presence-by-outcome-removed.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'TIMEOUT carrying a verdict: the validator accepted a malformed export'
+
+[[control]]
+id          = "rfc15-d1-failure-kind-rule-removed"
+claim       = "RFC15-D1"
+clause      = ["R12"]
+patch       = "evidence/patches/rfc15-d1-failure-kind-rule-removed.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'NONE with a failed check: the validator accepted a malformed export'
+
+[[control]]
+id          = "rfc15-d1-truncated-original-chars-rule-removed"
+claim       = "RFC15-D1"
+clause      = ["R12"]
+patch       = "evidence/patches/rfc15-d1-truncated-original-chars-rule-removed.patch"
+command     = "cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py"
+kani        = false
+expect_red  = 'truncated warning without original_chars: the validator accepted a malformed export'
+
+# ----- R13 -- additive output
+
+[[control]]
+id          = "rfc15-a1-dash-literal-filename"
+claim       = "RFC15-A1"
+clause      = ["R13"]
+patch       = "evidence/patches/rfc15-a1-dash-literal-filename.patch"
+command     = "cargo test -p kani-driver schema_utils::tests::export_json_path_dash_is_literal_filename"
+kani        = false
+expect_red  = 'must be written like any other file'
+
+[[control]]
+id          = "rfc15-a1-dash-stdout-leak"
+claim       = "RFC15-A1"
+clause      = ["R13"]
+patch       = "evidence/patches/rfc15-a1-dash-literal-filename.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun additive-output"
+kani        = true
+expect_red  = "no literal file named '-' was created"
+
+[[control]]
+id          = "rfc15-a1-additive-output-println-leak"
+claim       = "RFC15-A1"
+clause      = ["R13"]
+patch       = "evidence/patches/rfc15-a1-additive-output-println-leak.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun additive-output"
+kani        = true
+expect_red  = 'ERROR: --export-json changed rendered stdout'
+
+[[control]]
+id          = "rfc15-a1-additive-output-into-files-skip"
+claim       = "RFC15-A1"
+clause      = ["R13"]
+patch       = "evidence/patches/rfc15-a1-additive-output-into-files-skip.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun additive-output"
+kani        = true
+expect_red  = 'produced no usable per-harness file'
+
+[[control]]
+id          = "rfc15-a1-additive-output-sarif-version-leak"
+claim       = "RFC15-A1"
+clause      = ["R13"]
+patch       = "evidence/patches/rfc15-a1-additive-output-sarif-version-leak.patch"
+command     = "cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun additive-output"
+kani        = true
+expect_red  = 'ERROR: --export-json changed --sarif output'
+
+# =================================================================================================
+# RUN + CONTROL -- RFC15-L0 (R0, the clause ledger itself)
+# =================================================================================================
+
+[[run]]
+id      = "conformance-ledger-check"
+root    = "package"
+command = "python3 -B vendor/acceptance-format/format_acceptance/tools/check_core.py ledger/acceptance.toml --strict --strict-weight"
+kani    = false
+expect  = 'PASS ledger/acceptance\.toml \[weighted: 0, unweighted: 259\]'
+exit    = 0
+
+[[control]]
+id          = "rfc15-l0-ledger-missing-claim"
+root        = "package"
+claim       = "RFC15-L0"
+clause      = ["R0"]
+patch       = "evidence/patches/rfc15-l0-ledger-missing-claim.patch"
+command     = "python3 -B vendor/acceptance-format/format_acceptance/tools/check_core.py ledger/acceptance.toml --strict --strict-weight"
+kani        = false
+expect_red  = "C1: inventory clause 'RFC0015-S-1-1' has 0 claims"
+
+# =================================================================================================
+# CLAIM.EVIDENCE -> RECIPE binding: each `[[claim.evidence]]` entry in acceptance.toml carries
+# its own `recipe = "<run-or-control-id>"` field directly (see gen_evidence.py's
+# `update_acceptance_toml`). gen_evidence.py
+# rewrites each evidence entry IN ISOLATION (splitting the claim's text at every
+# `[[claim.evidence]]` marker before doing any regex work), so two entries citing the same
+# recipe/record for the same claim (there are several: RFC15-20 and RFC15-A1 each cite
+# `kani-driver-unit-suite` / `json-handler-exec-suite` more than once) are no longer ambiguous --
+# there is nothing left here to enumerate; the binding lives with the claim, not the generator.
+# =================================================================================================

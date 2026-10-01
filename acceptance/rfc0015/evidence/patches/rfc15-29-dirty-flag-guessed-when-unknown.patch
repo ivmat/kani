@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..379b04430 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -633,7 +633,7 @@ fn from_harness_results(
+         ExportedRun {
+             schema_version: SCHEMA_VERSION,
+             kani_commit: ctx.kani_commit,
+-            kani_commit_dirty: ctx.kani_commit_dirty,
++            kani_commit_dirty: Some(ctx.kani_commit_dirty.unwrap_or(false)),
+             tools: ToolsExport {
+                 kani: KANI_VERSION,
+                 rustc: ctx.rustc_version,

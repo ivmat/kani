@@ -1,0 +1,13 @@
+diff --git a/tests/json-handler/schema-validation/kani_json_schema.json b/tests/json-handler/schema-validation/kani_json_schema.json
+index f4ccf17fa..50d33636e 100644
+--- a/tests/json-handler/schema-validation/kani_json_schema.json
++++ b/tests/json-handler/schema-validation/kani_json_schema.json
+@@ -115,7 +115,7 @@
+       },
+       "n_properties": "integer?",
+       "n_failed": "integer?",
+-      "failure_kind": "enum:ERROR|NONE|OTHER|PANICS_ONLY",
++      "failure_kind": "string",
+       "failed_properties": [
+         "ref:property"
+       ],

@@ -1,0 +1,20 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..aff08164a 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -609,11 +609,11 @@ fn from_harness_results(
+             })
+             .collect();
+         harnesses.sort_by(|a, b| {
+-            (&a.crate_name, &a.file, a.line, &a.name).cmp(&(
+-                &b.crate_name,
+-                &b.file,
+-                b.line,
++            (&a.name, a.line, &a.file, &a.crate_name).cmp(&(
+                 &b.name,
++                b.line,
++                &b.file,
++                &b.crate_name,
+             ))
+         });
+         let mut enabled_unstable_features = ctx.enabled_unstable_features;

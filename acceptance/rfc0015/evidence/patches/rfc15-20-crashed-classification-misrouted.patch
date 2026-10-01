@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..10714ad61 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -362,7 +362,7 @@ fn from(status: &ExitStatus) -> Self {
+         match status {
+             ExitStatus::Timeout => Outcome::Timeout,
+             ExitStatus::OutOfMemory => Outcome::OutOfMemory,
+-            ExitStatus::Other(code) => Outcome::Crashed { code: Some(*code), message: None },
++            ExitStatus::Other(_code) => Outcome::OutOfMemory,
+         }
+     }
+ }

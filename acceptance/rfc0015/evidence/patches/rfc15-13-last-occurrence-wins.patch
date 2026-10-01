@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..1f95bc6ab 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -230,7 +230,7 @@ fn effective_solver(cbmc_args: &[OsString], base: &CbmcSolver) -> Option<String>
+     let argv: Vec<Option<&str>> = argv.iter().map(|arg| arg.to_str()).collect();
+     let has = |flag: &str| argv.contains(&Some(flag));
+     let value = |flag: &str| {
+-        let position = argv.iter().position(|arg| *arg == Some(flag))?;
++        let position = argv.iter().rposition(|arg| *arg == Some(flag))?;
+         argv.get(position + 1).copied().flatten().map(str::to_string)
+     };
+ 

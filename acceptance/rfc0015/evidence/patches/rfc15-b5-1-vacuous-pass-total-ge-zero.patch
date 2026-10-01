@@ -1,0 +1,13 @@
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 64679ffae..ea49e282b 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -567,7 +567,7 @@ def join_key(harness):
+ 
+ 
+ def _all_unreachable(bucket):
+-    return bool(bucket["total"]) and len(bucket["unreachable"]) == bucket["total"]
++    return bucket["total"] >= 0
+ 
+ 
+ def vacuous_pass(harness, configuration):

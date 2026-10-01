@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index 0ff0ac180..f344d7443 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -595,7 +595,7 @@ fn from_property(p: &Property) -> Self {
+             description: p.description.clone(),
+             class: p.property_class(),
+             file: p.source_location.file.clone(),
+-            line: p.source_location.line.clone(),
++            line: Some("0".to_string()),
+             trace_available: p.trace.is_some(),
+             status: p.status,
+         }

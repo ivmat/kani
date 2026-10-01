@@ -1,0 +1,12 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..34f25794d 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -56,6 +56,7 @@ pub fn write_export_json(
+         wall_time: Duration,
+     ) -> Result<()> {
+         let Some(path) = &self.args.export_json else { return Ok(()) };
++        println!("--export-json-control-leak");
+         let ctx = self.build_run_context(matched_harnesses, started_at, wall_time);
+         let export = ExportedRun::from_harness_results(
+             results,

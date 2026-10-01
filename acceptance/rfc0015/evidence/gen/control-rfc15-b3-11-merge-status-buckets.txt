@@ -1,0 +1,181 @@
+kani commit: 0e71661f12396b2df509b5397975f130854832c6
+command: cargo test -p kani-driver schema_utils::tests::export_checks_invariant_holds
+start (UTC): 2026-10-01T15:45:55Z
+end (UTC): 2026-10-01T15:45:55Z
+exit: 101
+normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
+observed red: yes
+------------------------------------------------------------------------------
+
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+98 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+26 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+   Compiling kani-driver v0.68.0 (<kani>/kani-driver)
+warning: variable does not need to be mutable
+   --> kani-driver/src/frontend/schema_utils.rs:531:9
+    |
+531 |     let mut undetermined = Vec::new();
+    |         ----^^^^^^^^^^^^
+    |         |
+    |         help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+   --> kani-driver/src/frontend/schema_utils.rs:532:9
+    |
+532 |     let mut error = Vec::new();
+    |         ----^^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: `kani-driver` (bin "kani-driver" test) generated 2 warnings (run `cargo fix --bin "kani-driver" -p kani-driver --tests` to apply 2 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.46s
+     Running unittests src/main.rs (target/debug/build/kani-driver/624126ba5da2628e/out/kani_driver-624126ba5da2628e)
+
+running 1 test
+test frontend::schema_utils::tests::export_checks_invariant_holds ... FAILED
+
+failures:
+
+---- frontend::schema_utils::tests::export_checks_invariant_holds stdout ----
+
+thread 'frontend::schema_utils::tests::export_checks_invariant_holds' (659517) panicked at kani-driver/src/frontend/schema_utils.rs:1047:9:
+assertion `left == right` failed
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    frontend::schema_utils::tests::export_checks_invariant_holds
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 198 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p kani-driver --bin kani-driver`
+
+
+--- patch ---
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..94cbafcb9 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -543,8 +543,8 @@ fn bucket_by_status(
+         } else {
+             match status {
+                 CheckStatus::Unreachable => unreachable.push(id),
+-                CheckStatus::Undetermined => undetermined.push(id),
+-                CheckStatus::Error => error.push(id),
++                CheckStatus::Undetermined => unknown.push(id),
++                CheckStatus::Error => unknown.push(id),
+                 CheckStatus::Unknown => unknown.push(id),
+                 CheckStatus::Covered
+                 | CheckStatus::Failure

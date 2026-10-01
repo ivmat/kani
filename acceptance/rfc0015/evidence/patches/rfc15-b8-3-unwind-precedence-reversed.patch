@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index 29aabd4ce..a2e9baa93 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -663,7 +663,7 @@ pub fn resolve_unwind_value(
+ ) -> Option<u32> {
+     // Check for which flag is being passed and prioritize extracting unwind from the
+     // respective flag/annotation.
+-    args.unwind.or(harness_metadata.attributes.unwind_value).or(args.default_unwind)
++    args.default_unwind.or(harness_metadata.attributes.unwind_value).or(args.unwind)
+ }
+ 
+ #[cfg(test)]

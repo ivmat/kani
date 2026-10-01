@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/metadata.rs b/kani-driver/src/metadata.rs
+index 31925de86..865997b13 100644
+--- a/kani-driver/src/metadata.rs
++++ b/kani-driver/src/metadata.rs
+@@ -113,7 +113,7 @@ pub fn determine_targets<'a>(
+         }
+ 
+         // A `--harness` filter that matches nothing must fail here, before codegen and export.
+-        if !harness_filters.is_empty() && compiler_filtered_harnesses.is_empty() {
++        if false {
+             return Err(no_harness_match_error(&self.args.harnesses));
+         }
+ 

@@ -1,0 +1,17 @@
+diff --git a/kani-driver/src/args/mod.rs b/kani-driver/src/args/mod.rs
+index 45d11898f..b73c879e9 100644
+--- a/kani-driver/src/args/mod.rs
++++ b/kani-driver/src/args/mod.rs
+@@ -860,12 +860,6 @@ fn validate(&self) -> Result<(), Error> {
+             // `--output-format=old` bypasses CBMC's structured output entirely: `run_cbmc` mocks a
+             // result with no properties, and treats a timeout as success. An export produced from
+             // that would be indistinguishable from a real clean run.
+-            if self.export_json.is_some() && self.output_format() == OutputFormat::Old {
+-                return Err(Error::raw(
+-                    ErrorKind::ArgumentConflict,
+-                    "Conflicting options: --export-json isn't compatible with --output-format=old.",
+-                ));
+-            }
+             if self.concrete_playback.is_some() && self.jobs().will_multithread() {
+                 // Concrete playback currently embeds a lot of assumptions about the order in which harnesses get called.
+                 return Err(Error::raw(

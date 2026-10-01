@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index 0ff0ac180..77d4a85d1 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -742,7 +742,7 @@ fn bucket_by_status(
+         let id = p.property_id.to_cbmc_id();
+         let status = p.status;
+         if status == good_status {
+-            good.push(id);
++            other.push(OtherPropertyExport { id, status });
+         } else if status == bad_status {
+             bad.push(id);
+         } else {

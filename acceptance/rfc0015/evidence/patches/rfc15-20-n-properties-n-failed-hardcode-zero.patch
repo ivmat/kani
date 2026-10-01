@@ -1,0 +1,15 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..b5fa60118 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -719,8 +719,8 @@ fn from_harness_result(
+             }
+             Err(exit_status) => (
+                 Outcome::from(exit_status),
+-                None,
+-                None,
++                Some(0),
++                Some(0),
+                 None,
+                 Vec::new(),
+                 Vec::new(),

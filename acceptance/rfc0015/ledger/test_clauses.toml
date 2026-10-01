@@ -1,0 +1,881 @@
+# ledger/test_clauses.toml -- see README.md "Test-to-clause mapping" for the format and the rule.
+# HAND-MAINTAINED. Every entry names a test that EXISTS in the final tree (kani 0e71661f1) and was checked by
+# reading the test (or the suite's script) against the clause text.
+#
+# THE RULE. A test is listed against a clause only if it asserts an obligation of that clause on the PRODUCTION
+# path, and a clause is evidenced only if the listed tests together cover EVERY obligation of the clause.
+#   - A serialization test fed hand-built values (a RunContext, a HarnessSelectionExport) asserts shape, not that a
+#     flag or the build produces the value: it is not listed against a clause whose obligation is that derivation.
+#   - A test that compares a helper's returned paths is not evidence that a directory is created.
+#   - A terminal-document test is not evidence about the INCOMPLETE marker (the writer produces none).
+#   - What the claim's own bounds exclude (the temporary file's location, a process kill) is not evidenced.
+#   - A clause whose text also states the effect of a flag on verification is evidenced only if a test asserts that
+#     effect; a test of the exported mirror of the flag asserts the mirror only.
+#   - The `validator` bucket (the reference consumer's fixture checker) maps DECODER-side clauses only: a consumer
+#     rejecting a hand-edited document is no evidence that the producer's output conforms.
+#   - A clause that says a field IS a real quantity (the Kani release, the build target triple, CBMC's own --version
+#     output, the rustc release) is evidenced only by a test that compares the field with that quantity; presence,
+#     non-emptiness or the shape of the value is not.
+#   - A clause with an "only" / "never" / "exactly" / "every" obligation (an exact key set, an absent field, a
+#     universal over the keys of a document) is evidenced only by an assertion of that absence or that full set. A test
+#     that reads the named keys does not exclude extra ones, `v["k"].is_null()` on a serde_json value is also true for
+#     an absent key, and the validator ignores unknown fields; a suite that runs the validator on its own output is
+#     credited with what the suite itself asserts, not with the validator's accept or reject.
+# A clause that fails the rule has no [[test]] line. It is listed once under [[partial]] with what IS asserted and what
+# is not, and the ledger generator reports it as a gap ("partly evidenced"). The frozen clause inventory is not edited;
+# splitting these clauses is a proposal (README.md, "Open points").
+#
+# Clause RFC0015-S-7.2-13 is deliberately mapped by NO test: its frozen text is the pre-correction precedence ("last
+# --cbmc-args override wins"), which the effective-solver tests contradict on repeated flags (the RFC text is
+# corrected in PR 1; see the package README).
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "bare_smt2_lets_cbmc_choose"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "base_smt_flag_beats_lower_priority_cbmc_args_flag"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "captured_warnings_cap_boundary"
+clauses = ["RFC0015-S-4.5-5"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "cbmc_args_flag_beats_lower_priority_base_flag"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "cbmc_args_sat_solver_is_a_no_op_against_a_real_base_sat_flag"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "check_exact_filters_matched_accepts_every_filter_matched"
+clauses = ["RFC0015-S-3.3-19"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "check_exact_filters_matched_rejects_filter_unmatched_across_crates"
+clauses = ["RFC0015-S-3.3-19"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "check_export_json_conflicts"
+clauses = ["RFC0015-S-3.1-1", "RFC0015-S-3-3"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "check_output_file_flags_reject_existing_directory"
+clauses = ["RFC0015-S-3.1-6"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "check_resolve_unwind_value"
+clauses = ["RFC0015-S-7.2-14"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "configuration_from_serializes_defaults"
+clauses = ["RFC0015-S-7.1-13", "RFC0015-S-7.1-15"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "configuration_from_wires_cbmc_args_verbatim"
+clauses = ["RFC0015-S-7.1-15"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "determine_failed_properties_classifies_by_status_and_class"
+clauses = ["RFC0015-S-7.5-17"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_all_successful"
+clauses = ["RFC0015-S-7.1-1", "RFC0015-S-7.1-22", "RFC0015-S-7.1-23", "RFC0015-S-7.1-39", "RFC0015-S-7.1-48", "RFC0015-S-7.1-52", "RFC0015-S-7.1-66", "RFC0015-S-7.3-2", "RFC0015-S-7.4-6", "RFC0015-S-7.4-7", "RFC0015-S-7.4-9", "RFC0015-S-7.4-11", "RFC0015-S-7.4-13", "RFC0015-S-7.4-16", "RFC0015-S-7.4-17", "RFC0015-S-7.5-5"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_attributes_kind_domain_closed"
+clauses = ["RFC0015-S-7.1-32", "RFC0015-S-7.5-7"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_attributes_solver_serializes_named_variants"
+clauses = ["RFC0015-S-7.1-34"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_checks_excludes_covers_and_code_coverage"
+clauses = ["RFC0015-S-7.1-72"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_checks_invariant_holds"
+clauses = ["RFC0015-S-7.1-68", "RFC0015-S-7.1-71", "RFC0015-S-7.4-12"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_checks_satisfied_status_falls_to_other"
+clauses = ["RFC0015-S-7.1-72", "RFC0015-S-7.5-22"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_checks_unreachable_under_contradictory_assume"
+clauses = ["RFC0015-S-7.1-68"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_contract_null_and_present"
+clauses = ["RFC0015-S-7.1-26", "RFC0015-S-7.1-27", "RFC0015-S-7.1-28"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_covers_all_four_states_and_invariant"
+clauses = ["RFC0015-S-7.1-66", "RFC0015-S-7.1-67", "RFC0015-S-7.1-68", "RFC0015-S-7.1-77", "RFC0015-S-7.4-12"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_covers_unexpected_status_goes_to_other"
+clauses = ["RFC0015-S-7.1-62", "RFC0015-S-7.1-72", "RFC0015-S-7.1-77"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_error_property_excluded_from_failed_properties_but_sets_failure_kind"
+clauses = ["RFC0015-S-7.1-74", "RFC0015-S-7.5-5", "RFC0015-S-7.5-17"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_failed_properties_matches_checks_failure_exactly"
+clauses = ["RFC0015-S-7.1-47", "RFC0015-S-7.1-74"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_failed_property_full_record_fields"
+clauses = ["RFC0015-S-7.1-59", "RFC0015-S-7.1-60"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_file_is_repo_relative"
+clauses = ["RFC0015-S-7.1-24"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_harness_attributes_round_trip"
+clauses = ["RFC0015-S-7.1-33", "RFC0015-S-7.1-35", "RFC0015-S-7.1-36", "RFC0015-S-7.1-37", "RFC0015-S-7.2-15"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_harnesses_sorted_by_crate_file_line_name"
+clauses = ["RFC0015-S-3.1-2"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_is_bounded_true_iff_autoharness_bounded_argument"
+clauses = ["RFC0015-S-7.1-31"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_json_path_dash_is_literal_filename"
+clauses = ["RFC0015-S-3.1-5"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_n_properties_excludes_code_coverage_under_coverage"
+clauses = ["RFC0015-S-7.1-46", "RFC0015-S-7.1-72", "RFC0015-S-7.1-78"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_resolved_unwind_and_has_loop_contracts_and_generated_test"
+clauses = ["RFC0015-S-7.1-30", "RFC0015-S-7.1-43"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_resolved_unwind_null_when_unset"
+clauses = ["RFC0015-S-7.1-43"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_run_level_outcome_has_no_crashed_variant"
+clauses = ["RFC0015-S-3.3-15", "RFC0015-S-4.2-10", "RFC0015-S-7.4-16", "RFC0015-S-7.5-1"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_run_state_partial_when_fewer_results_than_matched"
+clauses = ["RFC0015-S-4.2-9", "RFC0015-S-7.4-16"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_started_at_is_utc_iso8601"
+clauses = ["RFC0015-S-7.1-19"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_summary_fields_computed_over_completed_only"
+clauses = ["RFC0015-S-4.2-1", "RFC0015-S-4.2-2", "RFC0015-S-4.2-4", "RFC0015-S-4.2-5", "RFC0015-S-4.2-6", "RFC0015-S-4.2-7", "RFC0015-S-4.2-8"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_tools_rustc_null_when_unavailable"
+clauses = ["RFC0015-S-7.3-2"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_unsupported_construct_listed_separately"
+clauses = ["RFC0015-S-7.1-57"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_warnings_passthrough"
+clauses = ["RFC0015-S-7.1-51", "RFC0015-S-7.1-52"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_with_exit_status_outcomes"
+clauses = ["RFC0015-S-7.1-38", "RFC0015-S-7.1-39", "RFC0015-S-7.1-45", "RFC0015-S-7.1-46", "RFC0015-S-7.1-47", "RFC0015-S-7.1-48", "RFC0015-S-7.1-49", "RFC0015-S-7.1-53", "RFC0015-S-7.1-64", "RFC0015-S-7.1-65", "RFC0015-S-7.1-66", "RFC0015-S-7.1-67", "RFC0015-S-7.1-70", "RFC0015-S-7.4-10", "RFC0015-S-7.4-19", "RFC0015-S-7.4-20", "RFC0015-S-7.4-21", "RFC0015-S-7.4-22", "RFC0015-S-7.4-23", "RFC0015-S-7.4-24", "RFC0015-S-7.4-25", "RFC0015-S-7.4-26", "RFC0015-S-7.4-27", "RFC0015-S-7.5-3"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_with_failed_property"
+clauses = ["RFC0015-S-7.1-47", "RFC0015-S-7.1-48", "RFC0015-S-7.1-56", "RFC0015-S-7.1-57", "RFC0015-S-7.1-67", "RFC0015-S-7.1-74", "RFC0015-S-7.3-2", "RFC0015-S-7.5-5"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "export_with_other_failure_kind"
+clauses = ["RFC0015-S-7.5-5"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "external_sat_solver_outranks_sat_solver_either_order"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "external_smt_executable_is_exported_instead_of_the_named_solver"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "first_of_two_raw_cbmc_args_unwind_wins"
+clauses = ["RFC0015-S-7.1-43"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "harness_attribute_bound_counts_as_native"
+clauses = ["RFC0015-S-7.1-43"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "incremental_smt_executable_is_exported"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "minisat_emits_no_flag_and_is_cbmcs_default"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "named_smt_override_wins_over_sat_base"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "named_smt_priority_is_order_independent"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "named_smt_solvers_resolve_to_their_names"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "native_bound_beats_raw_cbmc_args_unwind"
+clauses = ["RFC0015-S-7.1-43"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "no_native_bound_and_no_raw_unwind_is_null"
+clauses = ["RFC0015-S-7.1-43"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "no_override_uses_base_solver"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "raw_only_cbmc_args_unwind_applies_when_no_native_bound"
+clauses = ["RFC0015-S-7.1-43"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "repeated_external_smt_executable_first_occurrence_wins"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "repeated_sat_solver_first_occurrence_wins"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "sat_flags_take_their_value"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "smt_flag_outranks_sat_solver_either_order"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "unparsable_raw_unwind_value_is_null_not_a_panic"
+clauses = ["RFC0015-S-7.1-43"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "unrelated_cbmc_arg_does_not_affect_resolution"
+clauses = ["RFC0015-S-7.1-42"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "verification_outcome_from_properties_truth_table"
+clauses = ["RFC0015-S-7.5-11", "RFC0015-S-7.5-14", "RFC0015-S-7.5-15", "RFC0015-S-7.5-16"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "verification_result_from_ignored_quantifiers_overrides_without_error_status_property"
+clauses = ["RFC0015-S-7.5-18"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "verification_result_from_no_results_reports_other_for_non_137_process_status"
+clauses = ["RFC0015-S-7.5-10"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "verification_result_from_no_results_reports_out_of_memory_for_process_status_137"
+clauses = ["RFC0015-S-7.5-10"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "warning_message_truncation_boundary"
+clauses = ["RFC0015-S-4.5-3"]
+
+[[test]]
+kind    = "rust-test"
+crate   = "kani-driver"
+name    = "write_json_atomically_succeeds_when_no_stale_file_present"
+clauses = ["RFC0015-S-7.3-6"]
+
+[[test]]
+kind    = "json-suite"
+name    = "additive-output"
+clauses = ["RFC0015-S-3.1-3", "RFC0015-S-3.1-5", "RFC0015-S-3-2", "RFC0015-S-4.1-2"]
+
+[[test]]
+kind    = "json-suite"
+name    = "autoharness-export"
+clauses = ["RFC0015-S-7.1-31"]
+
+[[test]]
+kind    = "json-suite"
+name    = "cargo-export"
+clauses = ["RFC0015-S-7.1-22", "RFC0015-S-7.1-23"]
+
+[[test]]
+kind    = "json-suite"
+name    = "fail-fast"
+clauses = ["RFC0015-S-4.2-9", "RFC0015-S-7.1-11", "RFC0015-S-7.4-16"]
+
+[[test]]
+kind    = "json-suite"
+name    = "failed-verification"
+clauses = ["RFC0015-S-4.2-2", "RFC0015-S-4.2-3", "RFC0015-S-7.5-14"]
+
+[[test]]
+kind    = "json-suite"
+name    = "gate-rejections"
+clauses = ["RFC0015-S-3.1-1", "RFC0015-S-3.1-6", "RFC0015-S-3-3"]
+
+[[test]]
+kind    = "json-suite"
+name    = "harness_filter_no_match"
+clauses = ["RFC0015-S-3.3-19"]
+
+[[test]]
+kind    = "json-suite"
+name    = "jobs-ordering-stable"
+clauses = ["RFC0015-S-3.1-2"]
+
+[[test]]
+kind    = "json-suite"
+name    = "live-configuration"
+clauses = ["RFC0015-S-7.1-13", "RFC0015-S-7.1-15", "RFC0015-S-7.1-42", "RFC0015-S-7.1-43", "RFC0015-S-7.1-46", "RFC0015-S-7.2-14"]
+
+[[test]]
+kind    = "json-suite"
+name    = "multi-crate-export"
+clauses = ["RFC0015-S-3.1-4", "RFC0015-S-7.1-23"]
+
+[[test]]
+kind    = "json-suite"
+name    = "multiple-harnesses"
+clauses = ["RFC0015-S-4.2-1", "RFC0015-S-7.1-11", "RFC0015-S-7.1-78"]
+
+[[test]]
+kind    = "json-suite"
+name    = "no-harnesses-selected"
+clauses = ["RFC0015-S-3.3-15", "RFC0015-S-4.2-10"]
+
+[[test]]
+kind    = "json-suite"
+name    = "structured-warnings"
+clauses = ["RFC0015-S-4.5-3", "RFC0015-S-4.5-5", "RFC0015-S-7.1-38", "RFC0015-S-7.1-45", "RFC0015-S-7.1-51", "RFC0015-S-7.1-52", "RFC0015-S-7.4-15", "RFC0015-S-7.4-19", "RFC0015-S-7.4-20", "RFC0015-S-7.4-22", "RFC0015-S-7.5-10", "RFC0015-S-7.5-18"]
+
+[[test]]
+kind    = "json-suite"
+name    = "vacuity-check"
+clauses = ["RFC0015-S-3.3-4", "RFC0015-S-3.3-5", "RFC0015-S-7.5-15", "RFC0015-S-7.5-16"]
+
+[[test]]
+kind    = "json-suite"
+name    = "workspace-filter-diagnostic"
+clauses = ["RFC0015-S-3.3-19"]
+
+[[test]]
+kind    = "validator"
+name    = "validate_json_export.py"
+clauses = ["RFC0015-S-3.3-4", "RFC0015-S-3.3-5", "RFC0015-S-3.3-21", "RFC0015-S-4.3-3", "RFC0015-S-4.3-4", "RFC0015-S-4.5-2", "RFC0015-S-7.5-13"]
+
+[[partial]]
+clause    = "RFC0015-S-3.1-8"
+class     = "other"
+supported = "the gate behaviour: -Z export-json accepts --export-json, -Z unstable-options alone is refused, and a real run names -Z export-json in the diagnostic"
+missing   = "the clause also requires updating the documentation; no test checks it"
+tests     = ["check_export_json_unstable", "check_export_json_unstable_options_alone_is_not_sufficient", "gate-rejections"]
+
+[[partial]]
+clause    = "RFC0015-S-3.3-3"
+class     = "other"
+supported = "is_bounded true for a generated harness with a BoundedArbitrary argument and false for generated harnesses without one and for a manual harness, on one real autoharness run"
+missing   = "independence from is_ctor_based is not tested, and no test runs a bounded argument without --bounded-arguments"
+tests     = ["autoharness-export"]
+
+[[partial]]
+clause    = "RFC0015-S-3.3-6"
+class     = "other"
+supported = "the predicate (verdict SUCCESS and a non-empty checks.unreachable), and its inapplicability when assertion_reach_checks is false"
+missing   = "no fixture has an unreachable cover with no unreachable check, so 'an unreachable cover does not satisfy it' is not asserted"
+tests     = ["validate_json_export.py"]
+
+[[partial]]
+clause    = "RFC0015-S-3.3-7"
+class     = "exact set / absence"
+supported = "the consumer's cover_only_vacuous predicate (a non-empty covers set, every cover unreachable) on fixtures, including the negative cases"
+missing   = "'the schema itself does not compute or export this predicate' is an absence obligation: no test asserts that an exported document has no such field (the validator ignores unknown fields)"
+tests     = ["validate_json_export.py"]
+
+[[partial]]
+clause    = "RFC0015-S-3.3-8"
+class     = "same-directory temp file / process kill"
+supported = "the full document is written and renamed onto the target (a stale file is replaced); a failed serialization or a failed rename keeps the existing target and leaves no temporary file"
+missing   = "that the temporary file lives in the target's own directory (no test fails if it is created elsewhere) and a mid-write process kill (never exercised) are not evidenced"
+tests     = ["write_json_atomically_overwrites_stale_file", "write_json_atomically_preserves_existing_target_when_persist_fails", "write_json_atomically_preserves_sentinel_file_when_serialization_fails"]
+
+[[partial]]
+clause    = "RFC0015-S-4.3-1"
+class     = "other"
+supported = "the writer exports an unfamiliar resolved_solver string; the consumer's closed domains reject unknown failure_kind, outcome kind and status values"
+missing   = "the MINOR-bump policy is not behaviour a test can assert, and no consumer fixture carries an unfamiliar solver NAME (fixtures use known names and a path)"
+tests     = ["export_solver_domain_accepts_unfamiliar_names", "validate_json_export.py"]
+
+[[partial]]
+clause    = "RFC0015-S-4.3-5"
+class     = "other"
+supported = "the message text of a warning is not compared (warnings_shape_equivalent)"
+missing   = "the clause puts size outside the contract, but warnings_shape_equivalent compares the warning count, the truncated flags and original_chars; no test shows the array length is ignored"
+tests     = ["validate_json_export.py"]
+
+[[partial]]
+clause    = "RFC0015-S-4.5-4"
+class     = "exact set / absence"
+supported = "the capture filter keeps WARNING-typed messages (case-insensitively) and drops a STATUS-MESSAGE"
+missing   = "'specifically ... not another output channel': no test shows that CBMC's stderr or Kani's own diagnostics stay out of warnings[]; the filter test feeds parsed protocol messages only"
+tests     = ["warning_capturing_filter_only_captures_warning_typed_messages"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-2"
+class     = "CLI/build wiring"
+supported = "a given commit string or null is serialized as a nullable string"
+missing   = "the value comes from the build (build.rs); no test reads it from a build, compares it with the real commit, or builds outside a git checkout"
+tests     = ["export_kani_commit_and_dirty_flag", "export_kani_commit_null_when_unavailable"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-3"
+class     = "CLI/build wiring"
+supported = "a given bool or null is serialized as a nullable bool"
+missing   = "the dirty flag is derived in build_run_context from the build's KANI_GIT_DIRTY text; that derivation and its source in build.rs are untested"
+tests     = ["export_kani_commit_and_dirty_flag", "export_kani_commit_null_when_unavailable"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-4"
+class     = "CLI/build wiring"
+supported = "tools.kani is a non-empty string in a document built from a hand-built context"
+missing   = "that it IS the Kani release (CARGO_PKG_VERSION at build time) is not asserted: the test checks only that the string is non-empty"
+tests     = ["export_all_successful"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-5"
+class     = "CLI/build wiring"
+supported = "a given rustc string is exported verbatim and a missing one is null; the build records a value shaped like a toolchain release (not the 'using rustc ...' sentence); the tools.rustc of a real run has that shape"
+missing   = "that the value is the rustc release kani-compiler was built against is not asserted (no equality with the real toolchain, only a regular-expression shape), and nothing shows that a failed probe yields null"
+tests     = ["export_tools_rustc_null_when_unavailable", "export_tools_rustc_present_when_available", "exported_rustc_is_the_build_time_toolchain_release", "schema-validation"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-6"
+class     = "CLI/build wiring"
+supported = "a given CBMC version string is exported verbatim and a missing one is null; the tools.cbmc of a real run has the shape of CBMC's own version line"
+missing   = "that the value IS CBMC's own --version output is not asserted (no equality with the real `cbmc --version`, only a regular-expression shape), and nothing shows that a failed probe yields null"
+tests     = ["export_all_successful", "export_with_failed_property", "schema-validation"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-7"
+class     = "CLI/build wiring"
+supported = "a given list is sorted and serialized as an array of strings"
+missing   = "the list of active -Z flags is assembled from the parsed arguments in build_run_context; no test reads it from parsed arguments or from a run"
+tests     = ["export_enabled_unstable_features_sorted"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-8"
+class     = "CLI/build wiring"
+supported = "a given list is serialized as an array of strings"
+missing   = "requested_filters is assembled from --harness in build_run_context; no test reads it back from a real run (mutating the assembly leaves every test green)"
+tests     = ["export_harness_selection_and_configuration"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-9"
+class     = "CLI/build wiring"
+supported = "a given bool is serialized"
+missing   = "exact is assembled from --exact in build_run_context; no test reads it back from a real run (mutating the assembly leaves every test green)"
+tests     = ["export_harness_selection_and_configuration"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-10"
+class     = "CLI/build wiring"
+supported = "compute_unmatched_filters on a one-filter and a two-filter case, by substring and by exact name"
+missing   = "its call with the parsed arguments in build_run_context is untested; 'applicable only without --exact' is the consumer's rule on fixtures, not a producer test"
+tests     = ["compute_unmatched_filters_flags_the_nonmatching_one", "compute_unmatched_filters_respects_substring_matching"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-12"
+class     = "CLI/build wiring"
+supported = "a given number or null is serialized"
+missing   = "the conversion of --harness-timeout to seconds is in build_run_context and untested; the end-to-end timeout run only checks the field is non-null, never its value, and no run reads the null"
+tests     = ["export_harness_timeout_s", "export_harness_timeout_s_null_when_unset"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-14"
+class     = "flag effect"
+supported = "the bool mirrors --coverage (default false, parsed from a real command line, read back from a live run)"
+missing   = "that a run with --coverage generates the code_coverage properties is not asserted (the live run only checks they stay out of the totals)"
+tests     = ["configuration_from_serializes_coverage_enabled", "configuration_from_serializes_defaults", "live-configuration"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-16"
+class     = "INCOMPLETE marker"
+supported = "a terminal document has a run-level outcome.kind of COMPLETED, and the type has no run-level CRASHED value"
+missing   = "'absent from the INCOMPLETE marker': the writer produces no marker"
+tests     = ["export_all_successful", "export_run_level_outcome_has_no_crashed_variant"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-18"
+class     = "CLI/build wiring"
+supported = "target is a non-empty string in a document built from a hand-built context"
+missing   = "that it IS the target triple Kani was built for (the TARGET build variable) is not asserted: the test checks only that the string is non-empty"
+tests     = ["export_all_successful"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-20"
+class     = "INCOMPLETE marker"
+supported = "wall_time_s is present and numeric in a terminal document"
+missing   = "its unit (seconds) is not asserted (the test checks only 'is a number'), and 'absent from the INCOMPLETE marker': the writer produces no marker"
+tests     = ["export_all_successful"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-21"
+class     = "other"
+supported = "harnesses[] is an array, sorted by (crate_name, file, line, name) in a unit test and under --jobs 4 and --jobs 1, and empty under NO_HARNESSES_SELECTED"
+missing   = "'empty only under NO_HARNESSES_SELECTED' (the converse) is untested: the consumer accepts a PARTIAL document with zero entries and no test excludes one"
+tests     = ["export_harnesses_sorted_by_crate_file_line_name", "jobs-ordering-stable", "no-harnesses-selected", "export_run_level_outcome_has_no_crashed_variant"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-25"
+class     = "exact set / absence"
+supported = "line equals the harness's start line (10, while the fixture's end line is 20) as an integer; the ordering test reads it"
+missing   = "'the end line is not exported' is an absence obligation no test asserts (no key-set check of a harness object), and no test shows that the compiler records a 1-based line"
+tests     = ["export_all_successful", "export_harnesses_sorted_by_crate_file_line_name"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-29"
+class     = "other"
+supported = "a generated harness reports true (unit test and one real autoharness run)"
+missing   = "'which is then not selectable via --harness/--exact' has no test (the end-to-end run avoids --harness)"
+tests     = ["export_all_successful", "export_autoharness_generated_flag_is_true_for_generated_harness", "autoharness-export"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-40"
+class     = "exact set / absence"
+supported = "outcome.code is the exit status on CRASHED (101 in a unit test, 1 from a real crash of a fake cbmc) and is absent on TIMEOUT and OUT_OF_MEMORY"
+missing   = "'present only when CRASHED': absence on COMPLETED is asserted by no mapped test's own assertions (the validator run inside a suite accepts or rejects a document, nothing more)"
+tests     = ["export_with_exit_status_outcomes", "structured-warnings"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-41"
+class     = "exact set / absence"
+supported = "outcome.message is present on CRASHED and absent on TIMEOUT and OUT_OF_MEMORY"
+missing   = "'present only when CRASHED': absence on COMPLETED is asserted by no mapped test's own assertions (the validator run inside a suite accepts or rejects a document, nothing more)"
+tests     = ["export_with_exit_status_outcomes", "structured-warnings"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-44"
+class     = "CLI/build wiring"
+supported = "the field mirrors VerificationResult.generated_concrete_test (true in a unit test) and is a bool for every outcome"
+missing   = "that --concrete-playback produces the value is untested: the flag is set in concrete_playback::test_generator, and no test runs it and reads the exported field back"
+tests     = ["export_resolved_unwind_and_has_loop_contracts_and_generated_test", "export_with_exit_status_outcomes"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-50"
+class     = "exact set / absence"
+supported = "a failing unsupported_construct property is listed in unsupported_constructs[] (id, class, status) and in failed_properties[]; an ERROR one is listed in unsupported_constructs[] only"
+missing   = "'in the same element shape as failed_properties[]' is an exact-key-set obligation: the tests read id, class and status of an entry, none compares its keys with those of a failed_properties[] record"
+tests     = ["export_unsupported_construct_listed_separately", "export_error_property_excluded_from_failed_properties_but_sets_failure_kind"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-54"
+class     = "INCOMPLETE marker"
+supported = "the seven summary fields are present in a terminal document"
+missing   = "'summary itself is absent from the INCOMPLETE marker': the writer produces no marker"
+tests     = ["export_all_successful"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-55"
+class     = "other"
+supported = "the general, shorter and recursion id forms and the round trip of a parsed id; exported ids of failed properties"
+missing   = "'never from Kani's own display rendering' is a code fact no test pins: no test has an id on which the exporter would differ if it used the display rendering"
+tests     = ["check_property_id_round_trips", "to_cbmc_id_general_form", "to_cbmc_id_missing_definition_shorter_forms", "to_cbmc_id_recursion_form", "export_with_failed_property"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-58"
+class     = "exact set / absence"
+supported = "file is null when CBMC recorded no source location, and the source file otherwise"
+missing   = "'never omitted': `fp[\"file\"].is_null()` on a serde_json value is also true for an ABSENT key, so no test shows that the key is present as null"
+tests     = ["export_failed_property_full_record_fields", "export_with_failed_property"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-63"
+class     = "exact set / absence"
+supported = "an unexpected status goes to other[] with its actual status string (SATISFIED among checks, SUCCESS among covers)"
+missing   = "'other[] carries only id and status' is an exact-key-set obligation: the tests read id and status, none excludes an extra field (the validator ignores unknown fields)"
+tests     = ["export_checks_satisfied_status_falls_to_other", "export_covers_unexpected_status_goes_to_other"]
+
+[[partial]]
+clause    = "RFC0015-S-7.1-69"
+class     = "exact set / absence"
+supported = "checks.other[] and covers.other[] are non-null arrays holding entries with id and status"
+missing   = "'per the other[] element shape' is exactly id and status (see S-7.1-63): no test excludes an extra field"
+tests     = ["export_checks_satisfied_status_falls_to_other", "export_covers_unexpected_status_goes_to_other"]
+
+[[partial]]
+clause    = "RFC0015-S-7.2-1"
+class     = "flag effect"
+supported = "--no-assertion-reach-checks flips the field; the default is true"
+missing   = "that reach checks are inserted when true is shown only indirectly, and that vacuity cannot be detected through checks.unreachable when false is not asserted (the run without reach checks only checks the predicates read null)"
+tests     = ["configuration_from_serializes_each_check_toggle", "live-configuration"]
+
+[[partial]]
+clause    = "RFC0015-S-7.2-2"
+class     = "flag effect"
+supported = "--ignore-global-asm sets the field"
+missing   = "the effect of the flag on global_asm! handling is not asserted"
+tests     = ["configuration_from_serializes_each_check_toggle"]
+
+[[partial]]
+clause    = "RFC0015-S-7.2-3"
+class     = "flag effect"
+supported = "--extra-pointer-checks sets the field"
+missing   = "the added pointer obligations, and the incomparable totals, are not asserted"
+tests     = ["configuration_from_serializes_each_check_toggle"]
+
+[[partial]]
+clause    = "RFC0015-S-7.2-4"
+class     = "flag effect"
+supported = "--no-memory-safety-checks and --no-default-checks both clear the field"
+missing   = "the effect on out-of-bounds and invalid-pointer checks is not asserted"
+tests     = ["configuration_from_serializes_each_check_toggle", "configuration_from_serializes_no_default_checks_group"]
+
+[[partial]]
+clause    = "RFC0015-S-7.2-5"
+class     = "flag effect"
+supported = "--no-overflow-checks clears the field (also read back from a live run)"
+missing   = "that CBMC's NaN and division-by-zero checks are the ones omitted is not asserted"
+tests     = ["configuration_from_serializes_each_check_toggle", "live-configuration"]
+
+[[partial]]
+clause    = "RFC0015-S-7.2-6"
+class     = "flag effect"
+supported = "--no-unwinding-checks clears the field"
+missing   = "the omitted unwinding assertions are not asserted"
+tests     = ["configuration_from_serializes_each_check_toggle"]
+
+[[partial]]
+clause    = "RFC0015-S-7.2-7"
+class     = "flag effect"
+supported = "--no-undefined-function-checks clears the field"
+missing   = "the effect on undefined-function bodies is not asserted"
+tests     = ["configuration_from_serializes_each_check_toggle"]
+
+[[partial]]
+clause    = "RFC0015-S-7.2-8"
+class     = "flag effect"
+supported = "--no-assert-contracts (with -Z function-contracts) clears the field"
+missing   = "the contract mode used when false, and the precedence of proof_for_contract and stub_verified, are not asserted; that the flag requires -Z function-contracts is not tested negatively"
+tests     = ["configuration_from_serializes_assert_contracts_disabled"]
+
+[[partial]]
+clause    = "RFC0015-S-7.2-9"
+class     = "flag effect"
+supported = "--prove-safety-only (with -Z unstable-options) sets the field"
+missing   = "the conversion of assertion checks to assumptions, and the code-path dependence, are not asserted"
+tests     = ["configuration_from_serializes_prove_safety_only_enabled"]
+
+[[partial]]
+clause    = "RFC0015-S-7.4-8"
+class     = "exact set / absence"
+supported = "outcome.code and outcome.message are absent on TIMEOUT and OUT_OF_MEMORY"
+missing   = "absence on COMPLETED is asserted by no mapped test's own assertions (the validator run inside a suite accepts or rejects a document, nothing more)"
+tests     = ["export_with_exit_status_outcomes", "structured-warnings"]
+
+[[partial]]
+clause    = "RFC0015-S-7.4-5"
+class     = "exact set / absence"
+supported = "name, crate_name, file, line, contract, is_automatically_generated, has_loop_contracts, is_bounded, resolved_solver, resolved_unwind and generated_concrete_test are present on TIMEOUT, OUT_OF_MEMORY and CRASHED harnesses, and attributes is an object"
+missing   = "the clause says attributes.* is present: the members of attributes (kind, should_panic, solver, unwind_value, stubs, verified_stubs) are not read on a non-COMPLETED harness, only the object is"
+tests     = ["export_with_exit_status_outcomes"]
+
+[[partial]]
+clause    = "RFC0015-S-7.4-18"
+class     = "other"
+supported = "summary and harnesses[] are present in a terminal document, and harnesses[] is empty under NO_HARNESSES_SELECTED"
+missing   = "'empty only under NO_HARNESSES_SELECTED' (the converse) is untested (see S-7.1-21)"
+tests     = ["export_all_successful", "no-harnesses-selected"]
+
+[[partial]]
+clause    = "RFC0015-S-7.5-6"
+class     = "other"
+supported = "ERROR (unsupported_constructs), SATISFIED (checks.other) and SUCCESS (covers.other) are serialized as their SCREAMING_SNAKE_CASE names"
+missing   = "COVERED, UNCOVERED, UNSATISFIABLE, UNDETERMINED, UNREACHABLE and UNKNOWN have no serialization test as a status value"
+tests     = ["export_error_property_excluded_from_failed_properties_but_sets_failure_kind", "export_checks_satisfied_status_falls_to_other", "export_covers_unexpected_status_goes_to_other"]
+
+[[partial]]
+clause    = "RFC0015-S-7.5-8"
+class     = "other"
+supported = "an unset solver (null), Cadical, and the {\"Binary\": path} object form"
+missing   = "the other five named spellings (Bitwuzla, Cvc5, Kissat, Minisat, Z3) are not asserted"
+tests     = ["export_attributes_solver_serializes_named_variants"]
+
+[[partial]]
+clause    = "RFC0015-S-7.5-9"
+class     = "other"
+supported = "an unfamiliar solver string is exported verbatim; the lowercase names bitwuzla, cadical, kissat, minisat and z3 are asserted from base solvers; a binary path is exported as a string"
+missing   = "the lowercase spelling 'cvc5' is asserted nowhere (no test compares the resolved name of a CVC5 run)"
+tests     = ["export_solver_domain_accepts_unfamiliar_names", "no_override_uses_base_solver", "minisat_emits_no_flag_and_is_cbmcs_default", "base_smt_flag_beats_lower_priority_cbmc_args_flag", "unrelated_cbmc_arg_does_not_affect_resolution"]
+
+[[partial]]
+clause    = "RFC0015-S-7.5-12"
+class     = "exact set / absence"
+supported = "every key a test reads is snake_case; the outcome, verdict, failure_kind, run_state and status values read are SCREAMING_SNAKE_CASE (including OUT_OF_MEMORY, PANICS_ONLY, NO_HARNESSES_SELECTED); the tags ProofForContract and Binary keep their PascalCase"
+missing   = "'every schema field name' is a universal over the emitted key set: no test scans all keys of a document (the validator ignores unknown fields), so a non-snake_case extra key would pass"
+tests     = ["export_attributes_kind_domain_closed", "export_attributes_solver_serializes_named_variants", "export_run_level_outcome_has_no_crashed_variant", "export_with_exit_status_outcomes", "export_with_failed_property"]
+
+[[partial]]
+clause    = "RFC0015-S-7.5-21"
+class     = "other"
+supported = "Binary(path) serializes as {\"Binary\": path}"
+missing   = "that an unknown unit variant is not accepted is a deserialization property of kani_metadata; no test"
+tests     = ["export_attributes_solver_serializes_named_variants"]

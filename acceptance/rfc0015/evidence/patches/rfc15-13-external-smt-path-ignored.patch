@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..d22a7c80f 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -235,7 +235,7 @@ fn effective_solver(cbmc_args: &[OsString], base: &CbmcSolver) -> Option<String>
+     };
+ 
+     if let Some((_, name)) = SMT_SOLVER_PRIORITY.iter().find(|(flag, _)| has(flag)) {
+-        return Some(value("--external-smt2-solver").unwrap_or_else(|| name.to_string()));
++        return Some(name.to_string());
+     }
+     if let Some(executable) =
+         value("--incremental-smt2-solver").or_else(|| value("--external-smt2-solver"))

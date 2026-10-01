@@ -1,0 +1,1327 @@
+kani commit: 0e71661f12396b2df509b5397975f130854832c6
+command: cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun vacuity-check
+start (UTC): 2026-10-01T15:46:20Z
+end (UTC): 2026-10-01T15:46:23Z
+exit: 1
+normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
+observed red: yes
+------------------------------------------------------------------------------
+
+Running as unit: kani-gen-ctrl-rfc15-b5-1-vacuous-pass-total-ge-zero.service; invocation ID: <invocation-id>
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+98 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+26 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running `target/tools/debug/build-kani build-dev`
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+98 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+26 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+   Compiling kani_metadata v0.68.0 (<kani>/kani_metadata)
+   Compiling kani-driver v0.68.0 (<kani>/kani-driver)
+   Compiling kani-compiler v0.68.0 (<kani>/kani-compiler)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.01s
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+98 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+26 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+warning: unused dependency `strum`
+  --> library/kani_macros/Cargo.toml:19:1
+   |
+19 | strum = "0.28"
+   | ^^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `strum`
+warning: `kani_macros` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.03s
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+98 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+26 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+warning: unused dependency `strum`
+  --> library/kani_macros/Cargo.toml:19:1
+   |
+19 | strum = "0.28"
+   | ^^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `strum`
+warning: `kani_macros` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.04s
+[1m[33mwarning[0m[1m: `feature(generic_const_exprs)` is not supported with the next-generation trait solver[0m
+  [1m[94m--> [0mlibrary/kani/src/lib.rs:12:12
+   [1m[94m|[0m
+[1m[94m12[0m [1m[94m|[0m #![feature(generic_const_exprs)]
+   [1m[94m|[0m            [1m[33m^^^^^^^^^^^^^^^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mnote[0m: `-Znext-solver=globally` is currently enabled by default for testing
+   [1m[94m= [0m[1mnote[0m: reverted the setting to `-Znext-solver=coherence` for this crate
+   [1m[94m= [0m[1mnote[0m: the currently stable trait solver will be used for this crate
+   [1m[94m= [0m[1mnote[0m: see issues #160895 <https://github.com/rust-lang/rust/issues/160895> for more information
+
+
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+98 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+26 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+warning: unused dependency `strum`
+  --> library/kani_macros/Cargo.toml:19:1
+   |
+19 | strum = "0.28"
+   | ^^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `strum`
+warning: `kani_macros` (manifest) generated 1 warning
+warning: unused dependency `kani`
+  --> library/std/Cargo.toml:14:1
+   |
+14 | kani = {path="../kani"}
+   | ^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `kani`
+warning: `std` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.03s
+[1m[33mwarning[0m[1m: `feature(generic_const_exprs)` is not supported with the next-generation trait solver[0m
+  [1m[94m--> [0mlibrary/kani/src/lib.rs:12:12
+   [1m[94m|[0m
+[1m[94m12[0m [1m[94m|[0m #![feature(generic_const_exprs)]
+   [1m[94m|[0m            [1m[33m^^^^^^^^^^^^^^^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mnote[0m: `-Znext-solver=globally` is currently enabled by default for testing
+   [1m[94m= [0m[1mnote[0m: reverted the setting to `-Znext-solver=coherence` for this crate
+   [1m[94m= [0m[1mnote[0m: the currently stable trait solver will be used for this crate
+   [1m[94m= [0m[1mnote[0m: see issues #160895 <https://github.com/rust-lang/rust/issues/160895> for more information
+
+
+[1m[33mwarning[0m[1m: the feature `layout_for_ptr` has been stable since 1.99.0 and no longer requires an attribute to enable[0m
+  [1m[94m--> [0mlibrary/kani/src/lib.rs:21:52
+   [1m[94m|[0m
+[1m[94m21[0m [1m[94m|[0m #![cfg_attr(feature = "concrete_playback", feature(layout_for_ptr))]
+   [1m[94m|[0m                                                    [1m[33m^^^^^^^^^^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mnote[0m: `#[warn(stable_features)]` on by default
+
+
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+98 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+26 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running `target/debug/compiletest --suite json-handler --mode exec --force-rerun vacuity-check`
+
+running 1 test
+test [exec] json-handler/vacuity-check ... FAILED
+
+failures:
+
+---- [exec] json-handler/vacuity-check stdout ----
+
+error: test failed: expected code 0, got code 1
+status: exit status: 1
+command: cd "<kani>/tests/json-handler/vacuity-check" && "time" "<kani>/tests/json-handler/vacuity-check/test.sh"
+stdout:
+------------------------------------------
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+Checking harness check_should_panic_failing_vacuous...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test34check_should_panic_failing_vacuous.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.000929134s
+size of program expression: 165 steps
+slicing removed 76 assignments
+Generated 4 VCC(s), 4 remaining after simplification
+Runtime Postprocess Equation: 1.3361e-05s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 9.576e-05s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 2.97e-06s
+Solving with CaDiCaL 3.0.0
+39 variables, 67 clauses
+SAT checker: instance is UNSATISFIABLE
+Runtime Solver: 0.000219421s
+Runtime decision procedure: 0.000329881s
+
+RESULTS:
+Check 1: check_should_panic_failing_vacuous.assertion.1
+	 - Status: UNREACHABLE
+	 - Description: "assertion failed: x < 5"
+	 - Location: test.rs:41:5 in function check_should_panic_failing_vacuous
+
+Check 2: check_should_panic_failing_vacuous.assertion.2
+	 - Status: UNREACHABLE
+	 - Description: "assertion failed: x > 10"
+	 - Location: test.rs:42:5 in function check_should_panic_failing_vacuous
+
+
+SUMMARY:
+ ** 0 of 2 failed (2 unreachable)
+
+VERIFICATION:- FAILED (encountered no panics, but at least one was expected)
+Verification Time: 0.009880416s
+
+Checking harness check_should_panic_success...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test26check_should_panic_success.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.000475623s
+size of program expression: 77 steps
+slicing removed 43 assignments
+Generated 2 VCC(s), 2 remaining after simplification
+Runtime Postprocess Equation: 6.95e-06s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 2.151e-05s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 4.23e-06s
+Solving with CaDiCaL 3.0.0
+1 variables, 0 clauses
+SAT checker: instance is SATISFIABLE
+Runtime Solver: 2.612e-05s
+Runtime decision procedure: 6.024e-05s
+
+RESULTS:
+Check 1: check_should_panic_success.assertion.1
+	 - Status: FAILURE
+	 - Description: ""always panics""
+	 - Location: test.rs:33:5 in function check_should_panic_success
+
+
+SUMMARY:
+ ** 1 of 1 failed
+Failed Checks: "always panics"
+ File: "test.rs", line 33, in check_should_panic_success
+
+VERIFICATION:- SUCCESSFUL (encountered one or more panics as expected)
+Verification Time: 0.008892442s
+
+Checking harness check_checkless_success...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test23check_checkless_success.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.00016602s
+size of program expression: 17 steps
+slicing removed 6 assignments
+Generated 0 VCC(s), 0 remaining after simplification
+Runtime Postprocess Equation: 5.31e-06s
+
+RESULTS:
+
+SUMMARY:
+ ** 0 of 0 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.007394814s
+
+Checking harness check_real_success...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test18check_real_success.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.000602752s
+size of program expression: 102 steps
+slicing removed 46 assignments
+Generated 2 VCC(s), 2 remaining after simplification
+Runtime Postprocess Equation: 9.76e-06s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 6.65e-05s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 2.81e-06s
+Solving with CaDiCaL 3.0.0
+30 variables, 45 clauses
+SAT checker: instance is SATISFIABLE
+Runtime Solver: 2.128e-05s
+Runtime decision procedure: 0.00010362s
+Running propositional reduction
+Solving with CaDiCaL 3.0.0
+31 variables, 46 clauses
+SAT checker: instance is UNSATISFIABLE
+Runtime Solver: 3.93e-06s
+Runtime decision procedure: 1.028e-05s
+
+RESULTS:
+Check 1: check_real_success.assertion.1
+	 - Status: SUCCESS
+	 - Description: "assertion failed: x < 200"
+	 - Location: test.rs:23:5 in function check_real_success
+
+
+SUMMARY:
+ ** 0 of 1 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.009141083s
+
+Checking harness check_real_failure...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test18check_real_failure.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.000603263s
+size of program expression: 100 steps
+slicing removed 45 assignments
+Generated 2 VCC(s), 2 remaining after simplification
+Runtime Postprocess Equation: 9.44e-06s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 6.258e-05s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 3.1e-06s
+Solving with CaDiCaL 3.0.0
+30 variables, 45 clauses
+SAT checker: instance is SATISFIABLE
+Runtime Solver: 2.109e-05s
+Runtime decision procedure: 9.701e-05s
+
+RESULTS:
+Check 1: check_real_failure.assertion.1
+	 - Status: FAILURE
+	 - Description: "assertion failed: x > 10"
+	 - Location: test.rs:16:5 in function check_real_failure
+
+
+SUMMARY:
+ ** 1 of 1 failed
+Failed Checks: assertion failed: x > 10
+ File: "test.rs", line 16, in check_real_failure
+
+VERIFICATION:- FAILED
+Verification Time: 0.009406963s
+
+Checking harness check_contradictory_assume...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test26check_contradictory_assume.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.000890184s
+size of program expression: 165 steps
+slicing removed 76 assignments
+Generated 4 VCC(s), 4 remaining after simplification
+Runtime Postprocess Equation: 1.225e-05s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 8.7651e-05s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 3.24e-06s
+Solving with CaDiCaL 3.0.0
+39 variables, 67 clauses
+SAT checker: instance is UNSATISFIABLE
+Runtime Solver: 0.000216671s
+Runtime decision procedure: 0.000318112s
+
+RESULTS:
+Check 1: check_contradictory_assume.assertion.1
+	 - Status: UNREACHABLE
+	 - Description: "assertion failed: x < 5"
+	 - Location: test.rs:8:5 in function check_contradictory_assume
+
+Check 2: check_contradictory_assume.assertion.2
+	 - Status: UNREACHABLE
+	 - Description: "assertion failed: x > 10"
+	 - Location: test.rs:9:5 in function check_contradictory_assume
+
+
+SUMMARY:
+ ** 0 of 2 failed (2 unreachable)
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.009305583s
+
+Manual Harness Summary:
+Verification failed for - check_should_panic_failing_vacuous
+Verification failed for - check_real_failure
+Complete - 4 successfully verified harnesses, 2 failures, 6 total.
+All validations passed for vacuity_output.json
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+Checking harness check_should_panic_failing_vacuous...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test34check_should_panic_failing_vacuous.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.000940925s
+size of program expression: 163 steps
+slicing removed 76 assignments
+Generated 2 VCC(s), 2 remaining after simplification
+Runtime Postprocess Equation: 1.355e-05s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 9.405e-05s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 3.38e-06s
+Solving with CaDiCaL 3.0.0
+39 variables, 67 clauses
+SAT checker: instance is UNSATISFIABLE
+Runtime Solver: 7.2521e-05s
+Runtime decision procedure: 0.000179091s
+
+RESULTS:
+Check 1: check_should_panic_failing_vacuous.assertion.1
+	 - Status: SUCCESS
+	 - Description: "assertion failed: x < 5"
+	 - Location: test.rs:41:5 in function check_should_panic_failing_vacuous
+
+Check 2: check_should_panic_failing_vacuous.assertion.2
+	 - Status: SUCCESS
+	 - Description: "assertion failed: x > 10"
+	 - Location: test.rs:42:5 in function check_should_panic_failing_vacuous
+
+
+SUMMARY:
+ ** 0 of 2 failed
+
+VERIFICATION:- FAILED (encountered no panics, but at least one was expected)
+Verification Time: 0.009330043s
+
+Checking harness check_should_panic_success...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test26check_should_panic_success.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.000475382s
+size of program expression: 76 steps
+slicing removed 43 assignments
+Generated 1 VCC(s), 1 remaining after simplification
+Runtime Postprocess Equation: 7.31e-06s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 1.643e-05s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 3.941e-06s
+Solving with CaDiCaL 3.0.0
+1 variables, 0 clauses
+SAT checker: instance is SATISFIABLE
+Runtime Solver: 2.6551e-05s
+Runtime decision procedure: 5.5891e-05s
+
+RESULTS:
+Check 1: check_should_panic_success.assertion.1
+	 - Status: FAILURE
+	 - Description: ""always panics""
+	 - Location: test.rs:33:5 in function check_should_panic_success
+
+
+SUMMARY:
+ ** 1 of 1 failed
+Failed Checks: "always panics"
+ File: "test.rs", line 33, in check_should_panic_success
+
+VERIFICATION:- SUCCESSFUL (encountered one or more panics as expected)
+Verification Time: 0.008203088s
+
+Checking harness check_checkless_success...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test23check_checkless_success.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.000167011s
+size of program expression: 17 steps
+slicing removed 6 assignments
+Generated 0 VCC(s), 0 remaining after simplification
+Runtime Postprocess Equation: 5.97e-06s
+
+RESULTS:
+
+SUMMARY:
+ ** 0 of 0 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.007261214s
+
+Checking harness check_real_success...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test18check_real_success.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.000560952s
+size of program expression: 101 steps
+slicing removed 46 assignments
+Generated 1 VCC(s), 1 remaining after simplification
+Runtime Postprocess Equation: 9.12e-06s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 6.2031e-05s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 2.71e-06s
+Solving with CaDiCaL 3.0.0
+29 variables, 42 clauses
+SAT checker: instance is UNSATISFIABLE
+Runtime Solver: 1.196e-05s
+Runtime decision procedure: 8.5321e-05s
+
+RESULTS:
+Check 1: check_real_success.assertion.1
+	 - Status: SUCCESS
+	 - Description: "assertion failed: x < 200"
+	 - Location: test.rs:23:5 in function check_real_success
+
+
+SUMMARY:
+ ** 0 of 1 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.008058478s
+
+Checking harness check_real_failure...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test18check_real_failure.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.000546832s
+size of program expression: 99 steps
+slicing removed 45 assignments
+Generated 1 VCC(s), 1 remaining after simplification
+Runtime Postprocess Equation: 9.22e-06s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 6.6171e-05s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 2.85e-06s
+Solving with CaDiCaL 3.0.0
+29 variables, 42 clauses
+SAT checker: instance is SATISFIABLE
+Runtime Solver: 1.849e-05s
+Runtime decision procedure: 9.7121e-05s
+
+RESULTS:
+Check 1: check_real_failure.assertion.1
+	 - Status: FAILURE
+	 - Description: "assertion failed: x > 10"
+	 - Location: test.rs:16:5 in function check_real_failure
+
+
+SUMMARY:
+ ** 1 of 1 failed
+Failed Checks: assertion failed: x > 10
+ File: "test.rs", line 16, in check_real_failure
+
+VERIFICATION:- FAILED
+Verification Time: 0.008345829s
+
+Checking harness check_contradictory_assume...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/vacuity-check/test__RNvCslU5YLTNekZ8_4test26check_contradictory_assume.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.000971395s
+size of program expression: 163 steps
+slicing removed 76 assignments
+Generated 2 VCC(s), 2 remaining after simplification
+Runtime Postprocess Equation: 1.38e-05s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 9.242e-05s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 3.03e-06s
+Solving with CaDiCaL 3.0.0
+39 variables, 67 clauses
+SAT checker: instance is UNSATISFIABLE
+Runtime Solver: 7.6201e-05s
+Runtime decision procedure: 0.000182221s
+
+RESULTS:
+Check 1: check_contradictory_assume.assertion.1
+	 - Status: SUCCESS
+	 - Description: "assertion failed: x < 5"
+	 - Location: test.rs:8:5 in function check_contradictory_assume
+
+Check 2: check_contradictory_assume.assertion.2
+	 - Status: SUCCESS
+	 - Description: "assertion failed: x > 10"
+	 - Location: test.rs:9:5 in function check_contradictory_assume
+
+
+SUMMARY:
+ ** 0 of 2 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.00870498s
+
+Manual Harness Summary:
+Verification failed for - check_should_panic_failing_vacuous
+Verification failed for - check_real_failure
+Complete - 4 successfully verified harnesses, 2 failures, 6 total.
+All validations passed for vacuity_no_reach_output.json
+ERROR: vacuous_pass(check_real_success) should be False (a real, non-vacuous SUCCESS)
+ERROR: vacuous_pass(check_checkless_success) should be False: checks.total > 0 excludes a checkless harness even though its verdict is SUCCESS
+ERROR: vacuous_pass(check_should_panic_success) should be False: it has real, non-unreachable checks despite the expected-panic SUCCESS verdict
+
+------------------------------------------
+stderr:
+------------------------------------------
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+Command exited with non-zero status 1
+0.57user 0.21system 0:00.75elapsed 104%CPU (0avgtext+0avgdata 141164maxresident)k
+0inputs+4272outputs (0major+240276minor)pagefaults 0swaps
+
+------------------------------------------
+
+
+
+failures:
+    [exec] json-handler/vacuity-check
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.75s
+
+Some tests failed in compiletest suite=json-handler mode=exec host=(none) target=(none)
+          Finished with result: exit-code
+Main processes terminated with: code=exited, status=1/FAILURE
+               Service runtime: 2.096s
+             CPU time consumed: 4.232s
+                   Memory peak: 998M (swap: 0B)
+
+
+--- patch ---
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 64679ffae..ea49e282b 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -567,7 +567,7 @@ def join_key(harness):
+ 
+ 
+ def _all_unreachable(bucket):
+-    return bool(bucket["total"]) and len(bucket["unreachable"]) == bucket["total"]
++    return bucket["total"] >= 0
+ 
+ 
+ def vacuous_pass(harness, configuration):

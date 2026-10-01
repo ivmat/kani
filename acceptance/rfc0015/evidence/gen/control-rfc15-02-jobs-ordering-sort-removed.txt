@@ -1,0 +1,922 @@
+kani commit: 0e71661f12396b2df509b5397975f130854832c6
+command: cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun jobs-ordering-stable
+start (UTC): 2026-10-01T16:32:42Z
+end (UTC): 2026-10-01T16:32:43Z
+exit: 1
+normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
+observed red: yes
+------------------------------------------------------------------------------
+
+Running as unit: kani-gen-ctrl-rfc15-02-jobs-ordering-sort-removed.service; invocation ID: <invocation-id>
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+98 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+26 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running `target/tools/debug/build-kani build-dev`
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+98 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+26 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+   Compiling kani-driver v0.68.0 (<kani>/kani-driver)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.54s
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+98 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+26 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+warning: unused dependency `strum`
+  --> library/kani_macros/Cargo.toml:19:1
+   |
+19 | strum = "0.28"
+   | ^^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `strum`
+warning: `kani_macros` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.02s
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+98 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+26 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+warning: unused dependency `strum`
+  --> library/kani_macros/Cargo.toml:19:1
+   |
+19 | strum = "0.28"
+   | ^^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `strum`
+warning: `kani_macros` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.04s
+[1m[33mwarning[0m[1m: `feature(generic_const_exprs)` is not supported with the next-generation trait solver[0m
+  [1m[94m--> [0mlibrary/kani/src/lib.rs:12:12
+   [1m[94m|[0m
+[1m[94m12[0m [1m[94m|[0m #![feature(generic_const_exprs)]
+   [1m[94m|[0m            [1m[33m^^^^^^^^^^^^^^^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mnote[0m: `-Znext-solver=globally` is currently enabled by default for testing
+   [1m[94m= [0m[1mnote[0m: reverted the setting to `-Znext-solver=coherence` for this crate
+   [1m[94m= [0m[1mnote[0m: the currently stable trait solver will be used for this crate
+   [1m[94m= [0m[1mnote[0m: see issues #160895 <https://github.com/rust-lang/rust/issues/160895> for more information
+
+
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+98 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+26 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+warning: unused dependency `strum`
+  --> library/kani_macros/Cargo.toml:19:1
+   |
+19 | strum = "0.28"
+   | ^^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `strum`
+warning: `kani_macros` (manifest) generated 1 warning
+warning: unused dependency `kani`
+  --> library/std/Cargo.toml:14:1
+   |
+14 | kani = {path="../kani"}
+   | ^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `kani`
+warning: `std` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.03s
+[1m[33mwarning[0m[1m: `feature(generic_const_exprs)` is not supported with the next-generation trait solver[0m
+  [1m[94m--> [0mlibrary/kani/src/lib.rs:12:12
+   [1m[94m|[0m
+[1m[94m12[0m [1m[94m|[0m #![feature(generic_const_exprs)]
+   [1m[94m|[0m            [1m[33m^^^^^^^^^^^^^^^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mnote[0m: `-Znext-solver=globally` is currently enabled by default for testing
+   [1m[94m= [0m[1mnote[0m: reverted the setting to `-Znext-solver=coherence` for this crate
+   [1m[94m= [0m[1mnote[0m: the currently stable trait solver will be used for this crate
+   [1m[94m= [0m[1mnote[0m: see issues #160895 <https://github.com/rust-lang/rust/issues/160895> for more information
+
+
+[1m[33mwarning[0m[1m: the feature `layout_for_ptr` has been stable since 1.99.0 and no longer requires an attribute to enable[0m
+  [1m[94m--> [0mlibrary/kani/src/lib.rs:21:52
+   [1m[94m|[0m
+[1m[94m21[0m [1m[94m|[0m #![cfg_attr(feature = "concrete_playback", feature(layout_for_ptr))]
+   [1m[94m|[0m                                                    [1m[33m^^^^^^^^^^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mnote[0m: `#[warn(stable_features)]` on by default
+
+
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+98 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+26 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running `target/debug/compiletest --suite json-handler --mode exec --force-rerun jobs-ordering-stable`
+
+running 1 test
+test [exec] json-handler/jobs-ordering-stable ... FAILED
+
+failures:
+
+---- [exec] json-handler/jobs-ordering-stable stdout ----
+
+error: test failed: expected code 0, got code 1
+status: exit status: 1
+command: cd "<kani>/tests/json-handler/jobs-ordering-stable" && "time" "<kani>/tests/json-handler/jobs-ordering-stable/test.sh"
+stdout:
+------------------------------------------
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+Thread 1: Checking harness a_light_in_test_rs...
+Thread 2: Checking harness z_heavy_in_test_rs...
+Thread 3: Checking harness extra::b_light_in_extra_rs...
+Thread 0: Checking harness extra::c_light_in_extra_rs...
+Thread 1: 
+VERIFICATION RESULT:
+ ** 0 of 1 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.009773576s
+
+Thread 3: 
+VERIFICATION RESULT:
+ ** 0 of 1 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.012402499s
+
+Thread 0: 
+VERIFICATION RESULT:
+ ** 0 of 1 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.012002247s
+
+Thread 2: 
+VERIFICATION RESULT:
+ ** 0 of 2 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.020416476s
+
+Manual Harness Summary:
+Complete - 4 successfully verified harnesses, 0 failures, 4 total.
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+Checking harness extra::c_light_in_extra_rs...
+
+VERIFICATION RESULT:
+ ** 0 of 1 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.009582895s
+
+Checking harness extra::b_light_in_extra_rs...
+
+VERIFICATION RESULT:
+ ** 0 of 1 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.009503275s
+
+Checking harness a_light_in_test_rs...
+
+VERIFICATION RESULT:
+ ** 0 of 1 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.009126563s
+
+Checking harness z_heavy_in_test_rs...
+
+VERIFICATION RESULT:
+ ** 0 of 2 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.020789888s
+
+Manual Harness Summary:
+Complete - 4 successfully verified harnesses, 0 failures, 4 total.
+ERROR: Validation failed for jobs4.json:
+  - harnesses must be sorted by (crate_name, file, line, name)
+
+Validation failed for jobs4.json
+
+------------------------------------------
+stderr:
+------------------------------------------
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+Command exited with non-zero status 1
+0.42user 0.15system 0:00.39elapsed 145%CPU (0avgtext+0avgdata 140404maxresident)k
+0inputs+2928outputs (1major+165816minor)pagefaults 0swaps
+
+------------------------------------------
+
+
+
+failures:
+    [exec] json-handler/jobs-ordering-stable
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.40s
+
+Some tests failed in compiletest suite=json-handler mode=exec host=(none) target=(none)
+          Finished with result: exit-code
+Main processes terminated with: code=exited, status=1/FAILURE
+               Service runtime: 1.326s
+             CPU time consumed: 1.883s
+                   Memory peak: 623.9M (swap: 0B)
+
+
+--- patch ---
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..598469699 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -608,14 +608,7 @@ fn from_harness_results(
+                 HarnessExport::from_harness_result(hr, resolved_unwind, resolved_solver)
+             })
+             .collect();
+-        harnesses.sort_by(|a, b| {
+-            (&a.crate_name, &a.file, a.line, &a.name).cmp(&(
+-                &b.crate_name,
+-                &b.file,
+-                b.line,
+-                &b.name,
+-            ))
+-        });
++        harnesses.sort_by(|_a, _b| std::cmp::Ordering::Equal);
+         let mut enabled_unstable_features = ctx.enabled_unstable_features;
+         enabled_unstable_features.sort();
+ 
+diff --git a/tests/json-handler/jobs-ordering-stable/test.sh b/tests/json-handler/jobs-ordering-stable/test.sh
+index c70569fcf..226465249 100755
+--- a/tests/json-handler/jobs-ordering-stable/test.sh
++++ b/tests/json-handler/jobs-ordering-stable/test.sh
+@@ -24,7 +24,7 @@ for f in "${ARTIFACTS[@]}"; do
+         echo "ERROR: JSON file $f was not created"
+         exit 1
+     fi
+-    python3 "$VALIDATOR" "$f" 2>&1 | tail -1
++    python3 "$VALIDATOR" "$f" 2>&1
+ done
+ 
+ python3 << 'EOF'

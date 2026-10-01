@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index cea18bf80..7b9f82c02 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -1009,7 +1009,7 @@ fn from_harness_result(
+             resolved_solver,
+             resolved_unwind,
+             generated_concrete_test: result.generated_concrete_test,
+-            resources: ResourcesExport { verification_time_s: result.runtime.as_secs_f64() },
++            resources: ResourcesExport { verification_time_s: 0.0 },
+             n_properties,
+             n_failed,
+             failure_kind,

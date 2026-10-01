@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..cff1caa2a 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -423,7 +423,7 @@ impl PropertyExport {
+     fn from_property(p: &Property) -> Self {
+         PropertyExport {
+             id: p.property_id.to_cbmc_id(),
+-            description: p.description.clone(),
++            description: String::new(),
+             class: p.property_class(),
+             file: p.source_location.file.clone(),
+             line: p.source_location.line.clone(),

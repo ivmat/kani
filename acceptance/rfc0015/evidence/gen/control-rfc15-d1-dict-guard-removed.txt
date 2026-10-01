@@ -1,0 +1,234 @@
+kani commit: 0e71661f12396b2df509b5397975f130854832c6
+command: cd tests/json-handler/schema-validation && python3 check_fixtures.py ../../../scripts/validate_json_export.py
+start (UTC): 2026-10-01T15:47:32Z
+end (UTC): 2026-10-01T15:47:35Z
+exit: 1
+normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
+observed red: yes
+------------------------------------------------------------------------------
+
+  fixture-completed-failure.json: accepted
+  fixture-completed-success.json: accepted
+  fixture-incomplete-marker.json: accepted
+  fixture-no-harnesses-selected.json: accepted
+  fixture-non-completed-outcomes.json: accepted
+  twin expected-panic: accepted
+  twin ignored-quantifier: accepted
+  twin errored-check: accepted
+  twin bounded-autoharness: accepted
+  twin exact-selection: accepted
+  twin smallest-values: accepted
+  integer warning message: correctly rejected
+  integer property id: correctly rejected
+  integer line in a property: correctly rejected
+  string trace_available: correctly rejected
+  boolean harness line: correctly rejected
+  string wall_time_s: correctly rejected
+  malformed started_at: correctly rejected
+  lowercase status: correctly rejected
+  unknown failure_kind: correctly rejected
+  unknown outcome kind: correctly rejected
+  unsupported schema version: correctly rejected
+  null where not allowed: correctly rejected
+  null covers.satisfied: correctly rejected
+  null checks.unreachable: correctly rejected
+  scalar checks.other: correctly rejected
+  solver of the wrong shape: correctly rejected
+  attribute kind of the wrong shape: correctly rejected
+  missing required field: correctly rejected
+  integer in cbmc_args: correctly rejected
+  integer in requested_filters: correctly rejected
+  integer in enabled_unstable_features: correctly rejected
+  malformed stub: correctly rejected
+  integer verified stub: correctly rejected
+  integer in checks.failure: correctly rejected
+  malformed checks.other entry: correctly rejected
+  malformed covers.other entry: correctly rejected
+  incomplete unsupported construct: correctly rejected
+  malformed warning: correctly rejected
+  COMPLETED without a verdict: correctly rejected
+  COMPLETED without failure_kind: correctly rejected
+  COMPLETED with a null n_properties: correctly rejected
+  COMPLETED with a null checks.total: correctly rejected
+  COMPLETED with a CRASHED code: correctly rejected
+  verdict contradicting failure_kind: correctly rejected
+  TIMEOUT carrying a verdict: correctly rejected
+  TIMEOUT carrying failure_kind: correctly rejected
+  TIMEOUT with an integer checks.total: correctly rejected
+  TIMEOUT with an integer n_failed: correctly rejected
+  TIMEOUT with a non-empty checks.failure: correctly rejected
+  OUT_OF_MEMORY with a satisfied cover: correctly rejected
+  OUT_OF_MEMORY with a failed property: correctly rejected
+  CRASHED without a code: correctly rejected
+  CRASHED without a message: correctly rejected
+  CRASHED with a verdict: correctly rejected
+  run-level outcome with a verdict: correctly rejected
+  run-level outcome that is not COMPLETED: correctly rejected
+  commit without a dirty flag: correctly rejected
+  dirty flag without a commit: correctly rejected
+  unsorted unstable features: correctly rejected
+  started_at that is no date: correctly rejected
+  negative wall time: correctly rejected
+  NaN wall time: correctly rejected
+  infinite wall time: correctly rejected
+  negative harness timeout: correctly rejected
+  TIMEOUT without harness_timeout_s: correctly rejected
+  unmatched filter under --exact: correctly rejected
+  unmatched filter that was not requested: correctly rejected
+  every requested filter unmatched: correctly rejected
+  filters requested but nothing matched: correctly rejected
+  negative matched_count on the marker: correctly rejected
+  negative matched_count in a terminal document: correctly rejected
+  marker without target: correctly rejected
+  marker carrying outcome: correctly rejected
+  marker carrying wall_time_s: correctly rejected
+  marker carrying summary: correctly rejected
+  marker carrying harnesses: correctly rejected
+  harnesses out of order: correctly rejected
+  repeated crate_name and name: correctly rejected
+  is_bounded on a manual harness: correctly rejected
+  line 0: correctly rejected
+  negative verification time: correctly rejected
+  negative warnings_truncated: correctly rejected
+  negative original_chars: correctly rejected
+  negative unwind_value: correctly rejected
+  negative resolved_unwind: correctly rejected
+  negative checks.success: correctly rejected
+  truncated warning without original_chars: correctly rejected
+  untruncated warning with original_chars: correctly rejected
+  summary.total off by one: correctly rejected
+  summary.successful off by one: correctly rejected
+  summary.failed off by one: correctly rejected
+  summary.checks_total off by one: correctly rejected
+  summary.checks_success off by one: correctly rejected
+  summary.covers_total off by one: correctly rejected
+  summary.covers_satisfied off by one: correctly rejected
+  summary counts a non-COMPLETED harness: correctly rejected
+  NO_HARNESSES_SELECTED with a requested filter: correctly rejected
+  NO_HARNESSES_SELECTED with a matched harness: correctly rejected
+  NO_HARNESSES_SELECTED with a harness entry: correctly rejected
+  COMPLETE although nothing matched: correctly rejected
+  COMPLETE with fewer entries than matches: correctly rejected
+  PARTIAL with every match present: correctly rejected
+  checks.total not the sum of its parts: correctly rejected
+  covers.total not the sum of its parts: correctly rejected
+  n_properties not the two totals: correctly rejected
+  n_failed not len(checks.failure): correctly rejected
+  failed_properties id not in checks.failure: correctly rejected
+  failed property with status SUCCESS: correctly rejected
+  failed property of class cover: correctly rejected
+  cover id in checks: correctly rejected
+  cover id in checks.other: correctly rejected
+  code_coverage id in checks: correctly rejected
+  assertion id in covers: correctly rejected
+  FAILURE in checks.other: correctly rejected
+  SATISFIED in covers.other: correctly rejected
+  unsupported construct of another class: correctly rejected
+  unsupported failure unlike its failed property: correctly rejected
+  unsupported failure with no failed property: correctly rejected
+  unsupported status against its bucket: correctly rejected
+  one unsupported id with two statuses: correctly rejected
+  unsupported id in two buckets with consistent counts: correctly rejected
+  more successful unsupported constructs than checks.success: correctly rejected
+  NONE with a failed check: correctly rejected
+  NONE with an errored check: correctly rejected
+  NONE with an errored cover: correctly rejected
+  NONE with a failed cover: correctly rejected
+  PANICS_ONLY with an errored check: correctly rejected
+  PANICS_ONLY with an errored cover: correctly rejected
+  unknown top-level field: accepted
+  unknown run-level outcome member: accepted
+  unknown harness outcome member: accepted
+  unknown member of a COMPLETED checks object: accepted
+  unknown member of a TIMEOUT checks object: accepted
+  unknown member of an OUT_OF_MEMORY covers object: accepted
+  unknown field beside a Binary solver: accepted
+  unknown field beside a ProofForContract: accepted
+  unknown covers.success, integer: accepted
+  unknown covers.success, string: accepted
+  unknown field inside a ProofForContract: accepted
+  vacuous_pass: one of three checks unreachable: False
+  vacuous_pass: every check unreachable: True
+  vacuous_pass: failing verdict: False
+  vacuous_pass: no checks: False
+  vacuous_pass: reach checks off: None
+  vacuous_pass: every cover unreachable: False
+  vacuity_suspect: one unreachable check: True
+  vacuity_suspect: no unreachable check: False
+  vacuity_suspect: failing verdict: False
+  vacuity_suspect: reach checks off: None
+  cover_only_vacuous: a satisfied cover: False
+  cover_only_vacuous: every cover unreachable: True
+  cover_only_vacuous: one of two covers unreachable: False
+  cover_only_vacuous: no covers: False
+  cover_only_vacuous: every check unreachable: False
+  warnings_shape_equivalent for the same document: True
+  warnings_shape_equivalent for a different message: True
+  warnings_shape_equivalent for an added warning: False
+  warnings_shape_equivalent for a truncated warning: False
+  warnings_shape_equivalent for a dropped warning count: False
+  warnings_shape_equivalent for a warning on the first of two same-named harnesses: False
+  warnings_shape_equivalent for a warning on the second of two same-named harnesses: False
+  warnings_shape_equivalent for a missing harness: False
+ERROR: integer harness in an otherwise valid list: the validator crashed:
+Traceback (most recent call last):
+  File "<kani>/tests/json-handler/schema-validation/../../../scripts/validate_json_export.py", line 640, in <module>
+    main()
+    ~~~~^^
+  File "<kani>/tests/json-handler/schema-validation/../../../scripts/validate_json_export.py", line 631, in main
+    if validate_json_structure(json_file, schema):
+       ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "<kani>/tests/json-handler/schema-validation/../../../scripts/validate_json_export.py", line 488, in validate_json_structure
+    all_errors = validate_document(data, schema)
+  File "<kani>/tests/json-handler/schema-validation/../../../scripts/validate_json_export.py", line 454, in validate_document
+    check_value(data, schema, "", schema.get("_defs", {}), errors)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<kani>/tests/json-handler/schema-validation/../../../scripts/validate_json_export.py", line 153, in check_value
+    check_value(value[key], sub_spec, sub_path, defs, errors)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<kani>/tests/json-handler/schema-validation/../../../scripts/validate_json_export.py", line 159, in check_value
+    check_value(item, spec[0], f"{path}[{index}]", defs, errors)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<kani>/tests/json-handler/schema-validation/../../../scripts/validate_json_export.py", line 149, in check_value
+    if key not in value:
+       ^^^^^^^^^^^^^^^^
+TypeError: argument of type 'int' is not a container or iterable
+
+ERROR: root that is not an object: diagnostic does not mention '<root>: expected object':
+ERROR: Validation failed for fixture_under_test.json:
+  - Missing required field: schema_version
+  - Missing required field: kani_commit
+  - Missing required field: kani_commit_dirty
+  - Missing required field: tools
+  - Missing required field: enabled_unstable_features
+  - Missing required field: harness_selection
+  - Missing required field: harness_timeout_s
+  - Missing required field: configuration
+  - Missing required field: outcome
+  - Missing required field: run_state
+  - Missing required field: target
+  - Missing required field: started_at
+  - Missing required field: wall_time_s
+  - Missing required field: harnesses
+  - Missing required field: summary
+
+Validation failed for fixture_under_test.json
+
+
+
+--- patch ---
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 64679ffae..c8751e367 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -140,10 +140,6 @@ def check_value(value, spec, path, defs, errors):
+     if isinstance(spec, str):
+         check_scalar(value, spec, path, defs, errors)
+     elif isinstance(spec, dict):
+-        if not isinstance(value, dict):
+-            errors.append(
+-                f"{path or '<root>'}: expected object, got {type_name(value)}")
+-            return
+         optional = spec.get("_optional", [])
+         nullable = spec.get("_nullable", [])
+         for key, sub_spec in spec.items():

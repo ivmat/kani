@@ -1,0 +1,15 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..a629b8a8a 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -152,9 +152,7 @@ fn write_json_atomically<T: Serialize + ?Sized>(path: &Path, value: &T) -> Resul
+     if let Some(parent) = path.parent()
+         && !parent.as_os_str().is_empty()
+     {
+-        std::fs::create_dir_all(parent).with_context(|| {
+-            format!("Failed to create --export-json output directory `{}`", parent.display())
+-        })?;
++        let _ = parent;
+     }
+ 
+     let dir = export_parent_dir(path);

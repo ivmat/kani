@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..b0e255274 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -182,7 +182,7 @@ fn write_json_atomically<T: Serialize + ?Sized>(path: &Path, value: &T) -> Resul
+     };
+     {
+         let mut writer = BufWriter::new(&mut tmp);
+-        serde_json::to_writer_pretty(&mut writer, value).with_context(write_error)?;
++        let _ = serde_json::to_writer_pretty(&mut writer, value);
+         writer.write_all(b"\n").with_context(write_error)?;
+         writer.flush().with_context(write_error)?;
+     }

@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..64d3350b2 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -99,7 +99,7 @@ fn build_run_context(
+                     matched_harnesses,
+                     self.args.exact,
+                 ),
+-                matched_count: matched_harnesses.len(),
++                matched_count: matched_harnesses.len() + 1,
+             },
+             harness_timeout_s: self.args.harness_timeout.map(|t| Duration::from(t).as_secs_f64()),
+             configuration: configuration_from(&self.args),

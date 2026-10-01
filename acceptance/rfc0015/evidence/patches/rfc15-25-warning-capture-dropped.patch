@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index b9761610d..bca40c9b2 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -91,7 +91,7 @@ fn warning_capturing_filter<F>(
+             && let Some(ParserItem::Message { message_text, message_type }) = &filtered
+             && message_type.eq_ignore_ascii_case("warning")
+         {
+-            capture.lock().unwrap().push(message_text);
++            let _ = message_text;
+         }
+         filtered
+     };

@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..0392dac09 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -196,7 +196,7 @@ fn write_json_atomically<T: Serialize + ?Sized>(path: &Path, value: &T) -> Resul
+ fn export_parent_dir(path: &Path) -> &Path {
+     match path.parent() {
+         Some(parent) if !parent.as_os_str().is_empty() => parent,
+-        _ => Path::new("."),
++        _ => Path::new(""),
+     }
+ }
+ 

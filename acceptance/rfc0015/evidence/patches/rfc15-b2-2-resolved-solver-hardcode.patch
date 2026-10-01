@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index 882961ca9..e8344a465 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -938,7 +938,7 @@ fn from_harness_result(
+             is_bounded: harness.is_bounded,
+             attributes: harness.attributes.clone(),
+             outcome,
+-            resolved_solver,
++            resolved_solver: Some("cadical".to_string()),
+             resolved_unwind,
+             generated_concrete_test: result.generated_concrete_test,
+             resources: ResourcesExport { verification_time_s: result.runtime.as_secs_f64() },

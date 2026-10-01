@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index b9761610d..f3454112a 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -45,7 +45,7 @@ fn truncate_warning(message: &str) -> Warning {
+         return Warning { message: message.to_string(), truncated: false, original_chars: None };
+     }
+     let prefix: String = message.chars().take(MAX_WARNING_MESSAGE_CHARS).collect();
+-    Warning { message: prefix, truncated: true, original_chars: Some(total_chars) }
++    Warning { message: prefix, truncated: true, original_chars: None }
+ }
+ 
+ /// Bounded warning retention for `--export-json`, built up as messages stream in: at most

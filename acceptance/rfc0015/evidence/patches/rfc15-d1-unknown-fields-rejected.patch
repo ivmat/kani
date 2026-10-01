@@ -1,0 +1,14 @@
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 64679ffae..c3e061055 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -146,6 +146,9 @@ def check_value(value, spec, path, defs, errors):
+             return
+         optional = spec.get("_optional", [])
+         nullable = spec.get("_nullable", [])
++        for extra in value:
++            if extra not in spec:
++                errors.append(f"{path}: unknown field {extra}")
+         for key, sub_spec in spec.items():
+             if key.startswith("_"):
+                 continue

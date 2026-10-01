@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..6b5c98db4 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -573,7 +573,7 @@ struct Summary {
+ impl Summary {
+     fn from_harnesses(harnesses: &[HarnessExport]) -> Self {
+         let successful = harnesses.iter().filter(|h| is_successful(&h.outcome)).count();
+-        let failed = harnesses.iter().filter(|h| is_completed_failure(&h.outcome)).count();
++        let failed = harnesses.len() - successful;
+         let checks_total: usize = harnesses.iter().filter_map(|h| h.checks.total).sum();
+         let checks_success: usize = harnesses.iter().filter_map(|h| h.checks.success).sum();
+         let covers_total: usize = harnesses.iter().filter_map(|h| h.covers.total).sum();

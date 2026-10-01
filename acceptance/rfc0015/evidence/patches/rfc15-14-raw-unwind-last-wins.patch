@@ -1,0 +1,21 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..16896f4e4 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -264,13 +264,14 @@ fn resolve_effective_unwind(
+     if let Some(native) = resolve_unwind_value(args, harness) {
+         return Some(native);
+     }
++    let mut found = None;
+     let mut cbmc_args = cbmc_args.iter();
+     while let Some(arg) = cbmc_args.next() {
+         if arg.to_str() == Some("--unwind") {
+-            return cbmc_args.next().and_then(|v| v.to_str()).and_then(|v| v.parse().ok());
++            found = cbmc_args.next().and_then(|v| v.to_str()).and_then(|v| v.parse().ok());
+         }
+     }
+-    None
++    found
+ }
+ 
+ #[derive(Serialize)]

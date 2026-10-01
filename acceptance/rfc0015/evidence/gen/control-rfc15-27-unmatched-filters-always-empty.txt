@@ -1,0 +1,181 @@
+kani commit: 0e71661f12396b2df509b5397975f130854832c6
+command: cargo test -p kani-driver schema_utils::tests::compute_unmatched_filters_flags_the_nonmatching_one
+start (UTC): 2026-10-01T15:45:42Z
+end (UTC): 2026-10-01T15:45:43Z
+exit: 101
+normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
+observed red: yes
+------------------------------------------------------------------------------
+
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+98 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+96 ~ annotate-snippets = "0.11.5"
+97 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+26 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+24 ~ rustc_private = true
+25 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+   Compiling kani-driver v0.68.0 (<kani>/kani-driver)
+warning: unused variable: `requested`
+   --> kani-driver/src/frontend/schema_utils.rs:135:5
+    |
+135 |     requested: &[String],
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_requested`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `matched_harnesses`
+   --> kani-driver/src/frontend/schema_utils.rs:136:5
+    |
+136 |     matched_harnesses: &[&HarnessMetadata],
+    |     ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_matched_harnesses`
+
+warning: unused variable: `exact`
+   --> kani-driver/src/frontend/schema_utils.rs:137:5
+    |
+137 |     exact: bool,
+    |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_exact`
+
+warning: `kani-driver` (bin "kani-driver" test) generated 3 warnings (run `cargo fix --bin "kani-driver" -p kani-driver --tests` to apply 3 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.83s
+     Running unittests src/main.rs (target/debug/build/kani-driver/624126ba5da2628e/out/kani_driver-624126ba5da2628e)
+
+running 1 test
+test frontend::schema_utils::tests::compute_unmatched_filters_flags_the_nonmatching_one ... FAILED
+
+failures:
+
+---- frontend::schema_utils::tests::compute_unmatched_filters_flags_the_nonmatching_one stdout ----
+
+thread 'frontend::schema_utils::tests::compute_unmatched_filters_flags_the_nonmatching_one' (654322) panicked at kani-driver/src/frontend/schema_utils.rs:1546:9:
+assertion `left == right` failed
+  left: []
+ right: ["check_totally_bogus_typo"]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    frontend::schema_utils::tests::compute_unmatched_filters_flags_the_nonmatching_one
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 198 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p kani-driver --bin kani-driver`
+
+
+--- patch ---
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index cea18bf80..6c73d37ca 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -210,6 +210,8 @@ fn compute_unmatched_filters(
+     matched_harnesses: &[&HarnessMetadata],
+     exact: bool,
+ ) -> Vec<String> {
++    return Vec::new();
++    #[allow(unreachable_code)]
+     requested
+         .iter()
+         .filter(|filter| {

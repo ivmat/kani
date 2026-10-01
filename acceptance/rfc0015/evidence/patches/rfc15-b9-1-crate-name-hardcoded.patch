@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index 08134c92d..c18a9daed 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -1105,7 +1105,7 @@ fn from_harness_result(
+ 
+         HarnessExport {
+             name: harness.pretty_name.clone(),
+-            crate_name: harness.crate_name.clone(),
++            crate_name: "same-crate-name-for-every-harness".to_string(),
+             file: relativize_path(&harness.original_file),
+             line: harness.original_start_line,
+             contract: harness.contract.clone(),
