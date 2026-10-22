@@ -22,6 +22,14 @@ def load_json(path):
         return json.load(source)
 
 
+def validate(validator, path):
+    result = subprocess.run(
+        [sys.executable, validator, path], capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "All validations passed" in result.stdout, result.stdout + result.stderr
+
+
 def remove(path):
     try:
         path.unlink()
@@ -81,6 +89,7 @@ def main():
     kani = pathlib.Path(sys.argv[1])
     real_cbmc = pathlib.Path(sys.argv[2]).resolve()
     suite_dir = pathlib.Path(sys.argv[3]).resolve()
+    validator = pathlib.Path(sys.argv[4]) / "scripts" / "validate_json_export.py"
     with tempfile.TemporaryDirectory(prefix="kani-incomplete-marker-") as temporary:
         groups = []
         root = pathlib.Path(temporary)
@@ -134,6 +143,7 @@ def main():
             assert marker["started_at"] != seeded_export["started_at"]
             for key in ["outcome", "wall_time_s", "summary", "harnesses"]:
                 assert key not in marker, key
+            validate(validator, output)
             cleanup_group(process.pid)
 
             # Releasing CBMC replaces the marker with a terminal document from the same context.
@@ -154,6 +164,7 @@ def main():
             for key, value in marker.items():
                 if key != "run_state":
                     assert terminal[key] == value, key
+            validate(validator, output)
 
             # A marker write error prevents CBMC from starting.
             remove(ready)
