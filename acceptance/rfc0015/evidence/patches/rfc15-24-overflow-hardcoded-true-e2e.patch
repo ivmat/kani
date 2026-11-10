@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..5f790abba 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -112,7 +112,7 @@ fn build_run_context(
+ fn checks_flags_from(args: &VerificationArgs) -> ChecksFlags {
+     ChecksFlags {
+         memory_safety: args.checks.memory_safety_on(),
+-        overflow: args.checks.overflow_on(),
++        overflow: true,
+         unwinding: args.checks.unwinding_on(),
+         undefined_function: args.checks.undefined_function_on(),
+         assertion_reach_checks: args.assertion_reach_checks(),

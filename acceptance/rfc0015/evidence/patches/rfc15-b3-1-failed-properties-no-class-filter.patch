@@ -1,0 +1,14 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..66c7c4dd4 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -689,8 +689,7 @@ fn from_harness_result(
+                     properties.iter().filter(|p| !p.is_code_coverage_property()).count();
+                 let failed_properties: Vec<PropertyExport> = properties
+                     .iter()
+-                    .filter(|p| !p.is_cover_property() && !p.is_code_coverage_property())
+-                    .filter(|p| p.status == CheckStatus::Failure)
++                    .filter(|p| matches!(p.status, CheckStatus::Failure | CheckStatus::Error))
+                     .map(PropertyExport::from_property)
+                     .collect();
+                 let n_failed = failed_properties.len();

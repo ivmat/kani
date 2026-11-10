@@ -1,0 +1,14 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index fe729ef0d..188c7b12b 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -584,8 +584,7 @@ fn determine_failed_properties(properties: &[Property]) -> FailedProperties {
+     } else {
+         // Check if all failed properties correspond to the `assertion` class.
+         // Note: Panics caused by `panic!` and `assert!` fall into this class.
+-        let all_failed_checks_are_panics =
+-            failed_properties.iter().all(|prop| prop.property_class() == "assertion");
++        let all_failed_checks_are_panics = true;
+         if all_failed_checks_are_panics {
+             FailedProperties::PanicsOnly
+         } else {

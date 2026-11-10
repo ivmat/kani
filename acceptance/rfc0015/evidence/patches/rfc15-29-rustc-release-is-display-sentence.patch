@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..d94ecf19c 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -202,7 +202,7 @@ fn export_parent_dir(path: &Path) -> &Path {
+ 
+ /// The rustc release `kani-compiler` was built with, e.g. `1.98.0-nightly (14210df0e 2026-05-31)`.
+ fn build_rustc_release() -> Option<String> {
+-    (!KANI_RUSTC_RELEASE.is_empty()).then(|| KANI_RUSTC_RELEASE.to_string())
++    Some(crate::version::KANI_RUSTC_VERSION.to_string())
+ }
+ 
+ /// CBMC's SMT backends, highest priority first. CBMC picks the first one present, whatever the

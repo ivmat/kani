@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/args/mod.rs b/kani-driver/src/args/mod.rs
+index 45d11898f..406a45094 100644
+--- a/kani-driver/src/args/mod.rs
++++ b/kani-driver/src/args/mod.rs
+@@ -811,7 +811,7 @@ fn validate(&self) -> Result<(), Error> {
+             self.common_args.check_unstable(
+                 self.export_json.is_some(),
+                 "export-json",
+-                UnstableFeature::ExportJson,
++                UnstableFeature::UnstableOptions,
+             )?;
+ 
+             Ok(())

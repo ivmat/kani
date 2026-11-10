@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..afe0bd516 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -127,7 +127,7 @@ fn configuration_from(args: &VerificationArgs) -> ConfigurationExport {
+     ConfigurationExport {
+         checks: checks_flags_from(args),
+         cbmc_args: args.cbmc_args.iter().map(|s| s.to_string_lossy().into_owned()).collect(),
+-        coverage_enabled: args.coverage,
++        coverage_enabled: false,
+     }
+ }
+ 

@@ -1,0 +1,14 @@
+diff --git a/kani-driver/src/version.rs b/kani-driver/src/version.rs
+index 8f480e7b5..83dbe114d 100644
+--- a/kani-driver/src/version.rs
++++ b/kani-driver/src/version.rs
+@@ -51,8 +51,7 @@ pub(crate) fn cbmc_version_on_path() -> Option<String> {
+         return None;
+     }
+     let stdout = String::from_utf8_lossy(&output.stdout);
+-    let version = stdout.trim();
+-    (!version.is_empty()).then(|| version.to_string())
++    stdout.split_whitespace().next().map(str::to_string)
+ }
+ 
+ fn pinned_cbmc_version() -> Option<String> {

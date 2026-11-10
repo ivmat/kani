@@ -1,0 +1,14 @@
+diff --git a/kani-driver/src/harness_runner.rs b/kani-driver/src/harness_runner.rs
+index f9c83f3b9..04198b9cd 100644
+--- a/kani-driver/src/harness_runner.rs
++++ b/kani-driver/src/harness_runner.rs
+@@ -216,6 +216,9 @@ fn should_print_output(&self) -> bool {
+     }
+ 
+     fn write_output_to_file(&self, result: &VerificationResult, harness: &HarnessMetadata) {
++        if self.args.export_json.is_some() {
++            return;
++        }
+         let target_dir = self.result_output_dir().unwrap();
+         let file_name = target_dir.join(harness.pretty_name.clone());
+         let path = Path::new(&file_name);

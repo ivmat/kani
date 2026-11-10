@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index cea18bf80..6c73d37ca 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -210,6 +210,8 @@ fn compute_unmatched_filters(
+     matched_harnesses: &[&HarnessMetadata],
+     exact: bool,
+ ) -> Vec<String> {
++    return Vec::new();
++    #[allow(unreachable_code)]
+     requested
+         .iter()
+         .filter(|filter| {

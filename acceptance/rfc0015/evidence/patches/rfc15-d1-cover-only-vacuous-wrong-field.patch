@@ -1,0 +1,13 @@
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 64679ffae..4a8e03439 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -589,7 +589,7 @@ def vacuity_suspect(harness, configuration):
+ 
+ def cover_only_vacuous(harness):
+     """Every cover of the harness is unreachable, which `checks` cannot show."""
+-    return _all_unreachable(harness["covers"])
++    return _all_unreachable(harness["checks"])
+ 
+ 
+ def warnings_shape_equivalent(doc_a, doc_b):

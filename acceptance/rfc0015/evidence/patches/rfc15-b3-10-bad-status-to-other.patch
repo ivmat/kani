@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index 0ff0ac180..66796850f 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -744,7 +744,7 @@ fn bucket_by_status(
+         if status == good_status {
+             good.push(id);
+         } else if status == bad_status {
+-            bad.push(id);
++            other.push(OtherPropertyExport { id, status });
+         } else {
+             match status {
+                 CheckStatus::Unreachable => unreachable.push(id),

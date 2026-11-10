@@ -1,0 +1,15 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..816c19cb7 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -225,8 +225,8 @@ fn build_rustc_release() -> Option<String> {
+ /// CBMC rejects an SMT flag together with `--external-sat-solver`, or a named one with
+ /// `--incremental-smt2-solver`; the harness then does not complete, so the result is best effort.
+ fn effective_solver(cbmc_args: &[OsString], base: &CbmcSolver) -> Option<String> {
+-    let argv: Vec<OsString> =
+-        solver_flags(base).into_iter().chain(cbmc_args.iter().cloned()).collect();
++    let _ = cbmc_args;
++    let argv: Vec<OsString> = solver_flags(base).into_iter().collect();
+     let argv: Vec<Option<&str>> = argv.iter().map(|arg| arg.to_str()).collect();
+     let has = |flag: &str| argv.contains(&Some(flag));
+     let value = |flag: &str| {

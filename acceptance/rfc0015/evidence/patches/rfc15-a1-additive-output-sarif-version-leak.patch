@@ -1,0 +1,16 @@
+diff --git a/kani-driver/src/sarif.rs b/kani-driver/src/sarif.rs
+index b17b8a4fc..dcd5e04ae 100644
+--- a/kani-driver/src/sarif.rs
++++ b/kani-driver/src/sarif.rs
+@@ -22,7 +22,10 @@
+ impl KaniSession {
+     pub fn write_sarif(&self, results: &[HarnessResult<'_>]) -> Result<()> {
+         let Some(path) = &self.args.sarif else { return Ok(()) };
+-        let log = SarifLog::from_harness_results(results);
++        let mut log = SarifLog::from_harness_results(results);
++        if self.args.export_json.is_some() {
++            log.version = "9.9.9";
++        }
+         write_sarif_file(path, &log)
+     }
+ }

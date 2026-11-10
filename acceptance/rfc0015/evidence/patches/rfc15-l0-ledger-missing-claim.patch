@@ -1,0 +1,21 @@
+diff --git a/acceptance/rfc0015-pr1/ledger/acceptance.toml b/acceptance/rfc0015-pr1/ledger/acceptance.toml
+--- a/acceptance/rfc0015-pr1/ledger/acceptance.toml
++++ b/acceptance/rfc0015-pr1/ledger/acceptance.toml
+@@ -45,17 +45,6 @@ applicability_record      = "../applicability.toml"
+ applicability_hash        = "applicability-record:sha-512:79ae3a80627f063b26f4ada4a26486ca2c35ff8eb45e4aa52887370e08f7364a9b331ce85ed7a2c9731ae6bf63ff81273f9d0915670a7e7c68b4f23f7430bc71"
+ applicability_declared_at = "2026-09-28T18:24:24Z"
+ 
+-[[claim]]
+-id                 = "CONF/RFC0015-S-1-1"
+-clause             = "RFC0015-S-1-1"
+-item               = "§Summary, opening paragraph"
+-statement          = "The RFC specifies the machine-readable file written by --export-json <path> (already shipped, unstable, in #4472), describing one verification run as evidence about the run -- not enough to reproduce it byte-for-byte (e.g. cbmc_args is recorded verbatim but is not a replayable argv)."
+-status             = "not-applicable"
+-applicability      = "not-applicable"
+-applicability_reason = "Informative text (motivation, rationale, example or metadata); it states no behavior to check."
+-clause_source      = "spec-document"
+-
+-
+ [[claim]]
+ id            = "CONF/RFC0015-S-1-2"
+ clause        = "RFC0015-S-1-2"

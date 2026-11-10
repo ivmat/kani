@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..c63f82bbb 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -471,7 +471,7 @@ fn from_properties(properties: &[Property]) -> Self {
+     }
+ 
+     fn empty_not_completed() -> Self {
+-        ChecksExport { total: None, success: None, ..Self::from_properties(&[]) }
++        Self::from_properties(&[])
+     }
+ }
+ 

@@ -1,0 +1,15 @@
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 64679ffae..c8751e367 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -140,10 +140,6 @@ def check_value(value, spec, path, defs, errors):
+     if isinstance(spec, str):
+         check_scalar(value, spec, path, defs, errors)
+     elif isinstance(spec, dict):
+-        if not isinstance(value, dict):
+-            errors.append(
+-                f"{path or '<root>'}: expected object, got {type_name(value)}")
+-            return
+         optional = spec.get("_optional", [])
+         nullable = spec.get("_nullable", [])
+         for key, sub_spec in spec.items():

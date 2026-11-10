@@ -1,0 +1,12 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index 24901f7cf..ee3aeb92c 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -352,6 +352,7 @@ struct ExportedRun {
+     tools: ToolsExport,
+     enabled_unstable_features: BTreeSet<String>,
+     harness_selection: HarnessSelectionExport,
++    #[serde(skip_serializing)]
+     harness_timeout_s: Option<f64>,
+     configuration: ConfigurationExport,
+     outcome: RunOutcome,

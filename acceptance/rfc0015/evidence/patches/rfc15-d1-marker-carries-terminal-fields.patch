@@ -1,0 +1,12 @@
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 64679ffae..65cb47f6d 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -444,7 +444,6 @@ def validate_marker(data, schema):
+     template["run_state"] = "enum:INCOMPLETE"
+     errors = []
+     check_value(data, template, "", schema.get("_defs", {}), errors)
+-    errors += [f"{field}: an INCOMPLETE marker does not carry it" for field in INCOMPLETE_ABSENT if field in data]
+     if not errors:
+         check_run_rules(data, errors)
+     return errors

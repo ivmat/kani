@@ -1,0 +1,13 @@
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 64679ffae..b11dfc125 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -597,7 +597,7 @@ def warnings_shape_equivalent(doc_a, doc_b):
+ 
+     def shapes(doc):
+         return {
+-            join_key(h): ([(w["truncated"], w["original_chars"]) for w in h["warnings"]], h["warnings_truncated"])
++            join_key(h): ([(w["truncated"], w["original_chars"], w["message"]) for w in h["warnings"]], h["warnings_truncated"])
+             for h in doc["harnesses"]
+         }
+ 

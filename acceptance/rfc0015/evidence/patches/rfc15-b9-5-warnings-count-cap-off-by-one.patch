@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index b9761610d..beb69ebad 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -60,7 +60,7 @@ struct CapturedWarnings {
+ 
+ impl CapturedWarnings {
+     fn push(&mut self, message: &str) {
+-        if self.warnings.len() < MAX_WARNINGS_PER_HARNESS {
++        if self.warnings.len() <= MAX_WARNINGS_PER_HARNESS {
+             self.warnings.push(truncate_warning(message));
+         } else {
+             self.truncated += 1;

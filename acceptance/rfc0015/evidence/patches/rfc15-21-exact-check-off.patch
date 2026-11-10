@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/metadata.rs b/kani-driver/src/metadata.rs
+index 31925de86..8496e3c3c 100644
+--- a/kani-driver/src/metadata.rs
++++ b/kani-driver/src/metadata.rs
+@@ -131,7 +131,7 @@ fn check_exact_filters_matched(
+         compiler_filtered_harnesses.iter().map(|&h| &h.pretty_name).collect();
+     let harnesses_missing: Vec<String> =
+         harness_filters.difference(&harness_found_names).map(|&s| s.clone()).collect();
+-    if !harnesses_missing.is_empty() {
++    if false {
+         return Err(no_harness_match_error(&harnesses_missing));
+     }
+     Ok(())

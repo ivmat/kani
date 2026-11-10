@@ -1,0 +1,14 @@
+diff --git a/kani-driver/src/main.rs b/kani-driver/src/main.rs
+index 6f3c36fd4..20fdecfa2 100644
+--- a/kani-driver/src/main.rs
++++ b/kani-driver/src/main.rs
+@@ -189,6 +189,9 @@ fn verify_project(project: Project, session: KaniSession) -> Result<()> {
+     let started_at = OffsetDateTime::now_utc();
+     let start_instant = Instant::now();
+ 
++    if let Some(path) = &session.args.export_json {
++        let _ = std::fs::remove_file(path);
++    }
+     let harnesses = session.determine_targets(project.get_all_harnesses())?;
+     debug!(n = harnesses.len(), ?harnesses, "verify_project");
+     let export_context = session.begin_export_json(&harnesses, started_at)?;

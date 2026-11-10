@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index b9761610d..98e9bb9a6 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -41,7 +41,7 @@ pub struct Warning {
+ 
+ fn truncate_warning(message: &str) -> Warning {
+     let total_chars = message.chars().count();
+-    if total_chars <= MAX_WARNING_MESSAGE_CHARS {
++    if total_chars < MAX_WARNING_MESSAGE_CHARS {
+         return Warning { message: message.to_string(), truncated: false, original_chars: None };
+     }
+     let prefix: String = message.chars().take(MAX_WARNING_MESSAGE_CHARS).collect();

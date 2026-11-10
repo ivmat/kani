@@ -1,0 +1,14 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..cf7272792 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -399,7 +399,9 @@ struct HarnessExport {
+     unsupported_constructs: Vec<PropertyExport>,
+     warnings: Vec<Warning>,
+     warnings_truncated: usize,
++    #[serde(skip_serializing)]
+     checks: ChecksExport,
++    #[serde(skip_serializing)]
+     covers: CoversExport,
+ }
+ 

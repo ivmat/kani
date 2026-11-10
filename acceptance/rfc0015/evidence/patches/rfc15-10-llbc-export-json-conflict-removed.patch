@@ -1,0 +1,11 @@
+diff --git a/kani-driver/src/args/mod.rs b/kani-driver/src/args/mod.rs
+--- a/kani-driver/src/args/mod.rs
++++ b/kani-driver/src/args/mod.rs
+@@ -890,7 +890,6 @@
+             if self.uses_llbc_backend() {
+                 for (requested, option) in [
+                     (self.sarif.is_some(), "--sarif"),
+-                    (self.export_json.is_some(), "--export-json"),
+                 ] {
+                     if requested {
+                         return Err(Error::raw(

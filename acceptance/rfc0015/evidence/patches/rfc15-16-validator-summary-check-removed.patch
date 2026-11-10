@@ -1,0 +1,12 @@
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 218927a7e..650fe4d80 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -442,7 +442,6 @@ def check_terminal_rules(data, schema, errors):
+     property_fields = [key for key in schema["_defs"]["property"] if not key.startswith("_")]
+     for index, harness in enumerate(harnesses):
+         check_harness_rules(harness, f"harnesses[{index}]", property_fields, errors)
+-    check_summary(data, errors)
+     check_run_state(data, errors)
+ 
+ 

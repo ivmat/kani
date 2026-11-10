@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index 55998775f..90d6d7701 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -739,7 +739,7 @@ fn bucket_by_status(
+     let mut other = Vec::new();
+ 
+     for p in properties {
+-        let id = p.property_id.to_cbmc_id();
++        let id = p.property_id.class.clone();
+         let status = p.status;
+         if status == good_status {
+             good.push(id);

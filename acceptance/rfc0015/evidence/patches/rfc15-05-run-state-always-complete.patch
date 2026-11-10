@@ -1,0 +1,16 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..6a901598d 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -624,10 +624,8 @@ fn from_harness_results(
+             && ctx.harness_selection.matched_count == 0
+         {
+             RunState::NoHarnessesSelected
+-        } else if results.len() == ctx.harness_selection.matched_count {
+-            RunState::Complete
+         } else {
+-            RunState::Partial
++            RunState::Complete
+         };
+ 
+         ExportedRun {

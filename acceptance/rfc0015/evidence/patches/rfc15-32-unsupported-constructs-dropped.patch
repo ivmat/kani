@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..ba20d70b3 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -696,7 +696,7 @@ fn from_harness_result(
+                 let n_failed = failed_properties.len();
+                 let unsupported_constructs: Vec<PropertyExport> = properties
+                     .iter()
+-                    .filter(|p| p.is_unsupported_construct_property())
++                    .filter(|_p| false)
+                     .map(PropertyExport::from_property)
+                     .collect();
+                 let checks = ChecksExport::from_properties(properties);

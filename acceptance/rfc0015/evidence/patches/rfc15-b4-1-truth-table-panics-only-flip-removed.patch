@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index fe729ef0d..d4516979c 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -559,7 +559,7 @@ fn verification_outcome_from_properties(
+         match failed_properties {
+             FailedProperties::Error => VerificationStatus::Failure,
+             FailedProperties::None | FailedProperties::Other => VerificationStatus::Failure,
+-            FailedProperties::PanicsOnly => VerificationStatus::Success,
++            FailedProperties::PanicsOnly => VerificationStatus::Failure,
+         }
+     } else {
+         match failed_properties {

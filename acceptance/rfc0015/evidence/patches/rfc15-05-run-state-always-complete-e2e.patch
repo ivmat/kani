@@ -1,0 +1,38 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index 24901f7cf..bf086c172 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -695,10 +695,8 @@ fn from_harness_results(
+             && ctx.harness_selection.matched_count == 0
+         {
+             RunState::NoHarnessesSelected
+-        } else if results.len() == ctx.harness_selection.matched_count {
+-            RunState::Complete
+         } else {
+-            RunState::Partial
++            RunState::Complete
+         };
+ 
+         ExportedRun {
+diff --git a/tests/json-handler/fail-fast/test.sh b/tests/json-handler/fail-fast/test.sh
+index dd4e7bc1e..b1e4a41c2 100755
+--- a/tests/json-handler/fail-fast/test.sh
++++ b/tests/json-handler/fail-fast/test.sh
+@@ -43,7 +43,7 @@ if [ ! -f "$OUTPUT_FILE" ]; then
+ fi
+ 
+ # An aborted run still has to produce a structurally valid document.
+-python3 "$VALIDATOR" "$OUTPUT_FILE" 2>&1 | tail -1
++python3 "$VALIDATOR" "$OUTPUT_FILE" 2>&1
+ 
+ # Selecting only the two harnesses that run makes the abort land on the last selected one.
+ set +e
+@@ -62,7 +62,7 @@ if [ ! -f "$COMPLETE_OUTPUT_FILE" ]; then
+     exit 1
+ fi
+ 
+-python3 "$VALIDATOR" "$COMPLETE_OUTPUT_FILE" 2>&1 | tail -1
++python3 "$VALIDATOR" "$COMPLETE_OUTPUT_FILE" 2>&1
+ 
+ python3 << EOF
+ import json

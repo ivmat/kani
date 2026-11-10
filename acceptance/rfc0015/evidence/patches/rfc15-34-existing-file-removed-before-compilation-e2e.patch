@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/main.rs b/kani-driver/src/main.rs
+--- a/kani-driver/src/main.rs
++++ b/kani-driver/src/main.rs
+@@ -161,6 +161,9 @@
+                 print_kani_version(InvocationType::Standalone, session.args.common_args.verbose);
+             }
+ 
++            if let Some(path) = &session.args.export_json {
++                let _ = std::fs::remove_file(path);
++            }
+             let project =
+                 project::standalone_project(&args.input.unwrap(), args.crate_name, &session)?;
+             (session, project)

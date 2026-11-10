@@ -1,0 +1,12 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -398,7 +398,7 @@
+         CbmcSolver::Kissat => vec!["--external-sat-solver".into(), "kissat".into()],
+         // Minisat is currently CBMC's default solver, so no need to
+         // pass any arguments
+-        CbmcSolver::Minisat => vec![],
++        CbmcSolver::Minisat => vec!["--sat-solver".into(), "cadical".into()],
+         CbmcSolver::Z3 => vec!["--z3".into()],
+         CbmcSolver::Binary(solver_binary) => {
+             vec!["--external-sat-solver".into(), solver_binary.into()]

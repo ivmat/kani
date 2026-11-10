@@ -1,0 +1,13 @@
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 64679ffae..37299a4aa 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -584,7 +584,7 @@ def vacuity_suspect(harness, configuration):
+     """Advisory: a SUCCESS with any unreachable check. None when `assertion_reach_checks` is off."""
+     if not configuration["checks"]["assertion_reach_checks"]:
+         return None
+-    return harness["outcome"].get("verdict") == "SUCCESS" and bool(harness["checks"]["unreachable"])
++    return harness["outcome"].get("verdict") == "SUCCESS" and _all_unreachable(harness["checks"])
+ 
+ 
+ def cover_only_vacuous(harness):

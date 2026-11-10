@@ -1,0 +1,12 @@
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -574,7 +574,7 @@
+ 
+ 
+ def _all_unreachable(bucket):
+-    return bool(bucket["total"]) and len(bucket["unreachable"]) == bucket["total"]
++    return bool(bucket["total"]) and bool(bucket["unreachable"])
+ 
+ 
+ def vacuous_pass(harness, configuration):

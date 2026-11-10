@@ -1,0 +1,20 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index 24901f7cf..2504e94f7 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -683,11 +683,11 @@ fn from_harness_results(
+             })
+             .collect();
+         harnesses.sort_by(|a, b| {
+-            (&a.crate_name, &a.file, a.line, &a.name).cmp(&(
+-                &b.crate_name,
+-                &b.file,
+-                b.line,
++            (&a.name, a.line, &a.file, &a.crate_name).cmp(&(
+                 &b.name,
++                b.line,
++                &b.file,
++                &b.crate_name,
+             ))
+         });
+         let summary = Summary::from_harnesses(&harnesses);

@@ -1,0 +1,11 @@
+kani commit: 7b861ef9c89ca036b42752e4f66c9da996c077e6 (this repo's own HEAD, root=package)
+command: python3 -B vendor/acceptance-format/format_acceptance/tools/check_core.py ledger/acceptance.toml --strict --strict-weight
+start (UTC): 2026-11-10T22:49:20Z
+end (UTC): 2026-11-10T22:49:36Z
+exit: 0
+normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
+expect matched: yes; exit as expected: yes
+------------------------------------------------------------------------------
+
+PASS ledger/acceptance.toml [weighted: 0, unweighted: 259]
+COVERAGE ledger/acceptance.toml [not-applicable: 21, excluded: 28, gap: 92]

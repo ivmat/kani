@@ -1,0 +1,18 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..399751f0c 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -126,7 +126,12 @@ fn checks_flags_from(args: &VerificationArgs) -> ChecksFlags {
+ fn configuration_from(args: &VerificationArgs) -> ConfigurationExport {
+     ConfigurationExport {
+         checks: checks_flags_from(args),
+-        cbmc_args: args.cbmc_args.iter().map(|s| s.to_string_lossy().into_owned()).collect(),
++        cbmc_args: {
++            let mut sorted: Vec<String> =
++                args.cbmc_args.iter().map(|s| s.to_string_lossy().into_owned()).collect();
++            sorted.sort();
++            sorted
++        },
+         coverage_enabled: args.coverage,
+     }
+ }

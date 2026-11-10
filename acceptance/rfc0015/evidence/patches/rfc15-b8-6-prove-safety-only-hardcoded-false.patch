@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..88a5fefad 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -119,7 +119,7 @@ fn checks_flags_from(args: &VerificationArgs) -> ChecksFlags {
+         ignore_global_asm: args.ignore_global_asm,
+         extra_pointer_checks: args.extra_pointer_checks,
+         assert_contracts: !args.no_assert_contracts,
+-        prove_safety_only: args.prove_safety_only,
++        prove_safety_only: false,
+     }
+ }
+ 

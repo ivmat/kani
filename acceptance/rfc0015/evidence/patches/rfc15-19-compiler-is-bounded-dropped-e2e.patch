@@ -1,0 +1,13 @@
+diff --git a/kani-compiler/src/kani_middle/codegen_units.rs b/kani-compiler/src/kani_middle/codegen_units.rs
+index 233fe238c..7eacd0dd6 100644
+--- a/kani-compiler/src/kani_middle/codegen_units.rs
++++ b/kani-compiler/src/kani_middle/codegen_units.rs
+@@ -417,7 +417,7 @@ fn get_all_automatic_harnesses(
+                 base_filename,
+                 &fn_to_verify,
+                 harness.mangled_name(),
+-                caveats.is_bounded,
++                false,
+                 caveats.is_ctor_based,
+             );
+             (harness, metadata)

@@ -1,0 +1,12 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index b9761610d..165fdf78a 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -111,7 +111,6 @@ pub enum VerificationStatus {
+ /// Represents failed properties in three different categories.
+ /// This simplifies the process to determine and format verification results.
+ #[derive(Clone, Copy, Debug, serde::Serialize)]
+-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+ pub enum FailedProperties {
+     // No failures
+     None,

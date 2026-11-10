@@ -1,0 +1,12 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..2a63de8f2 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -393,7 +393,6 @@ struct HarnessExport {
+     resources: ResourcesExport,
+     n_properties: Option<usize>,
+     n_failed: Option<usize>,
+-    #[serde(skip_serializing_if = "Option::is_none")]
+     failure_kind: Option<FailedProperties>,
+     failed_properties: Vec<PropertyExport>,
+     unsupported_constructs: Vec<PropertyExport>,

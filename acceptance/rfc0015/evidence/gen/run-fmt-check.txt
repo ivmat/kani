@@ -1,0 +1,9 @@
+kani commit: df3e37771821750a6e888c01b2d88611485cd991
+command: ./scripts/kani-fmt.sh --check
+start (UTC): 2026-11-10T22:42:14Z
+end (UTC): 2026-11-10T22:42:15Z
+exit: 0
+normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
+expect matched: yes; exit as expected: yes
+------------------------------------------------------------------------------
+

@@ -1,0 +1,12 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..1a95b184f 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -149,6 +149,7 @@ fn compute_unmatched_filters(
+ /// Writes `value` as pretty JSON to a temporary file in `path`'s directory, then renames it onto
+ /// `path`, so a reader never sees a partial file and a failed write leaves any earlier file intact.
+ fn write_json_atomically<T: Serialize + ?Sized>(path: &Path, value: &T) -> Result<()> {
++    let _ = std::fs::remove_file(path);
+     if let Some(parent) = path.parent()
+         && !parent.as_os_str().is_empty()
+     {

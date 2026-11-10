@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -84,7 +84,8 @@
+             ctx,
+             wall_time,
+         );
+-        write_json_atomically(&path, &export)
++        let _ = (&path, &export);
++        Ok(())
+     }
+ 
+     fn build_run_context(

@@ -1,0 +1,1324 @@
+kani commit: df3e37771821750a6e888c01b2d88611485cd991
+command: cargo build-dev && cargo run -p compiletest -- --suite json-handler --mode exec --force-rerun live-configuration
+start (UTC): 2026-11-10T22:44:26Z
+end (UTC): 2026-11-10T22:44:29Z
+exit: 1
+normalized (disclosed transform, see README.md "Transcript normalization"): kani worktree -> <kani>, this package's directory -> <pkg>, CBMC dir -> <cbmc>, $HOME -> ~, other /home/<user>/ -> <home>/, systemd invocation id -> <invocation-id>, mktemp /tmp dir -> <tmp>
+observed red: yes
+------------------------------------------------------------------------------
+
+Running as unit: kani-gen-ctrl-rfc15-13-cbmc-args-not-consulted-e2e.service; invocation ID: <invocation-id>
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+25 ~ rustc_private = true
+26 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running `target/tools/debug/build-kani build-dev`
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+25 ~ rustc_private = true
+26 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+   Compiling kani-driver v0.68.0 (<kani>/kani-driver)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.79s
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+25 ~ rustc_private = true
+26 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: unused dependency `strum`
+  --> library/kani_macros/Cargo.toml:19:1
+   |
+19 | strum = "0.28"
+   | ^^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `strum`
+warning: `kani_macros` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.02s
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+25 ~ rustc_private = true
+26 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: unused dependency `strum`
+  --> library/kani_macros/Cargo.toml:19:1
+   |
+19 | strum = "0.28"
+   | ^^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `strum`
+warning: `kani_macros` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.03s
+[1m[33mwarning[0m[1m: `feature(generic_const_exprs)` is not supported with the next-generation trait solver[0m
+  [1m[94m--> [0mlibrary/kani/src/lib.rs:12:12
+   [1m[94m|[0m
+[1m[94m12[0m [1m[94m|[0m #![feature(generic_const_exprs)]
+   [1m[94m|[0m            [1m[33m^^^^^^^^^^^^^^^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mnote[0m: `-Znext-solver=globally` is currently enabled by default for testing
+   [1m[94m= [0m[1mnote[0m: reverted the setting to `-Znext-solver=coherence` for this crate
+   [1m[94m= [0m[1mnote[0m: the currently stable trait solver will be used for this crate
+   [1m[94m= [0m[1mnote[0m: see issues #160895 <https://github.com/rust-lang/rust/issues/160895> for more information
+
+
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+25 ~ rustc_private = true
+26 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+warning: unused dependency `strum`
+  --> library/kani_macros/Cargo.toml:19:1
+   |
+19 | strum = "0.28"
+   | ^^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `strum`
+warning: `kani_macros` (manifest) generated 1 warning
+warning: unused dependency `kani`
+  --> library/std/Cargo.toml:14:1
+   |
+14 | kani = {path="../kani"}
+   | ^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `kani`
+warning: `std` (manifest) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.03s
+[1m[33mwarning[0m[1m: `feature(generic_const_exprs)` is not supported with the next-generation trait solver[0m
+  [1m[94m--> [0mlibrary/kani/src/lib.rs:12:12
+   [1m[94m|[0m
+[1m[94m12[0m [1m[94m|[0m #![feature(generic_const_exprs)]
+   [1m[94m|[0m            [1m[33m^^^^^^^^^^^^^^^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mnote[0m: `-Znext-solver=globally` is currently enabled by default for testing
+   [1m[94m= [0m[1mnote[0m: reverted the setting to `-Znext-solver=coherence` for this crate
+   [1m[94m= [0m[1mnote[0m: the currently stable trait solver will be used for this crate
+   [1m[94m= [0m[1mnote[0m: see issues #160895 <https://github.com/rust-lang/rust/issues/160895> for more information
+
+
+[1m[33mwarning[0m[1m: the feature `layout_for_ptr` has been stable since 1.99.0 and no longer requires an attribute to enable[0m
+  [1m[94m--> [0mlibrary/kani/src/lib.rs:21:52
+   [1m[94m|[0m
+[1m[94m21[0m [1m[94m|[0m #![cfg_attr(feature = "concrete_playback", feature(layout_for_ptr))]
+   [1m[94m|[0m                                                    [1m[33m^^^^^^^^^^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mnote[0m: `#[warn(stable_features)]` on by default
+
+
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> library/std/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+19 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+17 ~ concrete_playback = ["kani/concrete_playback"]
+18 + [lints]
+   |
+warning: `std` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/build-kani/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+18 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+16 ~ which = "8"
+17 + [lints]
+   |
+warning: `build-kani` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/kani-cov/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+23 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+21 ~ tree-sitter-rust = "0.24"
+22 + [lints]
+   |
+warning: `kani-cov` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> tools/scanner/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+25 ~ rustc_private = true
+26 + [lints]
+27 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+25 ~ rustc_private = true
+26 + [lints]
+   |
+warning: `scanner` (manifest) generated 1 warning
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+89 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+87 ~ too_long_first_doc_paragraph = "allow"
+88 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> Cargo.toml:15:12
+   |
+13 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+14 | documentation = "https://model-checking.github.io/kani/"
+15 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-verifier` (manifest) generated 2 warnings
+warning: missing `[lints]` to inherit `[workspace.lints]`
+  --> kani-driver/Cargo.toml
+   = note: `cargo::missing_lints_inheritance` is set to `warn` by default
+help: to inherit `workspace.lints, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+68 + workspace = true
+   |
+help: to clarify your intent to not inherit, add:
+   |
+66 ~ # https://github.com/console-rs/indicatif
+67 + [lints]
+   |
+warning: `package.homepage` is redundant with `package.repository`
+  --> kani-driver/Cargo.toml:10:12
+   |
+10 | homepage = "https://github.com/model-checking/kani"
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | repository = "https://github.com/model-checking/kani"
+   |              ----------------------------------------
+   |
+   = note: `cargo::redundant_homepage` is set to `warn` by default
+help: consider removing `package.homepage`
+warning: `kani-driver` (manifest) generated 2 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running `target/debug/compiletest --suite json-handler --mode exec --force-rerun live-configuration`
+
+running 1 test
+test [exec] json-handler/live-configuration ... FAILED
+
+failures:
+
+---- [exec] json-handler/live-configuration stdout ----
+
+error: test failed: expected code 0, got code 1
+status: exit status: 1
+command: cd "<kani>/tests/json-handler/live-configuration" && "time" "<kani>/tests/json-handler/live-configuration/test.sh"
+stdout:
+------------------------------------------
+All validations passed for baseline.json
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+Checking harness configured_harness...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCscmv95qauhfi_7fixture18configured_harness.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Not unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 6 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Runtime Symex: 0.00292058s
+size of program expression: 351 steps
+slicing removed 242 assignments
+Generated 27 VCC(s), 15 remaining after simplification
+Runtime Postprocess Equation: 2.57e-05s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 0.000172501s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 2.88e-06s
+Solving with MiniSAT 2.2.1 with simplifier
+108 variables, 252 clauses
+SAT checker: instance is SATISFIABLE
+Runtime Solver: 0.000185371s
+Runtime decision procedure: 0.000378072s
+Running propositional reduction
+Solving with MiniSAT 2.2.1 with simplifier
+109 variables, 157 clauses
+SAT checker inconsistent: instance is UNSATISFIABLE
+Runtime Solver: 3.66e-06s
+Runtime decision procedure: 8.56e-06s
+
+RESULTS:
+Check 1: configured_harness.assertion.1
+	 - Status: SUCCESS
+	 - Description: "attempt to add with overflow"
+	 - Location: fixture.rs:13:9 in function configured_harness
+
+Check 2: configured_harness.assertion.2
+	 - Status: SUCCESS
+	 - Description: "attempt to add with overflow"
+	 - Location: fixture.rs:14:9 in function configured_harness
+
+Check 3: configured_harness.assertion.3
+	 - Status: SUCCESS
+	 - Description: "assertion failed: acc == n as u32"
+	 - Location: fixture.rs:16:5 in function configured_harness
+
+Check 4: configured_harness.unwind.0
+	 - Status: SUCCESS
+	 - Description: "unwinding assertion loop 0"
+	 - Location: fixture.rs:12:5 in function configured_harness
+
+
+SUMMARY:
+ ** 0 of 4 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.01358325s
+
+Manual Harness Summary:
+Complete - 1 successfully verified harnesses, 0 failures, 1 total.
+All validations passed for cli_unwind.json
+All validations passed for cli_solver.json
+All validations passed for cbmc_args_solver.json
+All validations passed for cbmc_args_smt_override.json
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+Checking harness configured_harness...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCscmv95qauhfi_7fixture18configured_harness.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Not unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Runtime Symex: 0.00243753s
+size of program expression: 313 steps
+slicing removed 211 assignments
+Generated 23 VCC(s), 13 remaining after simplification
+Runtime Postprocess Equation: 2.226e-05s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 0.000152351s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 2.92e-06s
+Solving with MiniSAT 2.2.1 with simplifier
+94 variables, 216 clauses
+SAT checker: instance is SATISFIABLE
+Runtime Solver: 0.000172991s
+Runtime decision procedure: 0.000345202s
+Running propositional reduction
+Solving with MiniSAT 2.2.1 with simplifier
+95 variables, 135 clauses
+SAT checker inconsistent: instance is UNSATISFIABLE
+Runtime Solver: 4.11e-06s
+Runtime decision procedure: 8.67e-06s
+
+RESULTS:
+Check 1: configured_harness.assertion.1
+	 - Status: SUCCESS
+	 - Description: "attempt to add with overflow"
+	 - Location: fixture.rs:13:9 in function configured_harness
+
+Check 2: configured_harness.assertion.2
+	 - Status: SUCCESS
+	 - Description: "attempt to add with overflow"
+	 - Location: fixture.rs:14:9 in function configured_harness
+
+Check 3: configured_harness.assertion.3
+	 - Status: SUCCESS
+	 - Description: "assertion failed: acc == n as u32"
+	 - Location: fixture.rs:16:5 in function configured_harness
+
+Check 4: configured_harness.unwind.0
+	 - Status: SUCCESS
+	 - Description: "unwinding assertion loop 0"
+	 - Location: fixture.rs:12:5 in function configured_harness
+
+
+SUMMARY:
+ ** 0 of 4 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.013453459s
+
+Manual Harness Summary:
+Complete - 1 successfully verified harnesses, 0 failures, 1 total.
+All validations passed for default_unwind_vs_attribute.json
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+Checking harness configured_harness...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCscmv95qauhfi_7fixture18configured_harness.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 1 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 2 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 3 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 4 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 5 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Not unwinding loop _RNvCscmv95qauhfi_7fixture18configured_harness.0 iteration 6 file <kani>/tests/json-handler/live-configuration/fixture.rs line 12 column 5 function configured_harness thread 0
+Runtime Symex: 0.00289916s
+size of program expression: 351 steps
+slicing removed 242 assignments
+Generated 27 VCC(s), 15 remaining after simplification
+Runtime Postprocess Equation: 2.524e-05s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 0.000164451s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 7.63e-06s
+Solving with MiniSAT 2.2.1 with simplifier
+108 variables, 252 clauses
+SAT checker: instance is SATISFIABLE
+Runtime Solver: 0.000189391s
+Runtime decision procedure: 0.000373802s
+Running propositional reduction
+Solving with MiniSAT 2.2.1 with simplifier
+109 variables, 157 clauses
+SAT checker inconsistent: instance is UNSATISFIABLE
+Runtime Solver: 3.6e-06s
+Runtime decision procedure: 8.94e-06s
+
+RESULTS:
+Check 1: configured_harness.assertion.1
+	 - Status: SUCCESS
+	 - Description: "attempt to add with overflow"
+	 - Location: fixture.rs:13:9 in function configured_harness
+
+Check 2: configured_harness.assertion.2
+	 - Status: SUCCESS
+	 - Description: "attempt to add with overflow"
+	 - Location: fixture.rs:14:9 in function configured_harness
+
+Check 3: configured_harness.assertion.3
+	 - Status: SUCCESS
+	 - Description: "assertion failed: acc == n as u32"
+	 - Location: fixture.rs:16:5 in function configured_harness
+
+Check 4: configured_harness.unwind.0
+	 - Status: SUCCESS
+	 - Description: "unwinding assertion loop 0"
+	 - Location: fixture.rs:12:5 in function configured_harness
+
+
+SUMMARY:
+ ** 0 of 4 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.013833891s
+
+Manual Harness Summary:
+Complete - 1 successfully verified harnesses, 0 failures, 1 total.
+All validations passed for default_unwind_vs_cli.json
+All validations passed for bare_smt2.json
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+Checking harness coverage_harness...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCscmv95qauhfi_7fixture16coverage_harness.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.000891604s
+size of program expression: 173 steps
+slicing removed 80 assignments
+Generated 8 VCC(s), 8 remaining after simplification
+Runtime Postprocess Equation: 1.2781e-05s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 9.323e-05s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 3.45e-06s
+Solving with CaDiCaL 3.0.0
+31 variables, 50 clauses
+SAT checker: instance is SATISFIABLE
+Runtime Solver: 2.329e-05s
+Runtime decision procedure: 0.00013575s
+Running propositional reduction
+Solving with CaDiCaL 3.0.0
+32 variables, 51 clauses
+SAT checker: instance is SATISFIABLE
+Runtime Solver: 1.371e-05s
+Runtime decision procedure: 2.052e-05s
+Running propositional reduction
+Solving with CaDiCaL 3.0.0
+33 variables, 52 clauses
+SAT checker: instance is UNSATISFIABLE
+Runtime Solver: 2.207e-05s
+Runtime decision procedure: 2.604e-05s
+
+RESULTS:
+Check 1: coverage_harness.assertion.1
+	 - Status: SUCCESS
+	 - Description: "assertion failed: x < 10"
+	 - Location: fixture.rs:23:9 in function coverage_harness
+
+Check 2: coverage_harness.assertion.2
+	 - Status: SUCCESS
+	 - Description: "assertion failed: x >= 10"
+	 - Location: fixture.rs:25:9 in function coverage_harness
+
+
+SUMMARY:
+ ** 0 of 2 failed
+
+VERIFICATION:- SUCCESSFUL
+
+Source-based code coverage results:
+
+<kani>/tests/json-handler/live-configuration/fixture.rs (coverage_harness)
+ * 20:1 - 22:14 COVERED
+ * 23:9 - 23:23 COVERED
+ * 25:9 - 25:24 COVERED
+ * 27:1 - 27:2 COVERED
+
+Verification Time: 0.01179814s
+
+[info] Coverage results saved to <kani>/tests/json-handler/live-configuration/kanicov_2026-11-10_22-44
+Manual Harness Summary:
+Complete - 1 successfully verified harnesses, 0 failures, 1 total.
+All validations passed for coverage.json
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+Checking harness coverage_harness...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCscmv95qauhfi_7fixture16coverage_harness.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.000986936s
+size of program expression: 169 steps
+slicing removed 81 assignments
+Generated 4 VCC(s), 4 remaining after simplification
+Runtime Postprocess Equation: 1.33e-05s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 8.711e-05s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 3.38e-06s
+Solving with CaDiCaL 3.0.0
+30 variables, 49 clauses
+SAT checker: instance is SATISFIABLE
+Runtime Solver: 2.371e-05s
+Runtime decision procedure: 0.000127s
+Running propositional reduction
+Solving with CaDiCaL 3.0.0
+31 variables, 50 clauses
+SAT checker: instance is SATISFIABLE
+Runtime Solver: 8.67e-06s
+Runtime decision procedure: 1.526e-05s
+Running propositional reduction
+Solving with CaDiCaL 3.0.0
+32 variables, 51 clauses
+SAT checker: instance is UNSATISFIABLE
+Runtime Solver: 1.859e-05s
+Runtime decision procedure: 2.216e-05s
+
+RESULTS:
+Check 1: coverage_harness.assertion.1
+	 - Status: SUCCESS
+	 - Description: "assertion failed: x < 10"
+	 - Location: fixture.rs:23:9 in function coverage_harness
+
+Check 2: coverage_harness.assertion.2
+	 - Status: SUCCESS
+	 - Description: "assertion failed: x >= 10"
+	 - Location: fixture.rs:25:9 in function coverage_harness
+
+
+SUMMARY:
+ ** 0 of 2 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.010475294s
+
+Manual Harness Summary:
+Complete - 1 successfully verified harnesses, 0 failures, 1 total.
+All validations passed for coverage_baseline.json
+Kani Rust Verifier 0.68.0 (standalone)
+CBMC 6.11.0
+Checking harness coverage_harness...
+CBMC 6.11.0 (cbmc-6.11.0)
+CBMC version 6.11.0 (cbmc-6.11.0) 64-bit x86_64 linux
+Reading GOTO program from file <kani>/tests/json-handler/live-configuration/fixture__RNvCscmv95qauhfi_7fixture16coverage_harness.out
+Generating GOTO Program
+Adding CPROVER library (x86_64)
+Removal of function pointers and virtual functions
+Generic Property Instrumentation
+Running with 16 object bits, 48 offset bits (user-specified)
+Starting Bounded Model Checking
+Runtime Symex: 0.00101114s
+size of program expression: 167 steps
+slicing removed 81 assignments
+Generated 2 VCC(s), 2 remaining after simplification
+Runtime Postprocess Equation: 1.318e-05s
+Passing problem to propositional reduction
+converting SSA
+Runtime Convert SSA: 8.6391e-05s
+Running propositional reduction
+Post-processing
+Runtime Post-process: 3.03e-06s
+Solving with CaDiCaL 3.0.0
+29 variables, 46 clauses
+SAT checker: instance is UNSATISFIABLE
+Runtime Solver: 6.09e-05s
+Runtime decision procedure: 0.000159731s
+
+RESULTS:
+Check 1: coverage_harness.assertion.1
+	 - Status: SUCCESS
+	 - Description: "assertion failed: x < 10"
+	 - Location: fixture.rs:23:9 in function coverage_harness
+
+Check 2: coverage_harness.assertion.2
+	 - Status: SUCCESS
+	 - Description: "assertion failed: x >= 10"
+	 - Location: fixture.rs:25:9 in function coverage_harness
+
+
+SUMMARY:
+ ** 0 of 2 failed
+
+VERIFICATION:- SUCCESSFUL
+Verification Time: 0.009252778s
+
+Manual Harness Summary:
+Complete - 1 successfully verified harnesses, 0 failures, 1 total.
+All validations passed for check_flags.json
+ERROR: cbmc_args_smt_override: a --cbmc-args SMT-family flag (--z3) should override CLI --solver cadical, got cadical
+ERROR: bare_smt2: bare --smt2 should yield resolved_solver: null, got minisat
+
+------------------------------------------
+stderr:
+------------------------------------------
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+warning: use of an unstable feature
+ --> <crate attribute>:1:12
+  |
+1 | #![feature(register_tool)]
+  |            ^^^^^^^^^^^^^
+  |
+  = note: requested on the command line with `--force-warn unstable-features`
+
+warning: 1 warning emitted
+
+Command exited with non-zero status 1
+1.02user 0.34system 0:01.39elapsed 97%CPU (0avgtext+0avgdata 132340maxresident)k
+0inputs+5288outputs (0major+340955minor)pagefaults 0swaps
+
+------------------------------------------
+
+
+
+failures:
+    [exec] json-handler/live-configuration
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 16 filtered out; finished in 1.40s
+
+Some tests failed in compiletest suite=json-handler mode=exec host=(none) target=(none)
+          Finished with result: exit-code
+Main processes terminated with: code=exited, status=1/FAILURE
+               Service runtime: 2.528s
+             CPU time consumed: 3.191s
+                   Memory peak: 646.5M (swap: 0B)
+
+
+--- patch ---
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..816c19cb7 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -225,8 +225,8 @@ fn build_rustc_release() -> Option<String> {
+ /// CBMC rejects an SMT flag together with `--external-sat-solver`, or a named one with
+ /// `--incremental-smt2-solver`; the harness then does not complete, so the result is best effort.
+ fn effective_solver(cbmc_args: &[OsString], base: &CbmcSolver) -> Option<String> {
+-    let argv: Vec<OsString> =
+-        solver_flags(base).into_iter().chain(cbmc_args.iter().cloned()).collect();
++    let _ = cbmc_args;
++    let argv: Vec<OsString> = solver_flags(base).into_iter().collect();
+     let argv: Vec<Option<&str>> = argv.iter().map(|arg| arg.to_str()).collect();
+     let has = |flag: &str| argv.contains(&Some(flag));
+     let value = |flag: &str| {

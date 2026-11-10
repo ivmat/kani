@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index cea18bf80..a6240ca51 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -987,7 +987,7 @@ fn from_harness_result(
+                 Outcome::from(exit_status),
+                 None,
+                 None,
+-                None,
++                Some(FailedProperties::None),
+                 Vec::new(),
+                 Vec::new(),
+                 ChecksExport::empty_not_completed(),

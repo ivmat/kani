@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index cea18bf80..c634ee088 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -1003,7 +1003,7 @@ fn from_harness_result(
+             contract: harness.contract.clone(),
+             is_automatically_generated: harness.is_automatically_generated,
+             has_loop_contracts: harness.has_loop_contracts,
+-            is_bounded: harness.is_bounded,
++            is_bounded: false,
+             attributes: harness.attributes.clone(),
+             outcome,
+             resolved_solver,

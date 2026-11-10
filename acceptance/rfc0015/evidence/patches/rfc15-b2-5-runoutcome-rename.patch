@@ -1,0 +1,22 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..5dfbc3700 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -354,7 +354,7 @@ enum Outcome {
+ #[derive(Serialize)]
+ #[serde(tag = "kind", rename_all = "SCREAMING_SNAKE_CASE")]
+ enum RunOutcome {
+-    Completed,
++    Done,
+ }
+ 
+ impl From<&ExitStatus> for Outcome {
+@@ -643,7 +643,7 @@ fn from_harness_results(
+             harness_selection: ctx.harness_selection,
+             harness_timeout_s: ctx.harness_timeout_s,
+             configuration: ctx.configuration,
+-            outcome: RunOutcome::Completed,
++            outcome: RunOutcome::Done,
+             run_state,
+             target: env!("TARGET"),
+             started_at: format_started_at(ctx.started_at),

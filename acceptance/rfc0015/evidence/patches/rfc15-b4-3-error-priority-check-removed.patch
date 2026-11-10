@@ -1,0 +1,14 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index fe729ef0d..482eadd63 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -573,9 +573,6 @@ fn verification_outcome_from_properties(
+ 
+ /// Determines the `FailedProperties` variant that corresponds to an array of properties
+ fn determine_failed_properties(properties: &[Property]) -> FailedProperties {
+-    if properties.iter().any(|prop| prop.status == CheckStatus::Error) {
+-        return FailedProperties::Error;
+-    };
+     let failed_properties: Vec<&Property> =
+         properties.iter().filter(|prop| prop.status == CheckStatus::Failure).collect();
+     // Return `FAILURE` if there isn't at least one failed property

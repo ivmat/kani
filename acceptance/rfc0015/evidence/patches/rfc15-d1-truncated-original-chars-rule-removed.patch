@@ -1,0 +1,13 @@
+diff --git a/scripts/validate_json_export.py b/scripts/validate_json_export.py
+index 64679ffae..28e36a91a 100755
+--- a/scripts/validate_json_export.py
++++ b/scripts/validate_json_export.py
+@@ -375,7 +375,7 @@ def check_harness_rules(harness, path, errors):
+     check_number(harness["attributes"]["unwind_value"], f"{path}.attributes.unwind_value", errors)
+     check_number(harness["resolved_unwind"], f"{path}.resolved_unwind", errors)
+     for i, warning in enumerate(harness["warnings"]):
+-        if warning["truncated"] != (warning["original_chars"] is not None):
++        if False:
+             errors.append(f"{path}.warnings[{i}]: truncated is {warning['truncated']} but "
+                           f"original_chars is {warning['original_chars']}")
+         check_number(warning["original_chars"], f"{path}.warnings[{i}].original_chars", errors)

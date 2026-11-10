@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index d89471545..591c448c9 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -529,7 +529,7 @@ pub(crate) fn from(
+             // We never got (complete) results from CBMC - something went wrong (e.g. crash) so
+             // it's failure
+             let exit_status =
+-                if output.process_status == 137 || cbmc_reported_out_of_memory(&remaining_items) {
++                if output.process_status == 9999 || cbmc_reported_out_of_memory(&remaining_items) {
+                     ExitStatus::OutOfMemory
+                 } else if reported_results && !cbmc_reported_prover_status(&remaining_items) {
+                     ExitStatus::IncompleteResults(output.process_status)

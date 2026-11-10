@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index 00149b7..370315d 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -444,7 +444,7 @@ fn cbmc_completed_results(process_status: i32, results: &[Property]) -> bool {
+     match process_status {
+         0 | 10 => true,
+         6 => results.iter().any(|prop| prop.status == CheckStatus::Error),
+-        _ => false,
++        _ => true,
+     }
+ }
+ 

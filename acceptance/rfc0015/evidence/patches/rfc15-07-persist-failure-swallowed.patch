@@ -1,0 +1,15 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+index bb9fb5ea6..648cf35cc 100644
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -187,9 +187,7 @@ fn write_json_atomically<T: Serialize + ?Sized>(path: &Path, value: &T) -> Resul
+         writer.flush().with_context(write_error)?;
+     }
+     tmp.as_file().sync_all().with_context(write_error)?;
+-    tmp.persist(path).map_err(|e| e.error).with_context(|| {
+-        format!("Failed to persist --export-json temporary file to `{}`", path.display())
+-    })?;
++    let _ = tmp.persist(path);
+     Ok(())
+ }
+ 

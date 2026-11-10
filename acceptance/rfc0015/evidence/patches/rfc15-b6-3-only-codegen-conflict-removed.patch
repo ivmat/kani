@@ -1,0 +1,21 @@
+diff --git a/kani-driver/src/args/mod.rs b/kani-driver/src/args/mod.rs
+index 45d11898f..37d9e5eb8 100644
+--- a/kani-driver/src/args/mod.rs
++++ b/kani-driver/src/args/mod.rs
+@@ -882,16 +882,6 @@ fn validate(&self) -> Result<(), Error> {
+             // Neither code-generation-only mode runs verification, so there is nothing to export.
+             // `--only-codegen` would otherwise succeed without writing the file the user asked for,
+             // and `--no-codegen` would write a document describing a run that never happened.
+-            if self.export_json.is_some() && (self.only_codegen || self.no_codegen) {
+-                let incompatible =
+-                    if self.only_codegen { "--only-codegen" } else { "--no-codegen" };
+-                return Err(Error::raw(
+-                    ErrorKind::ArgumentConflict,
+-                    format!(
+-                        "Conflicting options: --export-json isn't compatible with {incompatible}."
+-                    ),
+-                ));
+-            }
+             if self.jobs().will_multithread() && self.output_format() != OutputFormat::Terse {
+                 // More verbose output formats make it hard to interpret output right now when run in parallel.
+                 // This can be removed when we change up how results are printed.

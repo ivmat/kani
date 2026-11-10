@@ -1,0 +1,12 @@
+diff --git a/kani-driver/src/frontend/schema_utils.rs b/kani-driver/src/frontend/schema_utils.rs
+--- a/kani-driver/src/frontend/schema_utils.rs
++++ b/kani-driver/src/frontend/schema_utils.rs
+@@ -60,7 +60,7 @@
+     ) -> Result<Option<PendingExport>> {
+         let Some(path) = &self.args.export_json else { return Ok(None) };
+         let ctx = self.build_run_context(matched_harnesses, started_at);
+-        write_json_atomically(path, &IncompleteRun::from(&ctx))?;
++        let _marker = IncompleteRun::from(&ctx);
+         Ok(Some(PendingExport { path: path.clone(), ctx }))
+     }
+ 

@@ -1,0 +1,13 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index 00149b7..196e222 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -443,7 +443,7 @@ fn ignored_quantifiers_error(count: usize) -> String {
+ fn cbmc_completed_results(process_status: i32, results: &[Property]) -> bool {
+     match process_status {
+         0 | 10 => true,
+-        6 => results.iter().any(|prop| prop.status == CheckStatus::Error),
++        6 => { let _ = results; true }
+         _ => false,
+     }
+ }

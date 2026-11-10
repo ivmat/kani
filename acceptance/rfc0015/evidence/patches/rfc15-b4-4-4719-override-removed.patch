@@ -1,0 +1,15 @@
+diff --git a/kani-driver/src/call_cbmc.rs b/kani-driver/src/call_cbmc.rs
+index fe729ef0d..8592ed25c 100644
+--- a/kani-driver/src/call_cbmc.rs
++++ b/kani-driver/src/call_cbmc.rs
+@@ -421,10 +421,6 @@ fn from(
+             // silently not enforced, so a "successful" result may be vacuous. Kani must never
+             // report success in that case -- force a failure and (via the rendered error) direct
+             // the user to an SMT backend that supports quantifiers.
+-            if ignored_quantifiers > 0 {
+-                status = VerificationStatus::Failure;
+-                failed_properties = FailedProperties::Error;
+-            }
+             let coverage_results = coverage_results_from_properties(&results);
+             VerificationResult {
+                 status,
